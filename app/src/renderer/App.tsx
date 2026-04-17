@@ -4,6 +4,7 @@ import BlockedScreen from './components/BlockedScreen';
 import ImportCSV from './components/ImportCSV';
 import Generator from './components/Generator';
 import ColumnStats from './components/ColumnStats';
+import StatusPage from './components/StatusPage';
 
 type Tab = 'gerador' | 'importar' | 'status' | 'estatisticas';
 

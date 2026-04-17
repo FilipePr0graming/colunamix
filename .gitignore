@@ -1,4 +1,11 @@
-﻿node_modules/
+﻿# dependencies
+node_modules
+
+# playwright
+app/test-results/
+app/playwright-report/
+
+# dist
 dist/
 dist-electron/
 out/

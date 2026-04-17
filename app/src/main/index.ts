@@ -18,10 +18,12 @@ function createWindow() {
             sandbox: false,
         },
         title: 'ColunaMix',
-        show: false,
+        show: process.env.PW_TEST === 'true',
     });
 
-    mainWindow.once('ready-to-show', () => mainWindow?.show());
+    if (process.env.PW_TEST !== 'true') {
+        mainWindow.once('ready-to-show', () => mainWindow?.show());
+    }
 
     if (process.env.VITE_DEV_SERVER_URL) {
         mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);

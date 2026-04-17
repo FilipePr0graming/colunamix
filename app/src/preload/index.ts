@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbClear: () => ipcRenderer.invoke('db:clear'),
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) =>
         ipcRenderer.invoke('db:get-draws', mode, lastN, rangeStart, rangeEnd),
+    dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),
     generatorPreview: (config: any) => ipcRenderer.invoke('generator:preview', config),
     generatorSaveMass: (config: any) => ipcRenderer.invoke('generator:save-mass', config),

@@ -6,16 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "dist": "vite build && electron-builder"
+    "dist": "vite build && electron-builder",
+    "test:e2e": "npm run build && playwright test"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
+    "@playwright/test": "^1.55.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "electron": "^33.3.1",
     "electron-builder": "^25.1.8",
+    "playwright": "^1.55.0",
     "postcss": "^8.4.49",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

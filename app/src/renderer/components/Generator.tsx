@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion } from '../../shared/types';
-import { parseNumbers, validatePattern } from '../../shared/columns';
+import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import GridPicker from './GridPicker';
 import LotofacilGrid from './LotofacilGrid';
 
@@ -166,6 +166,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         if (saved) alert('Arquivo exportado com sucesso!');
     };
 
+    const handleClearResults = () => {
+        setGames([]);
+        setSelectedGame(null);
+        setViewingGames([]);
+        setMassProgress(null);
+        setError('');
+    };
+
     const handleExportConfig = async () => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
@@ -264,6 +272,48 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const clearAllPatternExclusions = () => {
         if (confirm('Tem certeza que deseja remover todos os padrões de linha/coluna?')) {
             setPatternExclusions([]);
+        }
+    };
+
+    const handleApplyHistory = async () => {
+        if (noData) {
+            setError('Importe concursos primeiro na aba "Dados".');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            const draws = await window.electronAPI.dbGetDraws('lastN', historyPullCount, 0, 0);
+            const unique = new Set<string>();
+            for (const d of (draws || [])) {
+                const numbers = Array.isArray(d?.numbers) ? d.numbers : [];
+                const arr = patternTab === 'column'
+                    ? getColPatternArray(numbers)
+                    : getRowPatternArray(numbers);
+                unique.add(arr.join(','));
+            }
+
+            const existing = new Set(
+                patternExclusions
+                    .filter(p => p.type === patternTab)
+                    .map(p => p.pattern.join(','))
+            );
+
+            const toAdd: PatternExclusion[] = [];
+            for (const key of unique) {
+                if (existing.has(key)) continue;
+                const nums = key.split(',').map(n => parseInt(n, 10));
+                const valid = nums.length === 5 && nums.every(n => Number.isFinite(n)) && nums.reduce((a, b) => a + b, 0) === K;
+                if (!valid) continue;
+                toAdd.push({ id: Math.random().toString(36).substr(2, 9), type: patternTab, pattern: nums });
+            }
+            if (toAdd.length > 0) {
+                setPatternExclusions([...patternExclusions, ...toAdd]);
+            }
+        } catch (e: any) {
+            setError(e?.message || 'Erro ao puxar padrões históricos.');
+        } finally {
+            setLoading(false);
         }
     };
 
