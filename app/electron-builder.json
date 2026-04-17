@@ -1,0 +1,34 @@
+{
+    "appId": "com.valient.colunamix",
+    "productName": "ColunaMix",
+    "artifactName": "ColunaMix-${version}-${os}-${arch}.${ext}",
+    "directories": {
+        "output": "release"
+    },
+    "files": [
+        "dist-electron/**/*",
+        "dist/**/*",
+        "package.json"
+    ],
+    "extraResources": [],
+    "win": {
+        "target": [
+            {
+                "target": "portable",
+                "arch": [
+                    "x64"
+                ]
+            },
+            {
+                "target": "zip",
+                "arch": [
+                    "x64"
+                ]
+            }
+        ],
+        "icon": "assets/icon.ico",
+        "signAndEditExecutable": false,
+        "forceCodeSigning": false,
+        "requestedExecutionLevel": "asInvoker"
+    }
+}

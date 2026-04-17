@@ -1,0 +1,12 @@
+﻿node_modules/
+dist/
+dist-electron/
+out/
+.DS_Store
+*.log
+.env
+licenses/license.json
+data/output/
+scripts/private_key.pem
+*.db
+state.json
