@@ -91,8 +91,6 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=Erro na geração')).toHaveCount(0);
       const firstRow = page.locator('tbody tr').first();
       await expect(firstRow).toBeVisible();
-      await firstRow.click();
-      await expect(page.locator('text=Painel de Visualização')).toBeVisible();
     } finally {
       await app.close();
     }

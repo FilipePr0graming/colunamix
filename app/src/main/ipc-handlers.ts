@@ -254,6 +254,20 @@ export function registerIpcHandlers(): void {
 
         if (draws.length === 0) return { success: false, count: 0, error: 'Sem dados no período selecinado.' };
 
+        const previewRes = (() => {
+            try {
+                const fn = (ipcMain as any)._invokeHandlers?.get('generator:preview');
+                if (!fn) return null;
+                return fn({} as any, config);
+            } catch {
+                return null;
+            }
+        })();
+
+        const effectiveTotal = previewRes && typeof (previewRes as any).totalCombinations === 'number'
+            ? Math.min(config.maxJogos, (previewRes as any).totalCombinations)
+            : config.maxJogos;
+
         const gen = new ChunkedGenerator(draws, config);
         const stream = createWriteStream(savePath);
 
@@ -272,7 +286,7 @@ export function registerIpcHandlers(): void {
                     // Send progress to UI
                     event.sender.send('generator:progress', {
                         current: totalWritten,
-                        total: config.maxJogos
+                        total: effectiveTotal
                     });
 
                     if (result.hasMore && totalWritten < config.maxJogos) {

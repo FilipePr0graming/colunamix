@@ -32,7 +32,6 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [massProgress, setMassProgress] = useState<{ current: number, total: number } | null>(null);
     const [pickingFor, setPickingFor] = useState<{ type: 'fixas' } | { type: 'exclusions', id: string } | null>(null);
     const [selectedGame, setSelectedGame] = useState<GeneratedGame | null>(null);
-    const [viewingGames, setViewingGames] = useState<GeneratedGame[]>([]); // For side-by-side view
     const [showFilterGrids, setShowFilterGrids] = useState(false);
 
     const noData = !dbStatus || dbStatus.drawCount === 0;
@@ -132,7 +131,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
     const handleMassGenerate = async () => {
         if (noData) return;
-        setLoading(true); setError(''); setMassProgress({ current: 0, total: maxJogos });
+        const total = preview?.totalCombinations ? Math.min(maxJogos, preview.totalCombinations) : maxJogos;
+        setLoading(true); setError(''); setMassProgress({ current: 0, total });
         try {
             const config: GeneratorConfig = {
                 mode, lastN, rangeStart, rangeEnd,
@@ -169,7 +169,6 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleClearResults = () => {
         setGames([]);
         setSelectedGame(null);
-        setViewingGames([]);
         setMassProgress(null);
         setError('');
     };
@@ -209,8 +208,6 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const formatNumber = (n: number) => {
-        if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-        if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
         return n.toLocaleString('pt-BR');
     };
 
@@ -767,20 +764,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 </thead>
                                 <tbody>
                                     {games.slice(0, 5000).map((g, i) => { // Virtualize locally with slice
-                                        const isViewing = viewingGames.some(vg => vg.key === g.key);
                                         return (
                                             <tr key={g.key}
-                                                onClick={() => {
-                                                    if (isViewing) {
-                                                        setViewingGames(viewingGames.filter(vg => vg.key !== g.key));
-                                                    } else {
-                                                        setViewingGames([g, ...viewingGames].slice(0, 3)); 
-                                                    }
-                                                }}
-                                                className={`border-t border-white/5 hover:bg-white/[0.05] cursor-pointer transition-colors ${isViewing ? 'bg-brand-500/10' : ''}`}>
+                                                className="border-t border-white/5 hover:bg-white/[0.05] transition-colors">
                                                 <td className="py-2 px-3 text-gray-600 text-xs tabular-nums">{i + 1}</td>
                                                 <td className="py-2 px-3 font-mono text-xs text-brand-300 tracking-wide">
-                                                    {isViewing && <span className="mr-2 text-brand-400">✅</span>}
                                                     {g.key}
                                                 </td>
                                             </tr>
@@ -797,37 +785,6 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             </table>
                         )}
                     </div>
-
-                    {viewingGames.length > 0 && (
-                        <div className="max-w-[800px] shrink-0 flex flex-col gap-4 animate-fade-in border-l border-white/5 pl-4 overflow-y-auto">
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Painel de Visualização</h4>
-                                <button onClick={() => setViewingGames([])} className="text-xs text-gray-600 hover:text-white transition-colors">Limpar Painel ✕</button>
-                            </div>
-
-                            <div className={`grid gap-4 ${viewingGames.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                                {viewingGames.map((g, idx) => (
-                                    <div key={g.key} className="space-y-2 p-2 bg-white/5 rounded-lg border border-white/10 relative group">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setViewingGames(viewingGames.filter(vg => vg.key !== g.key));
-                                            }}
-                                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >✕</button>
-                                        <div className="text-[9px] text-gray-500 uppercase text-center font-bold">Jogo #{idx + 1}</div>
-                                        <LotofacilGrid numbers={g.numbers} className="!p-2 !gap-1" />
-                                        <div className="text-[10px] font-mono text-brand-400 text-center truncate">{g.key}</div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="p-3 rounded-lg bg-brand-500/5 border border-brand-500/20 mt-auto">
-                                <div className="text-[10px] text-gray-500 uppercase mb-1">Dica de Estudo</div>
-                                <p className="text-[11px] text-gray-400">Analise os grupos de colunas comparando os jogos lado a lado.</p>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
