@@ -5,6 +5,9 @@ node_modules
 app/test-results/
 app/playwright-report/
 
+# electron-builder release artifacts
+app/release/
+
 # dist
 dist/
 dist-electron/
