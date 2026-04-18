@@ -1,7 +1,7 @@
 {
     "appId": "com.valient.colunamix",
     "productName": "ColunaMix",
-    "artifactName": "ColunaMix-${version}-${os}-${arch}.${ext}",
+    "artifactName": "ColunaMix-v${version}.${ext}",
     "directories": {
         "output": "release"
     },

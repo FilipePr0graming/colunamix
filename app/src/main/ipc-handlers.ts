@@ -2,7 +2,7 @@ import { ipcMain, dialog } from 'electron';
 import { getDbStatus, importDraws, getDraws, clearDraws } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { generateGames } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, GeneratedGame } from '../shared/types';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame } from '../shared/types';
 import { formatGame, collectUniquePatterns, getColPatternArray, getRowPatternArray, normalizeNumbers } from '../shared/columns';
 
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
@@ -57,7 +57,7 @@ export function registerIpcHandlers(): void {
                 patterns: colPatterns
             });
         }
-        return results.reverse(); // Newest first
+        return results;
     });
 
     ipcMain.handle('generator:preview', (_e, config: GeneratorConfig): CombinationPreview => {
@@ -134,14 +134,23 @@ export function registerIpcHandlers(): void {
         // 3. Handle Column Patterns (Modes)
         let total = 0;
         const colPatternMode = config.colPatternMode || 'exclude';
-        const definedColPatterns = (config.patternExclusions || [])
-            .filter(p => p.type === 'column')
-            .map(p => p.pattern.join(','));
+        const excludedColPatterns = new Set(
+            (config.patternExclusions || [])
+                .filter(p => p.type === 'column')
+                .map(p => p.pattern.join(','))
+        );
+
+        const includeColPatterns = new Set(
+            (config.patternIncludes || [])
+                .filter(p => p.type === 'column')
+                .map(p => p.pattern.join(','))
+        );
 
         if (colPatternMode === 'include') {
-            // ONLY these specific combinations are allowed
-            if (definedColPatterns.length > 0) {
-                for (const patternStr of definedColPatterns) {
+            // Start with include-only set then remove excluded patterns (final = include - excluded)
+            if (includeColPatterns.size > 0) {
+                for (const patternStr of includeColPatterns) {
+                    if (excludedColPatterns.has(patternStr)) continue;
                     const parts = patternStr.split(',').map(Number);
                     if (parts.length !== 5) continue;
                     const sum = parts.reduce((a, b) => a + b, 0);
@@ -162,8 +171,8 @@ export function registerIpcHandlers(): void {
         } else {
             // Standard counting (Exclude mode)
             total = countWays(0, 0);
-            if (definedColPatterns.length > 0) {
-                for (const patternStr of definedColPatterns) {
+            if (excludedColPatterns.size > 0) {
+                for (const patternStr of excludedColPatterns) {
                     const parts = patternStr.split(',').map(Number);
                     if (parts.length !== 5) continue;
                     const sum = parts.reduce((a, b) => a + b, 0);
@@ -181,7 +190,9 @@ export function registerIpcHandlers(): void {
             }
         }
 
-        const hasRowExclusions = (config.patternExclusions || []).some(p => p.type === 'row');
+        const hasRowExclusions =
+            (config.patternExclusions || []).some(p => p.type === 'row') ||
+            (config.patternIncludes || []).some(p => p.type === 'row');
 
         return { 
             totalCombinations: Math.max(0, total), 
@@ -357,12 +368,23 @@ export function registerIpcHandlers(): void {
         }
     });
 
-    ipcMain.handle('generator:apply-history', async (_e, count: number, scope: 'row' | 'column' | 'both') => {
-        const draws = getDraws('lastN', count, 0, 0);
+    ipcMain.handle('generator:apply-history', async (_e, count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => {
+        const safeRange: HistoryRangeConfig = range && (range.mode === 'lastN' || range.mode === 'range')
+            ? range
+            : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
+
+        const drawsRaw = safeRange.mode === 'range'
+            ? getDraws('range', 0, safeRange.rangeStart, safeRange.rangeEnd)
+            : getDraws('lastN', Math.max(1, safeRange.lastN || count), 0, 0);
+
+        const draws = safeRange.mode === 'range'
+            ? drawsRaw.filter(d => d.contest >= safeRange.rangeStart && d.contest <= safeRange.rangeEnd)
+            : drawsRaw;
         const exclusions: any[] = [];
         const seen = new Set<string>();
 
         for (const draw of draws) {
+            if (safeRange.mode === 'range' && draw.contest > safeRange.rangeEnd) continue;
             if (scope === 'row' || scope === 'both') {
                 const p = getRowPatternArray(draw.numbers);
                 const key = 'row:' + p.join(',');

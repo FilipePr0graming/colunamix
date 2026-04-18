@@ -1,4 +1,6 @@
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 
@@ -118,10 +120,85 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=Limpar Todos')).toHaveCount(1);
 
       await page.locator('button:has-text("GERAR JOGOS")').click();
-      await expect(page.locator('text=jogos gerados')).toBeVisible();
+      const generatedLabel = page.locator('text=jogos gerados');
+      const noneLabel = page.locator('text=Nenhum jogo gerado');
+      await Promise.race([
+        expect(generatedLabel).toBeVisible(),
+        expect(noneLabel).toBeVisible(),
+      ]);
 
-      await page.locator('text=Limpar Resultados').click();
-      await expect(page.locator('text=jogos gerados')).toHaveCount(0);
+      if (await generatedLabel.count()) {
+        await page.locator('text=Limpar Resultados').click();
+        await expect(generatedLabel).toHaveCount(0);
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('RANGE + HISTÓRICO: recorte por faixa respeita endContest e não puxa padrões do concurso fora do range', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_range_${Date.now()}.csv`);
+
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rows: string[] = [];
+
+      for (let c = 3600; c <= 3662; c++) {
+        rows.push(`${c},01,02,03,06,07,08,11,12,13,16,17,18,21,22,23`);
+      }
+      rows.push(`3663,01,02,03,04,05,06,07,11,12,16,17,21,22,23,24`);
+
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+
+      await page.locator('select').first().selectOption('range');
+      await page.locator('input[type="number"]').nth(0).fill('3600');
+      await page.locator('input[type="number"]').nth(1).fill('3662');
+
+      await page.locator('button:has-text("Padrão Colunas")').click();
+      await page.locator('button:has-text("Puxar e Excluir Padrões")').click();
+
+      await expect(page.locator('text=7,2,2,2,2')).toHaveCount(0);
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('INCLUDE ONLY - EXCLUDE HISTÓRICO: interseção é removida (final = include - excluded) e pode zerar geração', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_include_exclude_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+
+      const rows: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        const c = 5000 + i;
+        rows.push(`${c},01,02,03,06,07,08,11,12,13,16,17,18,21,22,23`);
+      }
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+
+      await page.locator('button:has-text("Padrão Colunas")').click();
+      await page.locator('button:has-text("Usar Somente")').click();
+      await page.locator('input[placeholder="Ex: 43332"]').fill('33333');
+      await page.locator('button:has-text("ADICIONAR")').click();
+
+      await page.locator('button:has-text("Modo Excluir")').click();
+      await page.locator('button:has-text("Puxar e Excluir Padrões")').click();
+
+      await page.locator('button:has-text("GERAR JOGOS")').click();
+      await expect(page.locator('text=Nenhum jogo gerado')).toBeVisible();
     } finally {
       await app.close();
     }

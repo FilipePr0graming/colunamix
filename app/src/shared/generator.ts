@@ -29,8 +29,10 @@ export class ChunkedGenerator {
 
         this.excludedRowPatterns = new Set((config.patternExclusions || []).filter(p => p.type === 'row').map(p => p.pattern.join(',')));
         this.excludedColPatterns = new Set((config.patternExclusions || []).filter(p => p.type === 'column').map(p => p.pattern.join(',')));
-        this.includedRowPatterns = this.rowPatternMode === 'include' ? new Set(this.excludedRowPatterns) : new Set();
-        this.includedColPatterns = this.colPatternMode === 'include' ? new Set(this.excludedColPatterns) : new Set();
+
+        const includeList = config.patternIncludes || [];
+        this.includedRowPatterns = new Set(includeList.filter(p => p.type === 'row').map(p => p.pattern.join(',')));
+        this.includedColPatterns = new Set(includeList.filter(p => p.type === 'column').map(p => p.pattern.join(',')));
 
         this.colPatterns = [];
         for (let col = 1; col <= 5; col++) {
@@ -105,6 +107,7 @@ export class ChunkedGenerator {
                             // Column Pattern Mode
                             if (this.colPatternMode === 'include') {
                                 if (!this.includedColPatterns.has(colPattern)) allowed = false;
+                                if (this.excludedColPatterns.has(colPattern)) allowed = false;
                             } else if (this.excludedColPatterns.has(colPattern)) {
                                 allowed = false;
                             }
@@ -113,6 +116,7 @@ export class ChunkedGenerator {
                             if (allowed) {
                                 if (this.rowPatternMode === 'include') {
                                     if (!this.includedRowPatterns.has(rowPattern)) allowed = false;
+                                    if (this.excludedRowPatterns.has(rowPattern)) allowed = false;
                                 } else if (this.excludedRowPatterns.has(rowPattern)) {
                                     allowed = false;
                                 }
@@ -144,6 +148,7 @@ export class ChunkedGenerator {
                         let colAllowed = true;
                         if (this.colPatternMode === 'include') {
                             if (!this.includedColPatterns.has(fullColPattern)) colAllowed = false;
+                            if (this.excludedColPatterns.has(fullColPattern)) colAllowed = false;
                         } else if (this.excludedColPatterns.has(fullColPattern)) {
                             colAllowed = false;
                         }

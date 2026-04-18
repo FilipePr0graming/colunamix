@@ -17,6 +17,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [fixasModo, setFixasModo] = useState<'contem' | 'exato'>('contem');
     const [exclusions, setExclusions] = useState<Exclusion[]>([]);
     const [patternExclusions, setPatternExclusions] = useState<PatternExclusion[]>([]);
+    const [patternIncludes, setPatternIncludes] = useState<PatternExclusion[]>([]);
     const [patternTab, setPatternTab] = useState<'column' | 'row'>('column');
     const [patternInput, setPatternInput] = useState('');
     const [patternError, setPatternError] = useState('');
@@ -61,6 +62,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.fixasModo) setFixasModo(config.fixasModo);
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
+                if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
             } catch (e) {
                 console.error('Erro ao carregar configurações salvas:', e);
@@ -71,11 +73,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     useEffect(() => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
-            fixas, fixasModo, exclusions, patternExclusions, noRepeat,
+            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat,
             colPatternMode, rowPatternMode
         };
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, noRepeat, colPatternMode, rowPatternMode]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat, colPatternMode, rowPatternMode]);
 
     // Fetch combination preview when parameters change
     const fetchPreview = useCallback(async () => {
@@ -90,6 +92,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             fixasModo,
             exclusions,
             patternExclusions,
+            patternIncludes,
             colPatternMode,
             rowPatternMode,
             maxJogos,
@@ -97,7 +100,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         };
         const res = await window.electronAPI.generatorPreview(config);
         setPreview(res);
-    }, [noData, mode, lastN, rangeStart, rangeEnd, K, fixas, fixasModo, exclusions, patternExclusions, maxJogos, noRepeat, colPatternMode, rowPatternMode]);
+    }, [noData, mode, lastN, rangeStart, rangeEnd, K, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, maxJogos, noRepeat, colPatternMode, rowPatternMode]);
 
     useEffect(() => { fetchPreview(); }, [fetchPreview]);
 
@@ -113,6 +116,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 fixasModo,
                 exclusions,
                 patternExclusions,
+                patternIncludes,
                 colPatternMode,
                 rowPatternMode,
                 noRepeatDrawn: noRepeat,
@@ -142,6 +146,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 fixasModo,
                 exclusions,
                 patternExclusions,
+                patternIncludes,
                 colPatternMode,
                 rowPatternMode,
                 noRepeatDrawn: noRepeat,
@@ -176,7 +181,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleExportConfig = async () => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
-            fixas, fixasModo, exclusions, patternExclusions, noRepeat,
+            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat,
             colPatternMode, rowPatternMode
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
@@ -197,6 +202,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.fixasModo) setFixasModo(config.fixasModo);
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
+                if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (config.colPatternMode) setColPatternMode(config.colPatternMode);
                 if (config.rowPatternMode) setRowPatternMode(config.rowPatternMode);
@@ -242,33 +248,45 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const addPatternExclusion = () => {
         const res = validatePattern(patternInput, K);
         if (!res.valid) {
-            setPatternError(res.error || 'Erro inválido');
+            setPatternError(res.error);
             return;
         }
-        
-        // Check for duplicates
-        const exists = patternExclusions.some(p => p.type === patternTab && p.pattern.join(',') === res.numbers.join(','));
+
+        setPatternError('');
+
+        const activeMode = patternTab === 'column' ? colPatternMode : rowPatternMode;
+        const targetList = activeMode === 'include' ? patternIncludes : patternExclusions;
+
+        const exists = targetList.some(p => p.type === patternTab && p.pattern.join(',') === res.numbers.join(','));
         if (exists) {
             setPatternError('Este padrão já foi adicionado.');
             return;
         }
 
-        setPatternExclusions([...patternExclusions, {
+        const nextItem: PatternExclusion = {
             id: Math.random().toString(36).substr(2, 9),
             type: patternTab,
             pattern: res.numbers
-        }]);
+        };
+
+        if (activeMode === 'include') {
+            setPatternIncludes([...patternIncludes, nextItem]);
+        } else {
+            setPatternExclusions([...patternExclusions, nextItem]);
+        }
+
         setPatternInput('');
-        setPatternError('');
     };
 
     const removePatternExclusion = (id: string) => {
         setPatternExclusions(patternExclusions.filter(p => p.id !== id));
+        setPatternIncludes(patternIncludes.filter(p => p.id !== id));
     };
 
     const clearAllPatternExclusions = () => {
         if (confirm('Tem certeza que deseja remover todos os padrões de linha/coluna?')) {
             setPatternExclusions([]);
+            setPatternIncludes([]);
         }
     };
 
@@ -280,15 +298,15 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setLoading(true);
         setError('');
         try {
-            const draws = await window.electronAPI.dbGetDraws('lastN', historyPullCount, 0, 0);
-            const unique = new Set<string>();
-            for (const d of (draws || [])) {
-                const numbers = Array.isArray(d?.numbers) ? d.numbers : [];
-                const arr = patternTab === 'column'
-                    ? getColPatternArray(numbers)
-                    : getRowPatternArray(numbers);
-                unique.add(arr.join(','));
-            }
+            const range = {
+                mode,
+                lastN: historyPullCount,
+                rangeStart,
+                rangeEnd,
+            };
+
+            const scope = patternTab === 'column' ? 'column' : 'row';
+            const pulled = await window.electronAPI.generatorApplyHistory(historyPullCount, scope, range);
 
             const existing = new Set(
                 patternExclusions
@@ -296,17 +314,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     .map(p => p.pattern.join(','))
             );
 
-            const toAdd: PatternExclusion[] = [];
-            for (const key of unique) {
-                if (existing.has(key)) continue;
-                const nums = key.split(',').map(n => parseInt(n, 10));
-                const valid = nums.length === 5 && nums.every(n => Number.isFinite(n)) && nums.reduce((a, b) => a + b, 0) === K;
-                if (!valid) continue;
-                toAdd.push({ id: Math.random().toString(36).substr(2, 9), type: patternTab, pattern: nums });
-            }
-            if (toAdd.length > 0) {
-                setPatternExclusions([...patternExclusions, ...toAdd]);
-            }
+            const toAdd = (pulled || []).filter(p => !existing.has(p.pattern.join(',')));
+            if (toAdd.length > 0) setPatternExclusions([...patternExclusions, ...toAdd]);
         } catch (e: any) {
             setError(e?.message || 'Erro ao puxar padrões históricos.');
         } finally {
@@ -564,27 +573,35 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
                 {/* 04. Padrões de Linha e Coluna (NEW) */}
                 <section className="animate-fade-in border-t border-white/5 pt-6">
-                    <div className="section-header">
-                        <div className="flex items-center gap-3">
-                            <h3 className="section-title">04. Padrões de Distribuição</h3>
-                            {patternExclusions.length > 0 && (
-                                <span className="px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-[9px] text-brand-400 font-black tabular-nums">
-                                    {patternExclusions.length}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex gap-4">
-                            {patternExclusions.length > 0 && (
-                                <button onClick={clearAllPatternExclusions} className="text-[9px] text-gray-500 hover:text-red-500 font-bold uppercase tracking-widest transition-colors">
-                                    Limpar Todos
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    {(() => {
+                        const activeMode = patternTab === 'column' ? colPatternMode : rowPatternMode;
+                        const list = (activeMode === 'include' ? patternIncludes : patternExclusions)
+                            .filter(p => p.type === patternTab);
+                        const totalAll = patternExclusions.length + patternIncludes.length;
 
-                    <div className="grid grid-cols-12 gap-6">
-                        {/* Control Column */}
-                        <div className="col-span-12 lg:col-span-5 space-y-4">
+                        return (
+                            <>
+                                <div className="section-header">
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="section-title">04. Padrões de Distribuição</h3>
+                                        {totalAll > 0 && (
+                                            <span className="px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-[9px] text-brand-400 font-black tabular-nums">
+                                                {list.length}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-4">
+                                        {totalAll > 0 && (
+                                            <button onClick={clearAllPatternExclusions} className="text-[9px] text-gray-500 hover:text-red-500 font-bold uppercase tracking-widest transition-colors">
+                                                Limpar Todos
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-12 gap-6">
+                                    {/* Control Column */}
+                                    <div className="col-span-12 lg:col-span-5 space-y-4">
                             <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
                                 {(['column', 'row'] as const).map(t => (
                                     <button key={t} onClick={() => { setPatternTab(t); setPatternError(''); }}
@@ -650,17 +667,17 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             </div>
                         </div>
 
-                        {/* List Column */}
-                        <div className="col-span-12 lg:col-span-7">
-                            <div className="glass-card !bg-black/20 border-dashed border-white/5 min-h-[140px] max-h-[180px] overflow-y-auto p-3 custom-scrollbar">
-                                {patternExclusions.length === 0 ? (
+                                    {/* List Column */}
+                                    <div className="col-span-12 lg:col-span-7">
+                                        <div className="glass-card !bg-black/20 border-dashed border-white/5 min-h-[140px] max-h-[180px] overflow-y-auto p-3 custom-scrollbar">
+                                {list.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center opacity-25 py-8">
                                         <span className="text-2xl mb-2">📉</span>
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-center">Nenhum padrão de {patternTab === 'column' ? 'coluna' : 'linha'} cadastrado</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {patternExclusions.map(p => (
+                                        {list.map(p => (
                                             <div key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/5 group hover:border-brand-500/40 transition-all hover:bg-white/[0.05]">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${p.type === 'column' ? 'bg-blue-500 shadow-blue-500/50' : 'bg-emerald-500 shadow-emerald-500/50'}`}></div>
@@ -677,9 +694,12 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         ))}
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                    </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </section>
 
                 {/* 05. Ação Final */}
@@ -702,7 +722,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     </div>
 
                     <div className="flex gap-4">
-                        {preview && (preview.totalCombinations > 10000 || patternExclusions.length > 0) && (
+                        {preview && (preview.totalCombinations > 10000 || (patternExclusions.length + patternIncludes.length) > 0) && (
                             <button onClick={handleMassGenerate} disabled={loading || noData}
                                 className="btn-premium-secondary !px-6 flex items-center gap-2 hover:!bg-white/10">
                                 <svg className="w-4 h-4 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>

@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     generatorSaveMass: (config: any) => ipcRenderer.invoke('generator:save-mass', config),
     generatorExportConfig: (config: any) => ipcRenderer.invoke('generator:export-config', config),
     generatorImportConfig: () => ipcRenderer.invoke('generator:import-config'),
+    generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: any) =>
+        ipcRenderer.invoke('generator:apply-history', count, scope, range),
     onGeneratorProgress: (callback: any) => {
         const listener = (_e: any, data: any) => callback(data);
         ipcRenderer.on('generator:progress', listener);

@@ -44,6 +44,7 @@ export interface GeneratorConfig {
     fixasModo: 'contem' | 'exato';
     exclusions: Exclusion[];
     patternExclusions: PatternExclusion[];
+    patternIncludes?: PatternExclusion[];
     colPatternMode?: 'exclude' | 'include';
     rowPatternMode?: 'exclude' | 'include';
     noRepeatDrawn: boolean;
@@ -90,6 +91,13 @@ export interface ImportResult {
     errors: string[];
 }
 
+export interface HistoryRangeConfig {
+    mode: 'lastN' | 'range';
+    lastN: number;
+    rangeStart: number;
+    rangeEnd: number;
+}
+
 export interface ElectronAPI {
     dbGetStatus: () => Promise<DbStatus>;
     dbImportCsv: (csvContent: string) => Promise<ImportResult>;
@@ -101,7 +109,7 @@ export interface ElectronAPI {
     generatorSaveMass: (config: GeneratorConfig) => Promise<{ success: boolean; count: number; error?: string }>;
     generatorExportConfig: (config: any) => Promise<boolean>;
     generatorImportConfig: () => Promise<any>;
-    generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both') => Promise<PatternExclusion[]>;
+    generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => Promise<PatternExclusion[]>;
     onGeneratorProgress: (callback: (data: { current: number; total: number }) => void) => () => void;
     exportSave: (content: string) => Promise<boolean>;
     licenseGetStatus: () => Promise<LicenseInfo>;
