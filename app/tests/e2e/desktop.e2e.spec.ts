@@ -5,9 +5,18 @@ import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 
 async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
+  const releaseDir = path.join(process.cwd(), 'release');
+  const unpackedExe = path.join(releaseDir, 'win-unpacked', 'ColunaMix.exe');
+  const releaseExe = fs.existsSync(unpackedExe)
+    ? unpackedExe
+    : (fs.existsSync(releaseDir)
+        ? fs.readdirSync(releaseDir).find((name) => /^ColunaMix-v.+\.exe$/i.test(name))
+        : null);
+  const packagedPath = releaseExe ? path.resolve(releaseExe) : null;
   const mainPath = path.join(process.cwd(), 'dist-electron', 'main', 'index.js');
   const app = await electron.launch({
-    args: [mainPath],
+    executablePath: packagedPath || undefined,
+    args: packagedPath ? [] : [mainPath],
     env: {
       ...process.env,
       APP_DEV_TOOLS: 'true',

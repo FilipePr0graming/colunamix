@@ -5,9 +5,11 @@ export class ChunkedGenerator {
     private colPatterns: number[][][];
     private K: number;
     private maxJogos: number;
+    private collectResults: boolean;
     private drawnSet: Set<string>;
     private seenKeys: Set<string>;
     private games: GeneratedGame[] = [];
+    private emittedCount = 0;
 
     // Patterns to exclude/include (Set<string> for O(1) matching)
     private excludedRowPatterns: Set<string>;
@@ -24,6 +26,7 @@ export class ChunkedGenerator {
         const uniquePatterns = collectUniquePatterns(draws);
         this.K = config.dezenasPorJogo;
         this.maxJogos = config.maxJogos;
+        this.collectResults = !config.countOnly;
         this.colPatternMode = config.colPatternMode || 'exclude';
         this.rowPatternMode = config.rowPatternMode || 'exclude';
 
@@ -85,7 +88,7 @@ export class ChunkedGenerator {
         let iterations = 0;
         const startTime = Date.now();
 
-        while (this.stack.length > 0 && iterations < batchSize && this.games.length < this.maxJogos) {
+        while (this.stack.length > 0 && iterations < batchSize && this.emittedCount < this.maxJogos) {
             iterations++;
             if (maxDurationMs && iterations % 100 === 0) {
                 if (Date.now() - startTime >= maxDurationMs) break;
@@ -124,9 +127,12 @@ export class ChunkedGenerator {
 
                             if (allowed) {
                                 this.seenKeys.add(key);
-                                const game = { numbers: gameResult, key };
-                                this.games.push(game);
-                                chunk.push(game);
+                                this.emittedCount++;
+                                if (this.collectResults) {
+                                    const game = { numbers: gameResult, key };
+                                    this.games.push(game);
+                                    chunk.push(game);
+                                }
                             }
                         }
                     }
@@ -142,20 +148,6 @@ export class ChunkedGenerator {
 
                 const nextSum = top.currentSum + p.length;
                 if (nextSum <= this.K) {
-                    if (top.colIdx === 4) {
-                        const fullColPattern = [...this.stack.slice(0, 4).map((s, i) => this.colPatterns[i][s.nextPatternIdx-1]?.length || 0), p.length].join(',');
-                        
-                        let colAllowed = true;
-                        if (this.colPatternMode === 'include') {
-                            if (!this.includedColPatterns.has(fullColPattern)) colAllowed = false;
-                            if (this.excludedColPatterns.has(fullColPattern)) colAllowed = false;
-                        } else if (this.excludedColPatterns.has(fullColPattern)) {
-                            colAllowed = false;
-                        }
-
-                        if (!colAllowed) continue;
-                    }
-
                     this.stack.push({
                         colIdx: top.colIdx + 1,
                         currentSet: top.currentSet.concat(p),
@@ -170,12 +162,12 @@ export class ChunkedGenerator {
 
         return {
             games: chunk,
-            hasMore: this.stack.length > 0 && this.games.length < this.maxJogos
+            hasMore: this.stack.length > 0 && this.emittedCount < this.maxJogos
         };
     }
 
     public getProcessedCount(): number {
-        return this.games.length;
+        return this.emittedCount;
     }
 }
 

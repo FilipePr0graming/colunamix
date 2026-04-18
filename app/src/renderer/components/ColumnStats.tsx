@@ -11,17 +11,24 @@ export default function ColumnStats({ dbStatus }: Props) {
     const [page, setPage] = useState(0);
     const pageSize = 10;
 
-    const noData = !dbStatus || dbStatus.drawCount === 0;
+    const drawCount = dbStatus?.drawCount ?? 0;
+    const noData = drawCount === 0;
 
     useEffect(() => {
         if (!noData) {
             setLoading(true);
             window.electronAPI.dbGetStats(3000).then(res => {
                 setStats(res);
+                setPage(Math.max(0, Math.ceil(res.length / pageSize) - 1));
+            }).catch(err => {
+                console.error('Erro ao carregar estatísticas:', err);
+                setStats([]);
+                setPage(0);
+            }).finally(() => {
                 setLoading(false);
             });
         }
-    }, [noData]);
+    }, [drawCount, noData]);
 
     if (noData) {
         return (

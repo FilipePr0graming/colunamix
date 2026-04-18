@@ -1,11 +1,160 @@
 import { ipcMain, dialog } from 'electron';
 import { getDbStatus, importDraws, getDraws, clearDraws } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
-import { generateGames } from '../shared/generator';
+import { ChunkedGenerator, generateGames } from '../shared/generator';
 import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame } from '../shared/types';
 import { formatGame, collectUniquePatterns, getColPatternArray, getRowPatternArray, normalizeNumbers } from '../shared/columns';
 
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
+type HistoryDraw = { contest: number; numbers: number[] };
+
+function waitForTick(): Promise<void> {
+    return new Promise(resolve => setImmediate(resolve));
+}
+
+function normalizeContestRange(rangeStart: number, rangeEnd: number): { rangeStart: number; rangeEnd: number } {
+    if (!Number.isFinite(rangeStart) || !Number.isFinite(rangeEnd)) {
+        throw new Error('Intervalo de concursos inválido.');
+    }
+    if (rangeStart <= 0 || rangeEnd <= 0) {
+        throw new Error('O intervalo de concursos deve ser maior que zero.');
+    }
+    if (rangeStart > rangeEnd) {
+        throw new Error(`Intervalo inválido: início (${rangeStart}) maior que fim (${rangeEnd}).`);
+    }
+    return { rangeStart, rangeEnd };
+}
+
+function resolveBaseDraws(config: GeneratorConfig): HistoryDraw[] {
+    if (config.mode === 'range') {
+        const { rangeStart, rangeEnd } = normalizeContestRange(config.rangeStart, config.rangeEnd);
+        const draws = getDraws('range', 0, rangeStart, rangeEnd);
+        if (draws.length === 0) {
+            throw new Error(`Nenhum concurso encontrado no intervalo ${rangeStart} a ${rangeEnd}.`);
+        }
+        return draws;
+    }
+
+    const requested = Math.max(1, Math.trunc(config.lastN || 0));
+    const available = getDbStatus().drawCount;
+    if (available < requested) {
+        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas existem apenas ${available}.`);
+    }
+
+    const draws = getDraws('lastN', requested, 0, 0);
+    if (draws.length !== requested) {
+        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas foram encontrados ${draws.length}.`);
+    }
+    return draws;
+}
+
+function resolveHistoryDraws(count: number, range: HistoryRangeConfig): HistoryDraw[] {
+    const requested = Math.max(1, Math.trunc(count || 0));
+
+    if (range.mode === 'range') {
+        const { rangeStart, rangeEnd } = normalizeContestRange(range.rangeStart, range.rangeEnd);
+        const draws = getDraws('range', 0, rangeStart, rangeEnd);
+        if (draws.length < requested) {
+            throw new Error(`Histórico insuficiente no intervalo ${rangeStart} a ${rangeEnd}: solicitado ${requested}, encontrados ${draws.length}.`);
+        }
+        const sorted = [...draws].sort((a, b) => a.contest - b.contest);
+        return sorted.slice(-requested);
+    }
+
+    const available = getDbStatus().drawCount;
+    if (available < requested) {
+        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas existem apenas ${available}.`);
+    }
+
+    const draws = getDraws('lastN', requested, 0, 0);
+    if (draws.length !== requested) {
+        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas foram encontrados ${draws.length}.`);
+    }
+    return draws;
+}
+
+async function countGeneratedGames(draws: HistoryDraw[], config: GeneratorConfig): Promise<number> {
+    const gen = new ChunkedGenerator(draws, { ...config, maxJogos: Number.MAX_SAFE_INTEGER, countOnly: true });
+    while (true) {
+        const result = gen.generateNextChunk(5000, 20);
+        if (!result.hasMore) break;
+        await waitForTick();
+    }
+    return gen.getProcessedCount();
+}
+
+async function buildPreview(draws: HistoryDraw[], config: GeneratorConfig): Promise<CombinationPreview> {
+    if (draws.length === 0) {
+        return { totalCombinations: 0, patternsPerCol: [0, 0, 0, 0, 0], drawCount: 0 };
+    }
+
+    const uniquePatterns = collectUniquePatterns(draws);
+    const patternsPerCol: number[] = [];
+    const colPatternMode = config.colPatternMode || 'exclude';
+    const includeColPatterns = new Set(
+        (config.patternIncludes || [])
+            .filter(p => p.type === 'column')
+            .map(p => p.pattern.join(','))
+    );
+    const excludedColPatterns = new Set(
+        (config.patternExclusions || [])
+            .filter(p => p.type === 'column')
+            .map(p => p.pattern.join(','))
+    );
+
+    for (let col = 1; col <= 5; col++) {
+        const patterns = uniquePatterns.get(col) || [];
+        const columnRange = [1, 6, 11, 16, 21].map(n => n + (col - 1));
+        const validPatterns = patterns.filter(p => {
+            for (const exclude of config.exclusions) {
+                const ruleValuesInCol = exclude.values.filter(n => columnRange.includes(n));
+                if (ruleValuesInCol.length === 0) continue;
+
+                if (exclude.type === 'group') {
+                    const isExactMatch = p.length === ruleValuesInCol.length && ruleValuesInCol.every(n => p.includes(n));
+                    if (isExactMatch) return false;
+                } else if (p.some(n => exclude.values.includes(n))) {
+                    return false;
+                }
+            }
+
+            const fixasInCol = config.fixas.filter(n => columnRange.includes(n));
+            if (fixasInCol.length > 0) {
+                if (config.fixasModo === 'exato') {
+                    return p.length === fixasInCol.length && fixasInCol.every(f => p.includes(f));
+                }
+                return fixasInCol.every(f => p.includes(f));
+            }
+            return true;
+        });
+
+        const validKeys = new Set(validPatterns.map(p => p.join(',')));
+        let selectedKeys: Set<string>;
+        if (colPatternMode === 'include' && includeColPatterns.size > 0) {
+            selectedKeys = new Set(
+                [...includeColPatterns].filter(patternStr => validKeys.has(patternStr) && !excludedColPatterns.has(patternStr))
+            );
+        } else {
+            selectedKeys = new Set(
+                [...validKeys].filter(patternStr => !excludedColPatterns.has(patternStr))
+            );
+        }
+
+        patternsPerCol.push(selectedKeys.size);
+    }
+
+    const totalCombinations = await countGeneratedGames(draws, config);
+    const hasRowExclusions =
+        (config.patternExclusions || []).some(p => p.type === 'row') ||
+        (config.patternIncludes || []).some(p => p.type === 'row');
+
+    return {
+        totalCombinations,
+        patternsPerCol,
+        drawCount: draws.length,
+        hasRowExclusions
+    };
+}
 
 export function registerIpcHandlers(): void {
     ipcMain.handle('db:get-status', () => getDbStatus());
@@ -18,11 +167,12 @@ export function registerIpcHandlers(): void {
     );
 
     ipcMain.handle('db:get-stats', async (_e, startContest: number) => {
-        const allDraws = getDraws('range', 0, 1, 99999);
-        const analyzed = allDraws.filter(d => d.contest >= startContest);
+        const allDraws = getDraws('range', 0, 1, 99999)
+            .filter(d => d.contest >= startContest)
+            .sort((a, b) => a.contest - b.contest);
         const results = [];
 
-        for (const draw of analyzed) {
+        for (const draw of allDraws) {
             // For each column pattern in this draw, find when it last appeared
             const colPatterns = [];
             for (let col = 1; col <= 5; col++) {
@@ -60,162 +210,14 @@ export function registerIpcHandlers(): void {
         return results;
     });
 
-    ipcMain.handle('generator:preview', (_e, config: GeneratorConfig): CombinationPreview => {
-        const draws = config.mode === 'lastN'
-            ? getDraws('lastN', config.lastN, 0, 0)
-            : getDraws('range', 0, config.rangeStart, config.rangeEnd);
-
-        if (draws.length === 0) return { totalCombinations: 0, patternsPerCol: [0, 0, 0, 0, 0], drawCount: 0 };
-
-        const uniquePatterns = collectUniquePatterns(draws);
-
-        const patternsPerCol: number[] = [];
-
-        // Accurate counting: count combinations where sum(pattern_lengths) == dezenasPorJogo
-        const countsPerLen: Map<number, number>[] = [];
-        for (let col = 1; col <= 5; col++) {
-            const patterns = uniquePatterns.get(col) || [];
-            const columnRange = [1, 6, 11, 16, 21].map(n => n + (col - 1));
-
-            // Filter: pattern must NOT have any of the exclusion rules apply
-            const validPatterns = patterns.filter(p => {
-                // 1. apply all exclusion rules
-                for (const exclude of config.exclusions) {
-                    const ruleValuesInCol = exclude.values.filter(n => columnRange.includes(n));
-                    if (ruleValuesInCol.length === 0) continue;
-
-                    if (exclude.type === 'group') {
-                        // Reject ONLY if the whole pattern matches exactly the excluded numbers for this column
-                        const isExactMatch = p.length === ruleValuesInCol.length && ruleValuesInCol.every(n => p.includes(n));
-                        if (isExactMatch) return false;
-                    } else {
-                        // Reject if ANY excluded number is present (legacy)
-                        if (p.some(n => exclude.values.includes(n))) return false;
-                    }
-                }
-
-                // 2. Fixed logic
-                const fixasInCol = config.fixas.filter(n => columnRange.includes(n));
-                if (fixasInCol.length > 0) {
-                    if (config.fixasModo === 'exato') {
-                        return p.length === fixasInCol.length && fixasInCol.every(f => p.includes(f));
-                    } else {
-                        return fixasInCol.every(f => p.includes(f));
-                    }
-                }
-                return true;
-            });
-
-            const lenMap = new Map<number, number>();
-            for (const p of validPatterns) {
-                lenMap.set(p.length, (lenMap.get(p.length) || 0) + 1);
-            }
-            countsPerLen.push(lenMap);
-            patternsPerCol.push(validPatterns.length);
-        }
-
-        const memo = new Map<string, number>();
-        function countWays(colIdx: number, currentSum: number): number {
-            if (colIdx === 5) return currentSum === config.dezenasPorJogo ? 1 : 0;
-            const key = `${colIdx}-${currentSum}`;
-            if (memo.has(key)) return memo.get(key)!;
-
-            let totalWays = 0;
-            const lenMap = countsPerLen[colIdx];
-            for (const [len, count] of lenMap.entries()) {
-                if (currentSum + len <= config.dezenasPorJogo) {
-                    totalWays += count * countWays(colIdx + 1, currentSum + len);
-                }
-            }
-            memo.set(key, totalWays);
-            return totalWays;
-        }
-
-        // 3. Handle Column Patterns (Modes)
-        let total = 0;
-        const colPatternMode = config.colPatternMode || 'exclude';
-        const excludedColPatterns = new Set(
-            (config.patternExclusions || [])
-                .filter(p => p.type === 'column')
-                .map(p => p.pattern.join(','))
-        );
-
-        const includeColPatterns = new Set(
-            (config.patternIncludes || [])
-                .filter(p => p.type === 'column')
-                .map(p => p.pattern.join(','))
-        );
-
-        if (colPatternMode === 'include') {
-            // Start with include-only set then remove excluded patterns (final = include - excluded)
-            if (includeColPatterns.size > 0) {
-                for (const patternStr of includeColPatterns) {
-                    if (excludedColPatterns.has(patternStr)) continue;
-                    const parts = patternStr.split(',').map(Number);
-                    if (parts.length !== 5) continue;
-                    const sum = parts.reduce((a, b) => a + b, 0);
-                    if (sum !== config.dezenasPorJogo) continue;
-
-                    let waysForThisPattern = 1;
-                    let possible = true;
-                    for (let i = 0; i < 5; i++) {
-                        const lenCount = countsPerLen[i].get(parts[i]) || 0;
-                        if (lenCount === 0) { possible = false; break; }
-                        waysForThisPattern *= lenCount;
-                    }
-                    if (possible) total += waysForThisPattern;
-                }
-            } else {
-                total = 0; // Include nothing if nothing selected
-            }
-        } else {
-            // Standard counting (Exclude mode)
-            total = countWays(0, 0);
-            if (excludedColPatterns.size > 0) {
-                for (const patternStr of excludedColPatterns) {
-                    const parts = patternStr.split(',').map(Number);
-                    if (parts.length !== 5) continue;
-                    const sum = parts.reduce((a, b) => a + b, 0);
-                    if (sum !== config.dezenasPorJogo) continue;
-
-                    let waysForThisPattern = 1;
-                    let possible = true;
-                    for (let i = 0; i < 5; i++) {
-                        const lenCount = countsPerLen[i].get(parts[i]) || 0;
-                        if (lenCount === 0) { possible = false; break; }
-                        waysForThisPattern *= lenCount;
-                    }
-                    if (possible) total -= waysForThisPattern;
-                }
-            }
-        }
-
-        const hasRowExclusions =
-            (config.patternExclusions || []).some(p => p.type === 'row') ||
-            (config.patternIncludes || []).some(p => p.type === 'row');
-
-        return { 
-            totalCombinations: Math.max(0, total), 
-            patternsPerCol, 
-            drawCount: draws.length,
-            hasRowExclusions
-        };
+    ipcMain.handle('generator:preview', async (_e, config: GeneratorConfig): Promise<CombinationPreview> => {
+        const draws = resolveBaseDraws(config);
+        return buildPreview(draws, config);
     });
 
     ipcMain.handle('generator:generate', async (_e, config: GeneratorConfig): Promise<GeneratedGame[]> => {
-        // Precise data fetching based on user selection
-        let draws = config.mode === 'lastN'
-            ? getDraws('lastN', config.lastN, 0, 0)
-            : getDraws('range', 0, config.rangeStart, config.rangeEnd);
-
-        // EXTRA SECURITY: Filter draws strictly by contest range if in range mode
-        if (config.mode === 'range') {
-            draws = draws.filter(d => d.contest >= config.rangeStart && d.contest <= config.rangeEnd);
-        }
-
+        const draws = resolveBaseDraws(config);
         if (draws.length === 0) return [];
-
-        const { ChunkedGenerator } = await import('../shared/generator');
         const gen = new ChunkedGenerator(draws, config);
         const allGames: GeneratedGame[] = [];
         const MAX_UI_GAMES = 500000; // Cap results for UI stability
@@ -223,7 +225,7 @@ export function registerIpcHandlers(): void {
         return new Promise((resolve, reject) => {
             function processNext() {
                 try {
-                    const result = gen.generateNextChunk(1000000, 40);
+                    const result = gen.generateNextChunk(10000, 20);
                     allGames.push(...result.games);
 
                     // Stop if reached limit or no more work
@@ -243,10 +245,6 @@ export function registerIpcHandlers(): void {
 
     // NEW: Mass generation directly to disk to avoid IPC/Memory bottlenecks
     ipcMain.handle('generator:save-mass', async (event, config: GeneratorConfig): Promise<{ success: boolean; count: number; error?: string }> => {
-        const { dialog } = await import('electron');
-        const { createWriteStream } = await import('fs');
-        const { ChunkedGenerator } = await import('../shared/generator');
-
         const savePath = dialog.showSaveDialogSync({
             title: 'Salvar Jogos (Alta Performance)',
             defaultPath: `ColunaMix_Jogos_${Date.now()}.txt`,
@@ -254,32 +252,11 @@ export function registerIpcHandlers(): void {
         });
 
         if (!savePath) return { success: false, count: 0 };
-
-        let draws = config.mode === 'lastN'
-            ? getDraws('lastN', config.lastN, 0, 0)
-            : getDraws('range', 0, config.rangeStart, config.rangeEnd);
-
-        if (config.mode === 'range') {
-            draws = draws.filter(d => d.contest >= config.rangeStart && d.contest <= config.rangeEnd);
-        }
-
-        if (draws.length === 0) return { success: false, count: 0, error: 'Sem dados no período selecinado.' };
-
-        const previewRes = (() => {
-            try {
-                const fn = (ipcMain as any)._invokeHandlers?.get('generator:preview');
-                if (!fn) return null;
-                return fn({} as any, config);
-            } catch {
-                return null;
-            }
-        })();
-
-        const effectiveTotal = previewRes && typeof (previewRes as any).totalCombinations === 'number'
-            ? Math.min(config.maxJogos, (previewRes as any).totalCombinations)
-            : config.maxJogos;
-
+        const draws = resolveBaseDraws(config);
+        const previewRes = await buildPreview(draws, config);
+        const effectiveTotal = Math.min(config.maxJogos, previewRes.totalCombinations);
         const gen = new ChunkedGenerator(draws, config);
+        const { createWriteStream } = await import('fs');
         const stream = createWriteStream(savePath);
 
         let totalWritten = 0;
@@ -287,7 +264,7 @@ export function registerIpcHandlers(): void {
         return new Promise((resolve) => {
             function processNext() {
                 try {
-                    const result = gen.generateNextChunk(50000, 40); // 40ms pulse
+                    const result = gen.generateNextChunk(10000, 20); // short pulses keep the UI responsive
 
                     for (const game of result.games) {
                         stream.write(game.key + '\n');
@@ -373,18 +350,11 @@ export function registerIpcHandlers(): void {
             ? range
             : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
 
-        const drawsRaw = safeRange.mode === 'range'
-            ? getDraws('range', 0, safeRange.rangeStart, safeRange.rangeEnd)
-            : getDraws('lastN', Math.max(1, safeRange.lastN || count), 0, 0);
-
-        const draws = safeRange.mode === 'range'
-            ? drawsRaw.filter(d => d.contest >= safeRange.rangeStart && d.contest <= safeRange.rangeEnd)
-            : drawsRaw;
+        const draws = resolveHistoryDraws(count, safeRange);
         const exclusions: any[] = [];
         const seen = new Set<string>();
 
         for (const draw of draws) {
-            if (safeRange.mode === 'range' && draw.contest > safeRange.rangeEnd) continue;
             if (scope === 'row' || scope === 'both') {
                 const p = getRowPatternArray(draw.numbers);
                 const key = 'row:' + p.join(',');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import GridPicker from './GridPicker';
@@ -18,7 +18,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [exclusions, setExclusions] = useState<Exclusion[]>([]);
     const [patternExclusions, setPatternExclusions] = useState<PatternExclusion[]>([]);
     const [patternIncludes, setPatternIncludes] = useState<PatternExclusion[]>([]);
-    const [patternTab, setPatternTab] = useState<'column' | 'row'>('column');
+    const [patternTab, setPatternTab] = useState<'column' | 'row'>('row');
     const [patternInput, setPatternInput] = useState('');
     const [patternError, setPatternError] = useState('');
     const [noRepeat, setNoRepeat] = useState(false);
@@ -34,9 +34,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [pickingFor, setPickingFor] = useState<{ type: 'fixas' } | { type: 'exclusions', id: string } | null>(null);
     const [selectedGame, setSelectedGame] = useState<GeneratedGame | null>(null);
     const [showFilterGrids, setShowFilterGrids] = useState(false);
+    const resultsViewportRef = useRef<HTMLDivElement | null>(null);
+    const [resultsScrollTop, setResultsScrollTop] = useState(0);
+    const [resultsViewportHeight, setResultsViewportHeight] = useState(480);
 
     const noData = !dbStatus || dbStatus.drawCount === 0;
     const effectiveMax = maxJogos;
+    const rowHeight = 36;
+    const overscan = 12;
 
     // Listen for mass generation progress
     useEffect(() => {
@@ -45,6 +50,19 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         });
         return unsubscribe;
     }, []);
+
+    useEffect(() => {
+        const el = resultsViewportRef.current;
+        if (!el) return;
+
+        const syncHeight = () => setResultsViewportHeight(el.clientHeight || 480);
+        syncHeight();
+
+        const ro = new ResizeObserver(syncHeight);
+        ro.observe(el);
+
+        return () => ro.disconnect();
+    }, [games.length]);
 
     // LocalStorage Persistence
     useEffect(() => {
@@ -57,8 +75,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.rangeStart) setRangeStart(config.rangeStart);
                 if (config.rangeEnd) setRangeEnd(config.rangeEnd);
                 if (config.K) setK(config.K);
-                if (config.maxJogos) setMaxJogos(config.maxJogos);
-                if (config.fixas !== undefined) setFixas(config.fixas);
+                if (typeof config.maxJogos === 'number') setMaxJogos(config.maxJogos);
+                if (typeof config.fixas === 'string') setFixas(config.fixas);
                 if (config.fixasModo) setFixasModo(config.fixasModo);
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
@@ -82,31 +100,37 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     // Fetch combination preview when parameters change
     const fetchPreview = useCallback(async () => {
         if (noData) return;
-        const config: GeneratorConfig = {
-            mode,
-            lastN,
-            rangeStart,
-            rangeEnd,
-            dezenasPorJogo: K,
-            fixas: parseNumbers(fixas),
-            fixasModo,
-            exclusions,
-            patternExclusions,
-            patternIncludes,
-            colPatternMode,
-            rowPatternMode,
-            maxJogos,
-            noRepeatDrawn: noRepeat
-        };
-        const res = await window.electronAPI.generatorPreview(config);
-        setPreview(res);
+        setError('');
+        try {
+            const config: GeneratorConfig = {
+                mode,
+                lastN,
+                rangeStart,
+                rangeEnd,
+                dezenasPorJogo: K,
+                fixas: parseNumbers(fixas),
+                fixasModo,
+                exclusions,
+                patternExclusions,
+                patternIncludes,
+                colPatternMode,
+                rowPatternMode,
+                maxJogos,
+                noRepeatDrawn: noRepeat
+            };
+            const res = await window.electronAPI.generatorPreview(config);
+            setPreview(res);
+        } catch (e: any) {
+            setPreview(null);
+            setError(e?.message || 'Erro ao calcular a pré-visualização.');
+        }
     }, [noData, mode, lastN, rangeStart, rangeEnd, K, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, maxJogos, noRepeat, colPatternMode, rowPatternMode]);
 
     useEffect(() => { fetchPreview(); }, [fetchPreview]);
 
     const handleGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
-        setLoading(true); setError(''); setGames([]);
+        setLoading(true); setError(''); setGames([]); setResultsScrollTop(0);
         try {
             const config: GeneratorConfig = {
                 mode, lastN, rangeStart, rangeEnd,
@@ -176,6 +200,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setSelectedGame(null);
         setMassProgress(null);
         setError('');
+        setResultsScrollTop(0);
     };
 
     const handleExportConfig = async () => {
@@ -197,8 +222,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.rangeStart) setRangeStart(config.rangeStart);
                 if (config.rangeEnd) setRangeEnd(config.rangeEnd);
                 if (config.K) setK(config.K);
-                if (config.maxJogos) setMaxJogos(config.maxJogos);
-                if (config.fixas !== undefined) setFixas(config.fixas);
+                if (typeof config.maxJogos === 'number') setMaxJogos(config.maxJogos);
+                if (typeof config.fixas === 'string') setFixas(config.fixas);
                 if (config.fixasModo) setFixasModo(config.fixasModo);
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
@@ -248,7 +273,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const addPatternExclusion = () => {
         const res = validatePattern(patternInput, K);
         if (!res.valid) {
-            setPatternError(res.error);
+            setPatternError(res.error || 'Padrão inválido.');
             return;
         }
 
@@ -327,6 +352,19 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const allExcludedDozens = React.useMemo(() => 
         Array.from(new Set(exclusions.flatMap(e => e.values))).sort((a, b) => a - b)
     , [exclusions]);
+
+    const visibleResults = React.useMemo(() => {
+        const total = Math.min(games.length, 5000);
+        const start = Math.max(0, Math.floor(resultsScrollTop / rowHeight) - overscan);
+        const end = Math.min(total, Math.ceil((resultsScrollTop + resultsViewportHeight) / rowHeight) + overscan);
+        return {
+            total,
+            start,
+            end,
+            topPad: start * rowHeight,
+            bottomPad: Math.max(0, (total - end) * rowHeight),
+        };
+    }, [games.length, resultsScrollTop, resultsViewportHeight, rowHeight]);
 
     return (
         <div className="h-full flex flex-col gap-3 overflow-auto">
@@ -603,10 +641,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     {/* Control Column */}
                                     <div className="col-span-12 lg:col-span-5 space-y-4">
                             <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
-                                {(['column', 'row'] as const).map(t => (
+                                {(['row', 'column'] as const).map(t => (
                                     <button key={t} onClick={() => { setPatternTab(t); setPatternError(''); }}
                                         className={`flex-1 py-1.5 text-[10px] uppercase font-black rounded-md transition-all ${patternTab === t ? 'bg-brand-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-400'}`}>
-                                        {t === 'column' ? 'Padrão Colunas' : 'Padrão Linhas'}
+                                        {t === 'row' ? 'Padrão Linhas' : 'Padrão Colunas'}
                                     </button>
                                 ))}
                             </div>
@@ -769,7 +807,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 </div>
 
                 <div className="flex flex-1 gap-4 overflow-hidden">
-                    <div className="flex-1 overflow-auto min-h-0">
+                    <div
+                        ref={resultsViewportRef}
+                        onScroll={(e) => setResultsScrollTop(e.currentTarget.scrollTop)}
+                        className="flex-1 overflow-auto min-h-0"
+                    >
                         {games.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-gray-600 text-sm">
                                 {noData ? 'Importe concursos para começar' : 'Configure os parâmetros acima e clique em "Gerar Jogos"'}
@@ -783,17 +825,29 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {games.slice(0, 5000).map((g, i) => { // Virtualize locally with slice
-                                        return (
-                                            <tr key={g.key}
-                                                className="border-t border-white/5 hover:bg-white/[0.05] transition-colors">
-                                                <td className="py-2 px-3 text-gray-600 text-xs tabular-nums">{i + 1}</td>
-                                                <td className="py-2 px-3 font-mono text-xs text-brand-300 tracking-wide">
-                                                    {g.key}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                    {visibleResults.topPad > 0 && (
+                                        <tr aria-hidden="true">
+                                            <td colSpan={2} style={{ height: visibleResults.topPad }} />
+                                        </tr>
+                                    )}
+                                    {games.slice(visibleResults.start, visibleResults.end).map((g, i) => (
+                                        <tr key={g.key}
+                                            className="border-t border-white/5 hover:bg-white/[0.05] transition-colors"
+                                            style={{ height: rowHeight }}
+                                        >
+                                            <td className="py-2 px-3 text-gray-600 text-xs tabular-nums">
+                                                {visibleResults.start + i + 1}
+                                            </td>
+                                            <td className="py-2 px-3 font-mono text-xs text-brand-300 tracking-wide">
+                                                {g.key}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {visibleResults.bottomPad > 0 && (
+                                        <tr aria-hidden="true">
+                                            <td colSpan={2} style={{ height: visibleResults.bottomPad }} />
+                                        </tr>
+                                    )}
                                     {games.length > 5000 && (
                                         <tr>
                                             <td colSpan={2} className="py-4 text-center text-[10px] text-gray-500 italic">

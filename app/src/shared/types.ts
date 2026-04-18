@@ -48,6 +48,7 @@ export interface GeneratorConfig {
     colPatternMode?: 'exclude' | 'include';
     rowPatternMode?: 'exclude' | 'include';
     noRepeatDrawn: boolean;
+    countOnly?: boolean;
 }
 
 export interface GeneratedGame {
