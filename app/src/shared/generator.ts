@@ -8,7 +8,6 @@ export class ChunkedGenerator {
     private collectResults: boolean;
     private drawnSet: Set<string>;
     private seenKeys: Set<string>;
-    private games: GeneratedGame[] = [];
     private emittedCount = 0;
 
     // Patterns to exclude/include (Set<string> for O(1) matching)
@@ -130,7 +129,6 @@ export class ChunkedGenerator {
                                 this.emittedCount++;
                                 if (this.collectResults) {
                                     const game = { numbers: gameResult, key };
-                                    this.games.push(game);
                                     chunk.push(game);
                                 }
                             }

@@ -63,6 +63,20 @@ export interface CombinationPreview {
     hasRowExclusions?: boolean;
 }
 
+export interface SaveMassResult {
+    success: boolean;
+    count: number;
+    error?: string;
+    filePath?: string;
+}
+
+export interface ApplyHistoryResult {
+    patterns: PatternExclusion[];
+    drawsUsed: number;
+    requested: number;
+    available: number;
+}
+
 export interface DbStatus {
     path: string;
     drawCount: number;
@@ -107,10 +121,10 @@ export interface ElectronAPI {
     dbGetStats: (startContest: number) => Promise<PatternStatsEntry[]>;
     generatorPreview: (config: GeneratorConfig) => Promise<CombinationPreview>;
     generatorGenerate: (config: GeneratorConfig) => Promise<GeneratedGame[]>;
-    generatorSaveMass: (config: GeneratorConfig) => Promise<{ success: boolean; count: number; error?: string }>;
+    generatorSaveMass: (config: GeneratorConfig, expectedTotal?: number) => Promise<SaveMassResult>;
     generatorExportConfig: (config: any) => Promise<boolean>;
     generatorImportConfig: () => Promise<any>;
-    generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => Promise<PatternExclusion[]>;
+    generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => Promise<ApplyHistoryResult>;
     onGeneratorProgress: (callback: (data: { current: number; total: number }) => void) => () => void;
     exportSave: (content: string) => Promise<boolean>;
     licenseGetStatus: () => Promise<LicenseInfo>;

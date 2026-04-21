@@ -1,15 +1,22 @@
-import { ipcMain, dialog } from 'electron';
+import { app, ipcMain, dialog } from 'electron';
+import path from 'path';
+import { once } from 'events';
 import { getDbStatus, importDraws, getDraws, clearDraws } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
-import { ChunkedGenerator, generateGames } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame } from '../shared/types';
-import { formatGame, collectUniquePatterns, getColPatternArray, getRowPatternArray, normalizeNumbers } from '../shared/columns';
+import { ChunkedGenerator } from '../shared/generator';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, PatternExclusion, ApplyHistoryResult, SaveMassResult } from '../shared/types';
+import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
 
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
 type HistoryDraw = { contest: number; numbers: number[] };
 
 function waitForTick(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
+}
+
+function getAllDrawsSorted(): HistoryDraw[] {
+    return getDraws('range', 0, 1, Number.MAX_SAFE_INTEGER)
+        .sort((a, b) => a.contest - b.contest);
 }
 
 function normalizeContestRange(rangeStart: number, rangeEnd: number): { rangeStart: number; rangeEnd: number } {
@@ -48,29 +55,67 @@ function resolveBaseDraws(config: GeneratorConfig): HistoryDraw[] {
     return draws;
 }
 
-function resolveHistoryDraws(count: number, range: HistoryRangeConfig): HistoryDraw[] {
+export function selectHistoryDrawsFromList(allDraws: HistoryDraw[], count: number, range: HistoryRangeConfig): { draws: HistoryDraw[]; requested: number; available: number } {
     const requested = Math.max(1, Math.trunc(count || 0));
 
+    if (allDraws.length === 0) {
+        throw new Error('Nenhum concurso importado para puxar histórico.');
+    }
+
     if (range.mode === 'range') {
-        const { rangeStart, rangeEnd } = normalizeContestRange(range.rangeStart, range.rangeEnd);
-        const draws = getDraws('range', 0, rangeStart, rangeEnd);
-        if (draws.length < requested) {
-            throw new Error(`Histórico insuficiente no intervalo ${rangeStart} a ${rangeEnd}: solicitado ${requested}, encontrados ${draws.length}.`);
+        const { rangeEnd } = normalizeContestRange(range.rangeStart, range.rangeEnd);
+        const eligibleDraws = allDraws.filter(draw => draw.contest <= rangeEnd);
+
+        if (eligibleDraws.length === 0) {
+            throw new Error(`Nenhum concurso encontrado até o concurso ${rangeEnd}.`);
         }
-        const sorted = [...draws].sort((a, b) => a.contest - b.contest);
-        return sorted.slice(-requested);
+
+        return {
+            draws: eligibleDraws.slice(-requested),
+            requested,
+            available: eligibleDraws.length,
+        };
     }
 
-    const available = getDbStatus().drawCount;
-    if (available < requested) {
-        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas existem apenas ${available}.`);
-    }
+    return {
+        draws: allDraws.slice(-requested),
+        requested,
+        available: allDraws.length,
+    };
+}
 
-    const draws = getDraws('lastN', requested, 0, 0);
-    if (draws.length !== requested) {
-        throw new Error(`Histórico insuficiente: solicitado ${requested} concursos, mas foram encontrados ${draws.length}.`);
-    }
-    return draws;
+function resolveHistoryDraws(count: number, range: HistoryRangeConfig): { draws: HistoryDraw[]; requested: number; available: number } {
+    return selectHistoryDrawsFromList(getAllDrawsSorted(), count, range);
+}
+
+function resolveAutomatedSavePath(defaultFileName: string): string | null {
+    if (process.env.PW_TEST !== 'true') return null;
+    if (process.env.PW_TEST_SAVE_PATH) return process.env.PW_TEST_SAVE_PATH;
+
+    const baseDir = process.env.PW_TEST_OUTPUT_DIR || app.getPath('temp');
+    return path.join(baseDir, defaultFileName);
+}
+
+function resolveMassSavePath(defaultFileName: string): string | undefined {
+    const automatedPath = resolveAutomatedSavePath(defaultFileName);
+    if (automatedPath) return automatedPath;
+
+    return dialog.showSaveDialogSync({
+        title: 'Salvar Jogos (Alta Performance)',
+        defaultPath: defaultFileName,
+        filters: [{ name: 'Arquivo de Texto', extensions: ['txt'] }]
+    });
+}
+
+async function writeTextChunk(stream: import('fs').WriteStream, content: string): Promise<void> {
+    if (!content) return;
+    if (stream.write(content)) return;
+    await once(stream, 'drain');
+}
+
+async function finalizeTextStream(stream: import('fs').WriteStream): Promise<void> {
+    stream.end();
+    await once(stream, 'finish');
 }
 
 async function countGeneratedGames(draws: HistoryDraw[], config: GeneratorConfig): Promise<number> {
@@ -244,52 +289,59 @@ export function registerIpcHandlers(): void {
     });
 
     // NEW: Mass generation directly to disk to avoid IPC/Memory bottlenecks
-    ipcMain.handle('generator:save-mass', async (event, config: GeneratorConfig): Promise<{ success: boolean; count: number; error?: string }> => {
-        const savePath = dialog.showSaveDialogSync({
-            title: 'Salvar Jogos (Alta Performance)',
-            defaultPath: `ColunaMix_Jogos_${Date.now()}.txt`,
-            filters: [{ name: 'Arquivo de Texto', extensions: ['txt'] }]
-        });
+    ipcMain.handle('generator:save-mass', async (event, config: GeneratorConfig, expectedTotal?: number): Promise<SaveMassResult> => {
+        const savePath = resolveMassSavePath(`ColunaMix_Jogos_${Date.now()}.txt`);
 
         if (!savePath) return { success: false, count: 0 };
         const draws = resolveBaseDraws(config);
-        const previewRes = await buildPreview(draws, config);
-        const effectiveTotal = Math.min(config.maxJogos, previewRes.totalCombinations);
+        const previewTotal = Number.isFinite(expectedTotal)
+            ? Math.max(0, Math.trunc(expectedTotal || 0))
+            : Math.min(config.maxJogos, (await buildPreview(draws, config)).totalCombinations);
+        const effectiveTotal = Math.min(config.maxJogos, previewTotal);
+
+        if (effectiveTotal === 0) {
+            return { success: false, count: 0, error: 'Nenhum jogo válido encontrado para salvar.' };
+        }
+
         const gen = new ChunkedGenerator(draws, config);
         const { createWriteStream } = await import('fs');
-        const stream = createWriteStream(savePath);
+        const stream = createWriteStream(savePath, { encoding: 'utf-8' });
 
         let totalWritten = 0;
 
-        return new Promise((resolve) => {
-            function processNext() {
-                try {
-                    const result = gen.generateNextChunk(10000, 20); // short pulses keep the UI responsive
+        try {
+            while (totalWritten < effectiveTotal) {
+                const result = gen.generateNextChunk(10000, 20);
+                if (result.games.length > 0) {
+                    const payload = result.games.map(game => game.key).join('\n') + '\n';
+                    await writeTextChunk(stream, payload);
+                    totalWritten += result.games.length;
 
-                    for (const game of result.games) {
-                        stream.write(game.key + '\n');
-                        totalWritten++;
-                    }
-
-                    // Send progress to UI
                     event.sender.send('generator:progress', {
                         current: totalWritten,
                         total: effectiveTotal
                     });
-
-                    if (result.hasMore && totalWritten < config.maxJogos) {
-                        setImmediate(processNext);
-                    } else {
-                        stream.end();
-                        resolve({ success: true, count: totalWritten });
-                    }
-                } catch (err: any) {
-                    stream.end();
-                    resolve({ success: false, count: totalWritten, error: err.message });
                 }
+
+                if (!result.hasMore || totalWritten >= effectiveTotal) {
+                    break;
+                }
+
+                await waitForTick();
             }
-            processNext();
-        });
+
+            const finalTotal = totalWritten === effectiveTotal ? effectiveTotal : Math.max(totalWritten, 1);
+            event.sender.send('generator:progress', {
+                current: totalWritten,
+                total: finalTotal
+            });
+
+            await finalizeTextStream(stream);
+            return { success: true, count: totalWritten, filePath: savePath };
+        } catch (err: any) {
+            stream.destroy();
+            return { success: false, count: totalWritten, error: err?.message || 'Erro ao salvar lote.' };
+        }
     });
 
     ipcMain.handle('export:save', async (_e, content: string) => {
@@ -345,16 +397,16 @@ export function registerIpcHandlers(): void {
         }
     });
 
-    ipcMain.handle('generator:apply-history', async (_e, count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => {
+    ipcMain.handle('generator:apply-history', async (_e, count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig): Promise<ApplyHistoryResult> => {
         const safeRange: HistoryRangeConfig = range && (range.mode === 'lastN' || range.mode === 'range')
             ? range
             : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
 
-        const draws = resolveHistoryDraws(count, safeRange);
-        const exclusions: any[] = [];
+        const history = resolveHistoryDraws(count, safeRange);
+        const exclusions: PatternExclusion[] = [];
         const seen = new Set<string>();
 
-        for (const draw of draws) {
+        for (const draw of history.draws) {
             if (scope === 'row' || scope === 'both') {
                 const p = getRowPatternArray(draw.numbers);
                 const key = 'row:' + p.join(',');
@@ -372,7 +424,12 @@ export function registerIpcHandlers(): void {
                 }
             }
         }
-        return exclusions;
+        return {
+            patterns: exclusions,
+            drawsUsed: history.draws.length,
+            requested: history.requested,
+            available: history.available,
+        };
     });
 
     ipcMain.handle('dev:simulate-expiration', () => { if (IS_DEV) simulateExpiration(); });

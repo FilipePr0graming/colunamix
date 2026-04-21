@@ -34,7 +34,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [pickingFor, setPickingFor] = useState<{ type: 'fixas' } | { type: 'exclusions', id: string } | null>(null);
     const [selectedGame, setSelectedGame] = useState<GeneratedGame | null>(null);
     const [showFilterGrids, setShowFilterGrids] = useState(false);
+    const [notice, setNotice] = useState<{ tone: 'success' | 'info'; title: string; message: string } | null>(null);
     const resultsViewportRef = useRef<HTMLDivElement | null>(null);
+    const previewRequestRef = useRef(0);
     const [resultsScrollTop, setResultsScrollTop] = useState(0);
     const [resultsViewportHeight, setResultsViewportHeight] = useState(480);
 
@@ -63,6 +65,13 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
         return () => ro.disconnect();
     }, [games.length]);
+
+    useEffect(() => {
+        if (!notice) return;
+
+        const timer = window.setTimeout(() => setNotice(null), 5000);
+        return () => window.clearTimeout(timer);
+    }, [notice]);
 
     // LocalStorage Persistence
     useEffect(() => {
@@ -97,55 +106,52 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
     }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat, colPatternMode, rowPatternMode]);
 
-    // Fetch combination preview when parameters change
-    const fetchPreview = useCallback(async () => {
-        if (noData) return;
-        setError('');
-        try {
-            const config: GeneratorConfig = {
-                mode,
-                lastN,
-                rangeStart,
-                rangeEnd,
-                dezenasPorJogo: K,
-                fixas: parseNumbers(fixas),
-                fixasModo,
-                exclusions,
-                patternExclusions,
-                patternIncludes,
-                colPatternMode,
-                rowPatternMode,
-                maxJogos,
-                noRepeatDrawn: noRepeat
-            };
-            const res = await window.electronAPI.generatorPreview(config);
-            setPreview(res);
-        } catch (e: any) {
-            setPreview(null);
-            setError(e?.message || 'Erro ao calcular a pré-visualização.');
-        }
-    }, [noData, mode, lastN, rangeStart, rangeEnd, K, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, maxJogos, noRepeat, colPatternMode, rowPatternMode]);
+    const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
+        mode,
+        lastN,
+        rangeStart,
+        rangeEnd,
+        dezenasPorJogo: K,
+        maxJogos: maxJogosOverride ?? maxJogos,
+        fixas: parseNumbers(fixas),
+        fixasModo,
+        exclusions,
+        patternExclusions,
+        patternIncludes,
+        colPatternMode,
+        rowPatternMode,
+        noRepeatDrawn: noRepeat,
+    }), [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, colPatternMode, rowPatternMode, noRepeat]);
 
-    useEffect(() => { fetchPreview(); }, [fetchPreview]);
+    useEffect(() => {
+        if (noData) {
+            setPreview(null);
+            return;
+        }
+
+        const requestId = ++previewRequestRef.current;
+        const timer = window.setTimeout(async () => {
+            try {
+                const res = await window.electronAPI.generatorPreview(buildGeneratorConfig());
+                if (previewRequestRef.current !== requestId) return;
+                setPreview(res);
+            } catch (e: any) {
+                if (previewRequestRef.current !== requestId) return;
+                setPreview(null);
+                setError(e?.message || 'Erro ao calcular a pré-visualização.');
+            }
+        }, 220);
+
+        return () => window.clearTimeout(timer);
+    }, [noData, buildGeneratorConfig]);
 
     const handleGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
-        setLoading(true); setError(''); setGames([]); setResultsScrollTop(0);
+        setLoading(true); setError(''); setNotice(null); setGames([]); setResultsScrollTop(0);
         try {
-            const config: GeneratorConfig = {
-                mode, lastN, rangeStart, rangeEnd,
-                dezenasPorJogo: K,
-                maxJogos: Math.min(effectiveMax, 500000), // Safety cap for UI
-                fixas: parseNumbers(fixas),
-                fixasModo,
-                exclusions,
-                patternExclusions,
-                patternIncludes,
-                colPatternMode,
-                rowPatternMode,
-                noRepeatDrawn: noRepeat,
-            };
-            const result = await window.electronAPI.generatorGenerate(config);
+            const result = await window.electronAPI.generatorGenerate(
+                buildGeneratorConfig(Math.min(effectiveMax, 500000))
+            );
             setGames(result || []);
             if (!result || result.length === 0) {
                 setError('Nenhum jogo gerado. Verifique se há concursos importados e ajuste os parâmetros.');
@@ -160,24 +166,15 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleMassGenerate = async () => {
         if (noData) return;
         const total = preview?.totalCombinations ? Math.min(maxJogos, preview.totalCombinations) : maxJogos;
-        setLoading(true); setError(''); setMassProgress({ current: 0, total });
+        setLoading(true); setError(''); setNotice(null); setMassProgress({ current: 0, total: Math.max(total, 1) });
         try {
-            const config: GeneratorConfig = {
-                mode, lastN, rangeStart, rangeEnd,
-                dezenasPorJogo: K,
-                maxJogos,
-                fixas: parseNumbers(fixas),
-                fixasModo,
-                exclusions,
-                patternExclusions,
-                patternIncludes,
-                colPatternMode,
-                rowPatternMode,
-                noRepeatDrawn: noRepeat,
-            };
-            const res = await window.electronAPI.generatorSaveMass(config);
+            const res = await window.electronAPI.generatorSaveMass(buildGeneratorConfig(), total);
             if (res.success) {
-                alert(`Sucesso! ${res.count.toLocaleString('pt-BR')} jogos salvos diretamente no arquivo.`);
+                setNotice({
+                    tone: 'success',
+                    title: 'Lote salvo',
+                    message: `${res.count.toLocaleString('pt-BR')} jogos foram salvos no TXT sem carregar tudo na tela.`,
+                });
             } else if (res.error) {
                 setError(res.error);
             }
@@ -192,7 +189,13 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleExport = async () => {
         const content = games.map(g => g.key).join('\n') + '\n';
         const saved = await window.electronAPI.exportSave(content);
-        if (saved) alert('Arquivo exportado com sucesso!');
+        if (saved) {
+            setNotice({
+                tone: 'success',
+                title: 'TXT exportado',
+                message: `${games.length.toLocaleString('pt-BR')} jogo(s) exportado(s) com sucesso.`,
+            });
+        }
     };
 
     const handleClearResults = () => {
@@ -210,7 +213,13 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             colPatternMode, rowPatternMode
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
-        if (success) alert('Configurações exportadas com sucesso!');
+        if (success) {
+            setNotice({
+                tone: 'success',
+                title: 'Configuração salva',
+                message: 'As configurações atuais do gerador foram exportadas.',
+            });
+        }
     };
 
     const handleImportConfig = async () => {
@@ -231,7 +240,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (config.colPatternMode) setColPatternMode(config.colPatternMode);
                 if (config.rowPatternMode) setRowPatternMode(config.rowPatternMode);
-                alert('Configurações carregadas com sucesso!');
+                setNotice({
+                    tone: 'success',
+                    title: 'Configuração carregada',
+                    message: 'As opções do gerador foram restauradas com sucesso.',
+                });
             }
         } catch (e: any) {
             setError(e.message || 'Erro ao importar configuração');
@@ -339,8 +352,31 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     .map(p => p.pattern.join(','))
             );
 
-            const toAdd = (pulled || []).filter(p => !existing.has(p.pattern.join(',')));
-            if (toAdd.length > 0) setPatternExclusions([...patternExclusions, ...toAdd]);
+            const toAdd = (pulled.patterns || []).filter(p => !existing.has(p.pattern.join(',')));
+            if (toAdd.length > 0) {
+                setPatternExclusions(prev => [...prev, ...toAdd]);
+            }
+
+            const drawsLabel = `${pulled.drawsUsed.toLocaleString('pt-BR')} concurso${pulled.drawsUsed !== 1 ? 's' : ''}`;
+            if (toAdd.length === 0) {
+                setNotice({
+                    tone: 'info',
+                    title: 'Histórico analisado',
+                    message: `Nenhum padrão novo foi encontrado. Foram lidos ${drawsLabel} do histórico disponível.`,
+                });
+            } else if (pulled.drawsUsed < pulled.requested) {
+                setNotice({
+                    tone: 'info',
+                    title: 'Histórico aplicado',
+                    message: `${toAdd.length} padrão(ões) adicionados usando ${drawsLabel} disponíveis até o fim da faixa.`,
+                });
+            } else {
+                setNotice({
+                    tone: 'success',
+                    title: 'Histórico aplicado',
+                    message: `${toAdd.length} padrão(ões) adicionados a partir de ${drawsLabel}.`,
+                });
+            }
         } catch (e: any) {
             setError(e?.message || 'Erro ao puxar padrões históricos.');
         } finally {
@@ -665,7 +701,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     <h4 className="text-[10px] text-brand-400 font-bold uppercase tracking-widest">Recorte Histórico</h4>
                                     <div className="flex items-center gap-2">
                                         <input type="number" value={historyPullCount} 
-                                            onChange={e => setHistoryPullCount(Number(e.target.value))}
+                                            min={1}
+                                            onChange={e => setHistoryPullCount(Math.max(1, Number(e.target.value) || 1))}
                                             className="w-12 bg-black/40 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-bold text-brand-300 outline-none" 
                                         />
                                         <span className="text-[9px] text-gray-600 font-bold uppercase">CONC.</span>
@@ -888,30 +925,54 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
             {/* Mass Progress Overlay */}
             {massProgress && (
-                <div className="fixed inset-0 z-50 bg-[#0a0a14]/90 backdrop-blur-md flex items-center justify-center p-6">
-                    <div className="premium-block max-w-md w-full border-brand-500/30 text-center space-y-6 !p-10 shadow-2xl">
-                        <div className="space-y-1">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">Processando Jogos</h3>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Aguarde a finalização</p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <div className="text-5xl font-black text-brand-400 tabular-nums tracking-tighter">
-                                {((massProgress.current / massProgress.total) * 100).toFixed(0)}%
-                            </div>
-                            <div className="text-[10px] text-gray-400 uppercase font-black tracking-[0.2em]">
-                                {massProgress.current.toLocaleString('pt-BR')} / {massProgress.total.toLocaleString('pt-BR')} JOGOS
-                            </div>
-                        </div>
+                (() => {
+                    const progressTotal = Math.max(1, massProgress.total);
+                    const progressPercent = Math.min(100, (massProgress.current / progressTotal) * 100);
 
-                        <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/10">
-                            <div
-                                className="h-full bg-gradient-to-r from-brand-600 to-indigo-500 transition-all duration-300 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-                                style={{ width: `${Math.min(100, (massProgress.current / massProgress.total) * 100)}%` }}
-                            ></div>
-                        </div>
+                    return (
+                        <div className="fixed inset-0 z-50 bg-[#0a0a14]/90 backdrop-blur-md flex items-center justify-center p-6">
+                            <div className="premium-block max-w-md w-full border-brand-500/30 text-center space-y-6 !p-10 shadow-2xl">
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">Processando Jogos</h3>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Aguarde a finalização</p>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <div className="text-5xl font-black text-brand-400 tabular-nums tracking-tighter">
+                                        {progressPercent.toFixed(0)}%
+                                    </div>
+                                    <div className="text-[10px] text-gray-400 uppercase font-black tracking-[0.2em]">
+                                        {massProgress.current.toLocaleString('pt-BR')} / {progressTotal.toLocaleString('pt-BR')} JOGOS
+                                    </div>
+                                </div>
 
-                        <p className="text-[9px] text-gray-600 italic">Por favor, não feche o aplicativo até a conclusão.</p>
+                                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/10">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-brand-600 to-indigo-500 transition-all duration-300 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                                        style={{ width: `${progressPercent}%` }}
+                                    ></div>
+                                </div>
+
+                                <p className="text-[9px] text-gray-600 italic">Por favor, não feche o aplicativo até a conclusão.</p>
+                            </div>
+                        </div>
+                    );
+                })()
+            )}
+
+            {/* Notice Message */}
+            {notice && (
+                <div className={`fixed bottom-6 left-6 p-4 rounded-xl text-xs animate-fade-in shadow-2xl backdrop-blur-md z-40 max-w-sm ${
+                    notice.tone === 'success'
+                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
+                        : 'bg-brand-500/10 border border-brand-500/30 text-brand-300'
+                }`}>
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">{notice.tone === 'success' ? '✓' : 'i'}</span>
+                        <div>
+                            <div className="font-black uppercase tracking-widest mb-0.5">{notice.title}</div>
+                            <p className="text-gray-300 leading-relaxed font-medium">{notice.message}</p>
+                        </div>
                     </div>
                 </div>
             )}

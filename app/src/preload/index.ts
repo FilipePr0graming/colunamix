@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),
     generatorPreview: (config: any) => ipcRenderer.invoke('generator:preview', config),
-    generatorSaveMass: (config: any) => ipcRenderer.invoke('generator:save-mass', config),
+    generatorSaveMass: (config: any, expectedTotal?: number) => ipcRenderer.invoke('generator:save-mass', config, expectedTotal),
     generatorExportConfig: (config: any) => ipcRenderer.invoke('generator:export-config', config),
     generatorImportConfig: () => ipcRenderer.invoke('generator:import-config'),
     generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: any) =>

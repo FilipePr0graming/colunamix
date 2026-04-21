@@ -4,7 +4,7 @@ import os from 'os';
 import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 
-async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
+async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: ElectronApplication; page: Page }> {
   const releaseDir = path.join(process.cwd(), 'release');
   const unpackedExe = path.join(releaseDir, 'win-unpacked', 'ColunaMix.exe');
   const releaseExe = fs.existsSync(unpackedExe)
@@ -12,7 +12,9 @@ async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
     : (fs.existsSync(releaseDir)
         ? fs.readdirSync(releaseDir).find((name) => /^ColunaMix-v.+\.exe$/i.test(name))
         : null);
-  const packagedPath = releaseExe ? path.resolve(releaseExe) : null;
+  const packagedPath = process.env.PW_TEST_USE_PACKAGED === 'true' && releaseExe
+    ? path.resolve(releaseExe)
+    : null;
   const mainPath = path.join(process.cwd(), 'dist-electron', 'main', 'index.js');
   const app = await electron.launch({
     executablePath: packagedPath || undefined,
@@ -21,6 +23,7 @@ async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
       ...process.env,
       APP_DEV_TOOLS: 'true',
       PW_TEST: 'true',
+      ...extraEnv,
     },
   });
 
@@ -179,6 +182,44 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
+  test('RANGE + HISTÓRICO LONGO: aceita puxar mais concursos do que a faixa visível usando concursos anteriores ao início', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_history_backfill_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rows: string[] = [];
+
+      for (let c = 3580; c <= 3663; c++) {
+        if (c === 3620) {
+          rows.push(`${c},01,02,03,04,06,07,08,11,12,13,16,17,18,21,22`);
+        } else {
+          rows.push(`${c},01,02,03,06,07,08,11,12,13,16,17,18,21,22,23`);
+        }
+      }
+
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      const result = await page.evaluate(async () => {
+        return await (window as any).electronAPI.generatorApplyHistory(50, 'column', {
+          mode: 'range',
+          lastN: 50,
+          rangeStart: 3624,
+          rangeEnd: 3663,
+        });
+      });
+
+      expect(result.drawsUsed).toBe(50);
+      expect(result.available).toBeGreaterThanOrEqual(50);
+      expect(result.patterns.some((item: { pattern: number[] }) => item.pattern.join(',') === '4,3,3,3,2')).toBeTruthy();
+    } finally {
+      await app.close();
+    }
+  });
+
   test('INCLUDE ONLY - EXCLUDE HISTÓRICO: interseção é removida (final = include - excluded) e pode zerar geração', async () => {
     const { app, page } = await launchApp();
     try {
@@ -209,6 +250,34 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button:has-text("GERAR JOGOS")').click();
       await expect(page.locator('text=Nenhum jogo gerado')).toBeVisible();
     } finally {
+      await app.close();
+    }
+  });
+
+  test('LOTE GRANDE: salva TXT sem deixar overlay travado em 100%', async () => {
+    const savePath = path.join(os.tmpdir(), `cmx_mass_${Date.now()}.txt`);
+    const { app, page } = await launchApp({ PW_TEST_SAVE_PATH: savePath });
+    try {
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), '..', 'data', 'input', 'exemplo.csv'));
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+      await page.locator('button:has-text("Padrão Colunas")').click();
+      await page.locator('button:has-text("Puxar e Excluir Padrões")').click();
+      await page.locator('input[type="number"]').nth(2).fill('100');
+
+      await expect(page.locator('button:has-text("Salvar Grande Lote (TXT)")')).toBeVisible();
+      await page.locator('button:has-text("Salvar Grande Lote (TXT)")').click();
+
+      await expect(page.locator('text=Lote salvo')).toBeVisible({ timeout: 60_000 });
+      await expect(page.locator('text=Processando Jogos')).toHaveCount(0);
+
+      expect(fs.existsSync(savePath)).toBeTruthy();
+      const content = fs.readFileSync(savePath, 'utf-8').trim().split(/\r?\n/);
+      expect(content.length).toBeGreaterThan(0);
+    } finally {
+      if (fs.existsSync(savePath)) fs.unlinkSync(savePath);
       await app.close();
     }
   });
