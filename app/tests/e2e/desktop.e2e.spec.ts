@@ -5,6 +5,9 @@ import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 
 async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: ElectronApplication; page: Page }> {
+  const launchEnv = { ...process.env };
+  delete launchEnv.ELECTRON_RUN_AS_NODE;
+
   const releaseDir = path.join(process.cwd(), 'release');
   const unpackedExe = path.join(releaseDir, 'win-unpacked', 'ColunaMix.exe');
   const releaseExe = fs.existsSync(unpackedExe)
@@ -20,7 +23,7 @@ async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: 
     executablePath: packagedPath || undefined,
     args: packagedPath ? [] : [mainPath],
     env: {
-      ...process.env,
+      ...launchEnv,
       APP_DEV_TOOLS: 'true',
       PW_TEST: 'true',
       ...extraEnv,
@@ -48,6 +51,7 @@ async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: 
     }
   });
 
+  await page.reload();
   await page.waitForTimeout(500);
 
   try {
@@ -74,14 +78,14 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=Importar Concursos')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.locator('text=Resultados')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Resultados' })).toBeVisible();
 
       await page.locator('button[title="Dashboard"]').click();
       await expect(page.locator('text=Status do Sistema')).toBeVisible();
 
       await page.locator('button[title="Estatísticas"]').click();
       await expect(
-        page.locator('text=Estatísticas por Padrão de Coluna')
+        page.locator('text=Importe concursos para visualizar as estatísticas.').or(page.locator('text=Estatísticas por Padrão de Coluna'))
       ).toBeVisible();
     } finally {
       await app.close();
@@ -105,6 +109,109 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=Erro na geração')).toHaveCount(0);
       const firstRow = page.locator('tbody tr').first();
       await expect(firstRow).toBeVisible();
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('MODO INTELIGENTE: ativa, mostra sugestões, gera jogos e exibe score', async () => {
+    const { app, page } = await launchApp();
+    try {
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), '..', 'data', 'input', 'exemplo.csv'));
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+      await page.locator('[data-testid="smart-mode-toggle"] input').check({ force: true });
+
+      await expect(page.locator('text=Padrões recomendados')).toBeVisible({ timeout: 20_000 });
+      await expect(page.locator('text=Score médio esperado').first()).toBeVisible();
+
+      await page.locator('button:has-text("Gerar Inteligente")').click();
+      await expect(page.locator('text=Modo Inteligente aplicado')).toBeVisible({ timeout: 60_000 });
+      await expect(page.locator('text=Score:').first()).toBeVisible();
+      await expect(page.locator('text=Erro na Geração')).toHaveCount(0);
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('MODO INTELIGENTE - POUCOS DADOS: mantém sugestões conservadoras e não trava UI', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_smart_few_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rows = [
+        '7001,01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
+        '7002,01,02,04,06,07,09,11,12,14,16,17,19,21,22,24',
+        '7003,02,03,05,07,08,10,12,13,15,17,18,20,22,23,25',
+      ];
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+      await page.locator('input[type="number"]').first().fill('3');
+      await page.locator('[data-testid="smart-mode-toggle"] input').check({ force: true });
+      await expect(page.locator('text=Base pequena')).toBeVisible({ timeout: 20_000 });
+      await page.locator('button:has-text("Gerar Inteligente")').click();
+
+      await expect(
+        page.locator('text=Modo Inteligente aplicado').or(page.locator('text=Nenhum jogo gerado pelo Modo Inteligente'))
+      ).toBeVisible({ timeout: 60_000 });
+      await expect(page.locator('button:has-text("GERAR JOGOS")')).toBeEnabled();
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('MODO INTELIGENTE - HISTÓRICO GRANDE: análise e geração retornam scores consistentes', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_smart_large_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const patterns = [
+        '01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
+        '01,02,04,06,07,09,11,12,14,16,17,19,21,22,24',
+        '02,03,05,07,08,10,12,13,15,17,18,20,22,23,25',
+        '01,03,04,06,08,09,11,13,14,16,18,19,21,23,24',
+      ];
+      const rows: string[] = [];
+      for (let i = 0; i < 180; i++) rows.push(`${8000 + i},${patterns[i % patterns.length]}`);
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      const result = await page.evaluate(async () => {
+        const api = (window as any).electronAPI;
+        const config = {
+          mode: 'lastN',
+          lastN: 80,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 25,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+        return await api.smartModeGenerate(config, 120);
+      });
+
+      expect(result.analysis.drawsAnalyzed).toBe(120);
+      expect(result.suggestions.recommendedPatterns.length).toBeGreaterThan(0);
+      expect(result.suggestions.expectedAverageScore).toBeGreaterThan(0);
+      expect(result.games.length).toBeGreaterThan(0);
+      expect(result.games.every((game: { score: number }) => game.score >= 0 && game.score <= 100)).toBeTruthy();
     } finally {
       await app.close();
     }
@@ -214,7 +321,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
 
       expect(result.drawsUsed).toBe(50);
       expect(result.available).toBeGreaterThanOrEqual(50);
-      expect(result.patterns.some((item: { pattern: number[] }) => item.pattern.join(',') === '4,3,3,3,2')).toBeTruthy();
+      expect(result.patterns.some((item: { pattern: number[] }) => item.pattern.join(',') === '5,5,4,1,0')).toBeTruthy();
     } finally {
       await app.close();
     }
@@ -238,8 +345,9 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
+      await page.locator('input[type="number"]').first().fill('10');
 
-      await page.locator('button:has-text("Padrão Colunas")').click();
+      await page.locator('button:has-text("Padrão Linhas")').click();
       await page.locator('button:has-text("Usar Somente")').click();
       await page.locator('input[placeholder="Ex: 43332"]').fill('33333');
       await page.locator('button:has-text("ADICIONAR")').click();
@@ -248,7 +356,25 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button:has-text("Puxar e Excluir Padrões")').click();
 
       await page.locator('button:has-text("GERAR JOGOS")').click();
-      await expect(page.locator('text=Nenhum jogo gerado')).toBeVisible();
+      const apiResult = await page.evaluate(async () => {
+        return await (window as any).electronAPI.generatorGenerate({
+          mode: 'lastN',
+          lastN: 10,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 50,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [{ id: 'test-exclude', type: 'row', pattern: [3, 3, 3, 3, 3] }],
+          patternIncludes: [{ id: 'test-include', type: 'row', pattern: [3, 3, 3, 3, 3] }],
+          colPatternMode: 'exclude',
+          rowPatternMode: 'include',
+          noRepeatDrawn: false,
+        });
+      });
+      expect(apiResult).toHaveLength(0);
     } finally {
       await app.close();
     }

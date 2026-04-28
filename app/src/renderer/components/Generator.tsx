@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
+import { SmartModePayload, SmartPatternStat } from '../../core/smart-mode/types';
 import GridPicker from './GridPicker';
 import LotofacilGrid from './LotofacilGrid';
 
@@ -25,6 +26,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [colPatternMode, setColPatternMode] = useState<'exclude' | 'include'>('exclude');
     const [rowPatternMode, setRowPatternMode] = useState<'exclude' | 'include'>('exclude');
     const [historyPullCount, setHistoryPullCount] = useState(50);
+    const [smartMode, setSmartMode] = useState(false);
+    const [smartHistoryCount, setSmartHistoryCount] = useState(50);
+    const [smartPayload, setSmartPayload] = useState<SmartModePayload | null>(null);
+    const [smartLoading, setSmartLoading] = useState(false);
     const [games, setGames] = useState<GeneratedGame[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -48,7 +53,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     // Listen for mass generation progress
     useEffect(() => {
         const unsubscribe = window.electronAPI.onGeneratorProgress((data) => {
-            setMassProgress(data);
+            setMassProgress(data.current >= data.total ? null : data);
         });
         return unsubscribe;
     }, []);
@@ -91,6 +96,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
+                if (typeof config.smartMode === 'boolean') setSmartMode(config.smartMode);
+                if (typeof config.smartHistoryCount === 'number') setSmartHistoryCount(config.smartHistoryCount);
             } catch (e) {
                 console.error('Erro ao carregar configurações salvas:', e);
             }
@@ -101,10 +108,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat,
-            colPatternMode, rowPatternMode
+            colPatternMode, rowPatternMode, smartMode, smartHistoryCount
         };
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat, colPatternMode, rowPatternMode]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat, colPatternMode, rowPatternMode, smartMode, smartHistoryCount]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -144,6 +151,34 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
         return () => window.clearTimeout(timer);
     }, [noData, buildGeneratorConfig]);
+
+    useEffect(() => {
+        if (noData || !smartMode) {
+            setSmartPayload(null);
+            return;
+        }
+
+        let cancelled = false;
+        const timer = window.setTimeout(async () => {
+            setSmartLoading(true);
+            try {
+                const res = await window.electronAPI.smartModeAnalyze(buildGeneratorConfig(), smartHistoryCount);
+                if (!cancelled) setSmartPayload(res);
+            } catch (e: any) {
+                if (!cancelled) {
+                    setSmartPayload(null);
+                    setError(e?.message || 'Erro ao analisar o Modo Inteligente.');
+                }
+            } finally {
+                if (!cancelled) setSmartLoading(false);
+            }
+        }, 260);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [noData, smartMode, smartHistoryCount, buildGeneratorConfig]);
 
     const handleGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
@@ -195,6 +230,37 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 title: 'TXT exportado',
                 message: `${games.length.toLocaleString('pt-BR')} jogo(s) exportado(s) com sucesso.`,
             });
+        }
+    };
+
+    const handleSmartGenerate = async () => {
+        if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
+        setSmartMode(true);
+        setLoading(true); setError(''); setNotice(null); setGames([]); setResultsScrollTop(0);
+        try {
+            const result = await window.electronAPI.smartModeGenerate(
+                buildGeneratorConfig(Math.min(effectiveMax, 500000)),
+                smartHistoryCount
+            );
+            setSmartPayload({
+                analysis: result.analysis,
+                suggestions: result.suggestions,
+                memory: result.memory,
+            });
+            setGames(result.games || []);
+            if (!result.games || result.games.length === 0) {
+                setError('Nenhum jogo gerado pelo Modo Inteligente. Ajuste os parâmetros ou reduza filtros manuais.');
+            } else {
+                setNotice({
+                    tone: 'success',
+                    title: 'Modo Inteligente aplicado',
+                    message: `${result.games.length.toLocaleString('pt-BR')} jogo(s) gerados e ordenados por score histórico.`,
+                });
+            }
+        } catch (e: any) {
+            setError(e.message || 'Erro desconhecido ao gerar jogos inteligentes.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -401,6 +467,21 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             bottomPad: Math.max(0, (total - end) * rowHeight),
         };
     }, [games.length, resultsScrollTop, resultsViewportHeight, rowHeight]);
+
+    const renderSmartPattern = (pattern: SmartPatternStat) => (
+        <div key={pattern.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
+            <div>
+                <div className="text-[8px] font-black uppercase tracking-[0.18em] text-gray-500">
+                    {pattern.type === 'column' ? 'Colunas' : 'Linhas'}
+                </div>
+                <div className="font-mono text-[12px] font-black text-brand-300">{pattern.key}</div>
+            </div>
+            <div className="text-right text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                <div>{pattern.occurrences}x</div>
+                <div>{pattern.lag} atraso</div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="h-full flex flex-col gap-3 overflow-auto">
@@ -777,6 +858,94 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     })()}
                 </section>
 
+                {/* Modo Inteligente */}
+                <section className="animate-fade-in border-t border-white/5 pt-6">
+                    <div className="section-header">
+                        <div className="flex items-center gap-3">
+                            <h3 className="section-title">Modo Inteligente</h3>
+                            {smartPayload && (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-emerald-400 font-black tabular-nums">
+                                    Score médio esperado: {smartPayload.suggestions.expectedAverageScore}/100
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12 lg:col-span-3 space-y-4">
+                            <label data-testid="smart-mode-toggle" className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative">
+                                    <input type="checkbox" checked={smartMode} onChange={e => setSmartMode(e.target.checked)}
+                                        className="peer sr-only" />
+                                    <div className="w-10 h-5 bg-white/5 border border-white/10 rounded-full peer-checked:bg-emerald-500 peer-checked:border-emerald-500 transition-all"></div>
+                                    <div className="absolute top-1 left-1 w-3 h-3 bg-gray-500 rounded-full transition-all peer-checked:left-6 peer-checked:bg-white"></div>
+                                </div>
+                                <span className="text-[10px] text-gray-500 group-hover:text-gray-300 transition-colors uppercase font-black tracking-widest">Modo Inteligente</span>
+                            </label>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="desktop-label !mb-0">Histórico inteligente</label>
+                                    <span className="text-[11px] font-black text-emerald-400 tabular-nums">{smartHistoryCount}</span>
+                                </div>
+                                <input type="range" min={5} max={200} value={smartHistoryCount}
+                                    onChange={e => setSmartHistoryCount(Number(e.target.value))}
+                                    className="w-full h-1.5 accent-emerald-500 cursor-pointer bg-white/5 rounded-full" />
+                            </div>
+                        </div>
+
+                        <div className="col-span-12 lg:col-span-9">
+                            {!smartMode ? (
+                                <div className="h-full min-h-[120px] rounded-lg border border-dashed border-white/10 bg-black/10 flex items-center justify-center text-[11px] text-gray-600 uppercase tracking-widest font-black">
+                                    Ative para ver recomendações históricas
+                                </div>
+                            ) : smartLoading ? (
+                                <div className="h-full min-h-[120px] rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center text-[11px] text-gray-500 uppercase tracking-widest font-black">
+                                    Analisando histórico...
+                                </div>
+                            ) : smartPayload ? (
+                                <div className="grid grid-cols-12 gap-4">
+                                    <div className="col-span-12 lg:col-span-4 space-y-2">
+                                        <h4 className="text-[9px] text-emerald-400 font-black uppercase tracking-widest">Padrões recomendados</h4>
+                                        <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                                            {smartPayload.suggestions.recommendedPatterns.slice(0, 3).map(renderSmartPattern)}
+                                        </div>
+                                    </div>
+                                    <div className="col-span-12 lg:col-span-4 space-y-2">
+                                        <h4 className="text-[9px] text-red-400 font-black uppercase tracking-widest">Padrões a evitar</h4>
+                                        <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                                            {smartPayload.suggestions.avoidPatterns.length === 0 ? (
+                                                <div className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-6 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                                                    Nenhum alerta forte
+                                                </div>
+                                            ) : smartPayload.suggestions.avoidPatterns.slice(0, 3).map(renderSmartPattern)}
+                                        </div>
+                                    </div>
+                                    <div className="col-span-12 lg:col-span-4 rounded-lg border border-white/5 bg-white/[0.03] p-4 space-y-3">
+                                        <div>
+                                            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-gray-500">Base analisada</div>
+                                            <div className="text-2xl font-black text-white tabular-nums">{smartPayload.analysis.drawsAnalyzed}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[8px] font-black uppercase tracking-[0.18em] text-gray-500">Score médio esperado</div>
+                                            <div className="text-xl font-black text-emerald-400 tabular-nums">
+                                                {smartPayload.suggestions.expectedAverageScore}/100
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] text-gray-500 leading-relaxed">
+                                            {smartPayload.suggestions.notes[1]}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-full min-h-[120px] rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center text-[11px] text-gray-600 uppercase tracking-widest font-black">
+                                    Sem análise disponível
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 {/* 05. Ação Final */}
                 <section className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-8">
@@ -804,6 +973,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 <span className="text-[10px] font-black uppercase tracking-widest">Salvar Grande Lote (TXT)</span>
                             </button>
                         )}
+                        <button onClick={handleSmartGenerate} disabled={loading || noData}
+                            className="btn-premium-secondary !px-6 flex items-center gap-2 border-emerald-500/20 hover:!bg-emerald-500/10">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Gerar Inteligente</span>
+                        </button>
                         <button onClick={handleGenerate} disabled={loading || noData}
                             className="btn-premium-primary min-w-[280px] shadow-2xl relative overflow-hidden group">
                             <div className="absolute inset-0 bg-white/10 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500"></div>
@@ -859,12 +1032,13 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     <tr>
                                         <th className="text-left text-xs text-gray-500 py-2 px-3 w-16 font-medium">#</th>
                                         <th className="text-left text-xs text-gray-500 py-2 px-3 font-medium">Dezenas</th>
+                                        <th className="text-left text-xs text-gray-500 py-2 px-3 w-32 font-medium">Score</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {visibleResults.topPad > 0 && (
                                         <tr aria-hidden="true">
-                                            <td colSpan={2} style={{ height: visibleResults.topPad }} />
+                                            <td colSpan={3} style={{ height: visibleResults.topPad }} />
                                         </tr>
                                     )}
                                     {games.slice(visibleResults.start, visibleResults.end).map((g, i) => (
@@ -878,16 +1052,19 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                             <td className="py-2 px-3 font-mono text-xs text-brand-300 tracking-wide">
                                                 {g.key}
                                             </td>
+                                            <td className="py-2 px-3 text-xs text-emerald-400 font-black tabular-nums">
+                                                {typeof g.score === 'number' ? `Score: ${g.score}/100` : '-'}
+                                            </td>
                                         </tr>
                                     ))}
                                     {visibleResults.bottomPad > 0 && (
                                         <tr aria-hidden="true">
-                                            <td colSpan={2} style={{ height: visibleResults.bottomPad }} />
+                                            <td colSpan={3} style={{ height: visibleResults.bottomPad }} />
                                         </tr>
                                     )}
                                     {games.length > 5000 && (
                                         <tr>
-                                            <td colSpan={2} className="py-4 text-center text-[10px] text-gray-500 italic">
+                                            <td colSpan={3} className="py-4 text-center text-[10px] text-gray-500 italic">
                                                 Exibindo primeiros 5.000 de {games.length.toLocaleString()} resultados para manter fluidez. Use "Exportar" para ver todos.
                                             </td>
                                         </tr>

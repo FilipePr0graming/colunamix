@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),
     generatorPreview: (config: any) => ipcRenderer.invoke('generator:preview', config),
+    smartModeAnalyze: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:analyze', config, historyCount),
+    smartModeGenerate: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:generate', config, historyCount),
     generatorSaveMass: (config: any, expectedTotal?: number) => ipcRenderer.invoke('generator:save-mass', config, expectedTotal),
     generatorExportConfig: (config: any) => ipcRenderer.invoke('generator:export-config', config),
     generatorImportConfig: () => ipcRenderer.invoke('generator:import-config'),
