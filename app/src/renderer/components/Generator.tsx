@@ -37,6 +37,18 @@ const createExactGroupTextState = (): Record<ExactGroupCategory, string> => ({
     borderEven: '',
 });
 
+const RADAR_HISTORICO_FEATURES = [
+    'Buscar concursos por configuração personalizada',
+    'Filtrar por pares e ímpares',
+    'Filtrar por dezenas na borda',
+    'Filtrar por números primos',
+    'Analisar sequências entre dezenas',
+    'Analisar intervalos numéricos',
+    'Mostrar frequência de ocorrência',
+    'Mostrar atraso atual',
+    'Exibir concursos compatíveis com a configuração pesquisada',
+];
+
 export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [mode, setMode] = useState<'lastN' | 'range'>('lastN');
     const [lastN, setLastN] = useState(20);
@@ -73,6 +85,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [selectedGame, setSelectedGame] = useState<GeneratedGame | null>(null);
     const [showFilterGrids, setShowFilterGrids] = useState(false);
     const [notice, setNotice] = useState<{ tone: 'success' | 'info'; title: string; message: string } | null>(null);
+    const [showRadarModal, setShowRadarModal] = useState(false);
+    const [radarContactNotice, setRadarContactNotice] = useState(false);
     const resultsViewportRef = useRef<HTMLDivElement | null>(null);
     const previewRequestRef = useRef(0);
     const [resultsScrollTop, setResultsScrollTop] = useState(0);
@@ -307,6 +321,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setMassProgress(null);
         setError('');
         setResultsScrollTop(0);
+    };
+
+    const openRadarModal = () => {
+        setRadarContactNotice(false);
+        setShowRadarModal(true);
+    };
+
+    const closeRadarModal = () => {
+        setShowRadarModal(false);
+        setRadarContactNotice(false);
     };
 
     const handleExportConfig = async () => {
@@ -1134,7 +1158,57 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     </div>
                 </section>
 
-                {/* 05. Ação Final */}
+                {/* Ferramentas Avançadas */}
+                <section className="animate-fade-in border-t border-white/5 pt-6">
+                    <div className="section-header">
+                        <div className="flex items-center gap-3">
+                            <h3 className="section-title">Ferramentas Avançadas</h3>
+                            <span className="px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/10 text-[9px] text-gray-500 font-black uppercase tracking-widest">
+                                Bloqueado
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        data-testid="locked-radar-card"
+                        className="relative overflow-hidden rounded-lg border border-white/10 bg-white/[0.025] p-4 shadow-xl"
+                    >
+                        <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-none"></div>
+                        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex min-w-0 items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-amber-400/20 bg-amber-400/10 text-amber-300 shadow-[0_0_24px_rgba(251,191,36,0.08)]">
+                                    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="4" y="11" width="16" height="9" rx="2"></rect>
+                                        <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+                                    </svg>
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                                            Radar Histórico Avançado
+                                        </h4>
+                                        <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-300">
+                                            Módulo avançado
+                                        </span>
+                                    </div>
+                                    <p className="max-w-3xl text-[12px] leading-relaxed text-gray-400">
+                                        Cruze configurações personalizadas com o histórico de concursos e veja quando determinadas estratégias já aconteceram.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={openRadarModal}
+                                data-testid="locked-radar-details"
+                                className="btn-premium-secondary h-[38px] shrink-0 !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Ver detalhes
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 06. Ação Final */}
                 <section className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-8">
                         <label className="flex items-center gap-3 cursor-pointer group">
@@ -1350,6 +1424,102 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                         <div>
                             <div className="font-black uppercase tracking-widest mb-0.5">Erro na Geração</div>
                             <p className="text-gray-400 leading-relaxed font-medium">{error}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showRadarModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a14]/90 p-6 backdrop-blur-md" data-testid="locked-radar-modal">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="radar-modal-title"
+                        className="premium-block max-h-[88vh] w-full max-w-2xl overflow-y-auto border-amber-400/20 !p-0 shadow-2xl custom-scrollbar"
+                    >
+                        <div className="border-b border-white/5 p-6">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-400/20 bg-amber-400/10 text-amber-300">
+                                            <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="4" y="11" width="16" height="9" rx="2"></rect>
+                                                <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 id="radar-modal-title" className="text-lg font-black text-white uppercase tracking-widest">
+                                                Radar Histórico Avançado
+                                            </h3>
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-amber-300">
+                                                Bloqueado / Módulo avançado
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeRadarModal}
+                                    aria-label="Fechar detalhes do Radar Histórico Avançado"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-gray-500 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-5 p-6">
+                            <p className="text-sm leading-relaxed text-gray-300">
+                                Este módulo permitirá cruzar configurações personalizadas com o histórico de concursos, mostrando quando determinada estratégia já aconteceu, frequência, atraso e concursos compatíveis.
+                            </p>
+                            <p className="text-sm leading-relaxed text-gray-400">
+                                Com ele, será possível analisar cenários como pares e ímpares, dezenas na borda, números primos, sequências e intervalos entre dezenas, tudo dentro do próprio ColunaMix.
+                            </p>
+
+                            <div className="rounded-lg border border-white/5 bg-black/20 p-4">
+                                <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                    Recursos previstos
+                                </h4>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    {RADAR_HISTORICO_FEATURES.map(feature => (
+                                        <div key={feature} className="flex items-start gap-2 rounded-md border border-white/5 bg-white/[0.025] px-3 py-2">
+                                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300/70"></span>
+                                            <span className="text-[11px] font-semibold leading-relaxed text-gray-300">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border border-amber-400/15 bg-amber-400/5 px-4 py-3 text-[11px] font-bold text-amber-200/90">
+                                Módulo avançado disponível para desenvolvimento futuro.
+                            </div>
+
+                            {radarContactNotice && (
+                                <div
+                                    data-testid="locked-radar-contact-message"
+                                    className="rounded-lg border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-[12px] font-semibold leading-relaxed text-brand-200"
+                                >
+                                    Para ativar este módulo, entre em contato com o desenvolvedor responsável pelo sistema.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col-reverse gap-3 border-t border-white/5 p-6 sm:flex-row sm:items-center sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={closeRadarModal}
+                                className="btn-premium-secondary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRadarContactNotice(true)}
+                                data-testid="locked-radar-contact"
+                                className="btn-premium-primary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Entrar em contato com o desenvolvedor
+                            </button>
                         </div>
                     </div>
                 </div>

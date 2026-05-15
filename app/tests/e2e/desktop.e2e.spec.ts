@@ -92,6 +92,58 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
+  test('RADAR HISTÓRICO AVANÇADO: mostra card bloqueado e modal informativo sem links externos', async () => {
+    const { app, page } = await launchApp();
+    try {
+      await page.locator('button[title="Gerador"]').click();
+
+      const card = page.getByTestId('locked-radar-card');
+      await expect(card).toBeVisible();
+      await expect(card).toContainText('Radar Histórico Avançado');
+      await expect(card).toContainText('Módulo avançado');
+      await expect(card).toContainText('Cruze configurações personalizadas com o histórico de concursos');
+
+      const beforeUrl = page.url();
+      await page.getByTestId('locked-radar-details').click();
+
+      const modal = page.getByTestId('locked-radar-modal');
+      await expect(modal).toBeVisible();
+      await expect(modal.getByRole('heading', { name: 'Radar Histórico Avançado' })).toBeVisible();
+      await expect(modal).toContainText('Este módulo permitirá cruzar configurações personalizadas com o histórico de concursos');
+      await expect(modal).toContainText('Buscar concursos por configuração personalizada');
+      await expect(modal).toContainText('Filtrar por pares e ímpares');
+      await expect(modal).toContainText('Filtrar por dezenas na borda');
+      await expect(modal).toContainText('Filtrar por números primos');
+      await expect(modal).toContainText('Analisar sequências entre dezenas');
+      await expect(modal).toContainText('Mostrar atraso atual');
+      await expect(modal).toContainText('Módulo avançado disponível para desenvolvimento futuro.');
+
+      const externalTargets = await page.evaluate(() => {
+        const root = document.querySelector('[data-testid="locked-radar-modal"]');
+        const scopedLinks = Array.from(root?.querySelectorAll('a[href]') || []).map((link) => (link as HTMLAnchorElement).href);
+        return {
+          links: scopedLinks,
+          hasWhatsAppText: /whatsapp/i.test(root?.textContent || ''),
+          hasPhoneHref: scopedLinks.some((href) => href.startsWith('tel:')),
+        };
+      });
+      expect(externalTargets.links).toHaveLength(0);
+      expect(externalTargets.hasWhatsAppText).toBeFalsy();
+      expect(externalTargets.hasPhoneHref).toBeFalsy();
+
+      await page.getByTestId('locked-radar-contact').click();
+      await expect(page.getByTestId('locked-radar-contact-message')).toHaveText(
+        'Para ativar este módulo, entre em contato com o desenvolvedor responsável pelo sistema.'
+      );
+      expect(page.url()).toBe(beforeUrl);
+
+      await modal.getByRole('button', { name: 'Fechar', exact: true }).click();
+      await expect(modal).toHaveCount(0);
+    } finally {
+      await app.close();
+    }
+  });
+
   test('GERADOR + DADOS: importa CSV real e executa geração normal com UI responsiva', async () => {
     const { app, page } = await launchApp();
     try {
