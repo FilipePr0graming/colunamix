@@ -49,6 +49,17 @@ const RADAR_HISTORICO_FEATURES = [
     'Exibir concursos compatíveis com a configuração pesquisada',
 ];
 
+const ADVANCED_GROUP_ENGINE_FEATURES = [
+    'Processamento otimizado para muitos grupos de exclusão',
+    'Prévia de impacto antes da geração',
+    'Alerta de configuração pesada',
+    'Melhor estabilidade em filtros complexos',
+    'Análise de conflito entre grupos cadastrados',
+    'Preparação para análises avançadas com histórico',
+    'Melhor organização visual dos grupos',
+    'Mais segurança antes de gerar jogos com muitos filtros',
+];
+
 export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [mode, setMode] = useState<'lastN' | 'range'>('lastN');
     const [lastN, setLastN] = useState(20);
@@ -87,6 +98,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [notice, setNotice] = useState<{ tone: 'success' | 'info'; title: string; message: string } | null>(null);
     const [showRadarModal, setShowRadarModal] = useState(false);
     const [radarContactNotice, setRadarContactNotice] = useState(false);
+    const [showGroupEngineModal, setShowGroupEngineModal] = useState(false);
+    const [groupEngineContactNotice, setGroupEngineContactNotice] = useState(false);
     const resultsViewportRef = useRef<HTMLDivElement | null>(null);
     const previewRequestRef = useRef(0);
     const [resultsScrollTop, setResultsScrollTop] = useState(0);
@@ -331,6 +344,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const closeRadarModal = () => {
         setShowRadarModal(false);
         setRadarContactNotice(false);
+    };
+
+    const openGroupEngineModal = () => {
+        setGroupEngineContactNotice(false);
+        setShowGroupEngineModal(true);
+    };
+
+    const closeGroupEngineModal = () => {
+        setShowGroupEngineModal(false);
+        setGroupEngineContactNotice(false);
     };
 
     const handleExportConfig = async () => {
@@ -938,6 +961,46 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     </div>
                 </section>
 
+                {/* Extensão avançada de grupos */}
+                <section className="animate-fade-in pt-2">
+                    <div
+                        data-testid="locked-group-engine-card"
+                        className="relative overflow-hidden rounded-lg border border-cyan-300/10 bg-white/[0.018] p-4"
+                    >
+                        <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px] pointer-events-none"></div>
+                        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex min-w-0 items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-300/10 text-cyan-200 shadow-[0_0_24px_rgba(103,232,249,0.08)]">
+                                    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M13 2L4 14h7l-1 8 10-13h-7l0-7z"></path>
+                                    </svg>
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                                            Motor Avançado de Processamento de Grupos
+                                        </h4>
+                                        <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-cyan-200">
+                                            Extensão avançada
+                                        </span>
+                                    </div>
+                                    <p className="max-w-3xl text-[12px] leading-relaxed text-gray-400">
+                                        Otimize o processamento dos grupos de exclusão, com análise mais rápida, prévia de impacto e maior estabilidade em configurações pesadas.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={openGroupEngineModal}
+                                data-testid="locked-group-engine-details"
+                                className="btn-premium-secondary h-[38px] shrink-0 !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Ver detalhes
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
                 {/* 05. Padrões de Linha e Coluna */}
                 <section className="animate-fade-in border-t border-white/5 pt-6">
                     {(() => {
@@ -1516,6 +1579,99 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 type="button"
                                 onClick={() => setRadarContactNotice(true)}
                                 data-testid="locked-radar-contact"
+                                className="btn-premium-primary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Entrar em contato com o desenvolvedor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showGroupEngineModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a14]/90 p-6 backdrop-blur-md" data-testid="locked-group-engine-modal">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="group-engine-modal-title"
+                        className="premium-block max-h-[88vh] w-full max-w-2xl overflow-y-auto border-cyan-300/20 !p-0 shadow-2xl custom-scrollbar"
+                    >
+                        <div className="border-b border-white/5 p-6">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+                                        <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M13 2L4 14h7l-1 8 10-13h-7l0-7z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 id="group-engine-modal-title" className="text-lg font-black text-white uppercase tracking-widest">
+                                            Motor Avançado de Processamento de Grupos
+                                        </h3>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-cyan-200">
+                                            Extensão avançada
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeGroupEngineModal}
+                                    aria-label="Fechar detalhes do Motor Avançado de Processamento de Grupos"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-gray-500 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-5 p-6">
+                            <p className="text-sm leading-relaxed text-gray-300">
+                                Esta extensão melhora o desempenho e a análise dos grupos cadastrados, ajudando o sistema a processar configurações mais complexas com mais rapidez e segurança.
+                            </p>
+                            <p className="text-sm leading-relaxed text-gray-400">
+                                Indicada para uso com muitos grupos, filtros combinados e análises mais pesadas dentro do ColunaMix.
+                            </p>
+
+                            <div className="rounded-lg border border-white/5 bg-black/20 p-4">
+                                <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                    Recursos previstos
+                                </h4>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    {ADVANCED_GROUP_ENGINE_FEATURES.map(feature => (
+                                        <div key={feature} className="flex items-start gap-2 rounded-md border border-white/5 bg-white/[0.025] px-3 py-2">
+                                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-200/70"></span>
+                                            <span className="text-[11px] font-semibold leading-relaxed text-gray-300">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/5 px-4 py-3 text-[11px] font-bold text-cyan-100/90">
+                                Extensão avançada disponível para ativação futura.
+                            </div>
+
+                            {groupEngineContactNotice && (
+                                <div
+                                    data-testid="locked-group-engine-contact-message"
+                                    className="rounded-lg border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-[12px] font-semibold leading-relaxed text-brand-200"
+                                >
+                                    Para ativar esta extensão, entre em contato com o desenvolvedor responsável pelo sistema.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col-reverse gap-3 border-t border-white/5 p-6 sm:flex-row sm:items-center sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={closeGroupEngineModal}
+                                className="btn-premium-secondary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setGroupEngineContactNotice(true)}
+                                data-testid="locked-group-engine-contact"
                                 className="btn-premium-primary !px-5 text-[10px] font-black uppercase tracking-widest"
                             >
                                 Entrar em contato com o desenvolvedor

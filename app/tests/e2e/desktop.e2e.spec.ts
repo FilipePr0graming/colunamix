@@ -144,6 +144,67 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
+  test('MOTOR AVANÇADO DE GRUPOS: mostra extensão bloqueada abaixo dos grupos sem links externos', async () => {
+    const { app, page } = await launchApp();
+    try {
+      await page.locator('button[title="Gerador"]').click();
+
+      const exactGroupSection = page.getByTestId('exact-group-exclusions');
+      const card = page.getByTestId('locked-group-engine-card');
+      await expect(exactGroupSection).toBeVisible();
+      await expect(card).toBeVisible();
+      await expect(card).toContainText('Motor Avançado de Processamento de Grupos');
+      await expect(card).toContainText('Extensão avançada');
+      await expect(card).toContainText('Otimize o processamento dos grupos de exclusão');
+
+      const cardIsAfterGroupSection = await page.evaluate(() => {
+        const groupSection = document.querySelector('[data-testid="exact-group-exclusions"]');
+        const engineCard = document.querySelector('[data-testid="locked-group-engine-card"]');
+        if (!groupSection || !engineCard) return false;
+        return Boolean(groupSection.compareDocumentPosition(engineCard) & Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      expect(cardIsAfterGroupSection).toBeTruthy();
+
+      const beforeUrl = page.url();
+      await page.getByTestId('locked-group-engine-details').click();
+
+      const modal = page.getByTestId('locked-group-engine-modal');
+      await expect(modal).toBeVisible();
+      await expect(modal.getByRole('heading', { name: 'Motor Avançado de Processamento de Grupos' })).toBeVisible();
+      await expect(modal).toContainText('Esta extensão melhora o desempenho e a análise dos grupos cadastrados');
+      await expect(modal).toContainText('Processamento otimizado para muitos grupos de exclusão');
+      await expect(modal).toContainText('Prévia de impacto antes da geração');
+      await expect(modal).toContainText('Alerta de configuração pesada');
+      await expect(modal).toContainText('Análise de conflito entre grupos cadastrados');
+      await expect(modal).toContainText('Mais segurança antes de gerar jogos com muitos filtros');
+      await expect(modal).toContainText('Extensão avançada disponível para ativação futura.');
+
+      const externalTargets = await page.evaluate(() => {
+        const root = document.querySelector('[data-testid="locked-group-engine-modal"]');
+        const scopedLinks = Array.from(root?.querySelectorAll('a[href]') || []).map((link) => (link as HTMLAnchorElement).href);
+        return {
+          links: scopedLinks,
+          hasWhatsAppText: /whatsapp/i.test(root?.textContent || ''),
+          hasPhoneHref: scopedLinks.some((href) => href.startsWith('tel:')),
+        };
+      });
+      expect(externalTargets.links).toHaveLength(0);
+      expect(externalTargets.hasWhatsAppText).toBeFalsy();
+      expect(externalTargets.hasPhoneHref).toBeFalsy();
+
+      await page.getByTestId('locked-group-engine-contact').click();
+      await expect(page.getByTestId('locked-group-engine-contact-message')).toHaveText(
+        'Para ativar esta extensão, entre em contato com o desenvolvedor responsável pelo sistema.'
+      );
+      expect(page.url()).toBe(beforeUrl);
+
+      await modal.getByRole('button', { name: 'Fechar', exact: true }).click();
+      await expect(modal).toHaveCount(0);
+    } finally {
+      await app.close();
+    }
+  });
+
   test('GERADOR + DADOS: importa CSV real e executa geração normal com UI responsiva', async () => {
     const { app, page } = await launchApp();
     try {
