@@ -1,11 +1,41 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion } from '../../shared/types';
+import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
+import {
+    EXACT_GROUP_CATEGORIES,
+    EXACT_GROUP_INPUT_ERROR,
+    createDefaultExactGroupExclusions,
+    formatExactGroup,
+    normalizeExactGroupExclusions,
+    parseExactGroupInput,
+    toExactGroupKey,
+} from '../../shared/exactGroupExclusions';
 import { SmartModePayload, SmartPatternStat } from '../../core/smart-mode/types';
 import GridPicker from './GridPicker';
 import LotofacilGrid from './LotofacilGrid';
 
 interface Props { dbStatus: DbStatus | null; licenseStatus: LicenseStatus; }
+
+const EXACT_GROUP_LABELS: Record<ExactGroupCategory, string> = {
+    coreOdd: 'Miolo - Ímpares',
+    coreEven: 'Miolo - Pares',
+    borderOdd: 'Borda - Ímpares',
+    borderEven: 'Borda - Pares',
+};
+
+const EXACT_GROUP_PLACEHOLDERS: Record<ExactGroupCategory, string> = {
+    coreOdd: '07,13,19',
+    coreEven: '08,12,14',
+    borderOdd: '01,03,05,11,21,23',
+    borderEven: '02,04,06,10,22,24',
+};
+
+const createExactGroupTextState = (): Record<ExactGroupCategory, string> => ({
+    coreOdd: '',
+    coreEven: '',
+    borderOdd: '',
+    borderEven: '',
+});
 
 export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [mode, setMode] = useState<'lastN' | 'range'>('lastN');
@@ -19,6 +49,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [exclusions, setExclusions] = useState<Exclusion[]>([]);
     const [patternExclusions, setPatternExclusions] = useState<PatternExclusion[]>([]);
     const [patternIncludes, setPatternIncludes] = useState<PatternExclusion[]>([]);
+    const [exactGroupExclusions, setExactGroupExclusions] = useState<ExactGroupExclusions>(() => createDefaultExactGroupExclusions());
+    const [exactGroupInputs, setExactGroupInputs] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
+    const [exactGroupErrors, setExactGroupErrors] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
     const [patternTab, setPatternTab] = useState<'column' | 'row'>('row');
     const [patternInput, setPatternInput] = useState('');
     const [patternError, setPatternError] = useState('');
@@ -95,6 +128,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
+                if (config.exactGroupExclusions) {
+                    setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
+                }
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (typeof config.smartMode === 'boolean') setSmartMode(config.smartMode);
                 if (typeof config.smartHistoryCount === 'number') setSmartHistoryCount(config.smartHistoryCount);
@@ -107,11 +143,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     useEffect(() => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
-            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat,
+            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
             colPatternMode, rowPatternMode, smartMode, smartHistoryCount
         };
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat, colPatternMode, rowPatternMode, smartMode, smartHistoryCount]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, smartMode, smartHistoryCount]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -125,10 +161,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         exclusions,
         patternExclusions,
         patternIncludes,
+        exactGroupExclusions,
         colPatternMode,
         rowPatternMode,
         noRepeatDrawn: noRepeat,
-    }), [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, colPatternMode, rowPatternMode, noRepeat]);
+    }), [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
 
     useEffect(() => {
         if (noData) {
@@ -275,7 +312,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleExportConfig = async () => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
-            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, noRepeat,
+            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
             colPatternMode, rowPatternMode
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
@@ -303,6 +340,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
+                setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (config.colPatternMode) setColPatternMode(config.colPatternMode);
                 if (config.rowPatternMode) setRowPatternMode(config.rowPatternMode);
@@ -346,6 +384,50 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const clearAllExclusions = () => {
         if (confirm('Tem certeza que deseja remover todas as regras de exclusão?')) {
             setExclusions([]);
+        }
+    };
+
+    const updateExactGroupInput = (category: ExactGroupCategory, value: string) => {
+        setExactGroupInputs(prev => ({ ...prev, [category]: value }));
+        if (exactGroupErrors[category]) {
+            setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
+        }
+    };
+
+    const addExactGroup = (category: ExactGroupCategory) => {
+        const parsed = parseExactGroupInput(exactGroupInputs[category]);
+        if (!parsed.valid) {
+            setExactGroupErrors(prev => ({ ...prev, [category]: parsed.error || EXACT_GROUP_INPUT_ERROR }));
+            return;
+        }
+
+        const nextKey = toExactGroupKey(parsed.numbers);
+        const alreadyExists = exactGroupExclusions[category].some(group => toExactGroupKey(group) === nextKey);
+        if (alreadyExists) {
+            setExactGroupErrors(prev => ({ ...prev, [category]: 'Este grupo já foi adicionado.' }));
+            return;
+        }
+
+        setExactGroupExclusions(prev => ({
+            ...prev,
+            [category]: [...prev[category], parsed.numbers],
+        }));
+        setExactGroupInputs(prev => ({ ...prev, [category]: '' }));
+        setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
+    };
+
+    const removeExactGroup = (category: ExactGroupCategory, index: number) => {
+        setExactGroupExclusions(prev => ({
+            ...prev,
+            [category]: prev[category].filter((_, groupIndex) => groupIndex !== index),
+        }));
+    };
+
+    const clearExactGroups = (category: ExactGroupCategory) => {
+        if (exactGroupExclusions[category].length === 0) return;
+        if (confirm(`Remover todos os grupos de ${EXACT_GROUP_LABELS[category]}?`)) {
+            setExactGroupExclusions(prev => ({ ...prev, [category]: [] }));
+            setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
         }
     };
 
@@ -454,6 +536,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const allExcludedDozens = React.useMemo(() => 
         Array.from(new Set(exclusions.flatMap(e => e.values))).sort((a, b) => a - b)
     , [exclusions]);
+
+    const totalExactGroups = React.useMemo(
+        () => EXACT_GROUP_CATEGORIES.reduce((total, category) => total + exactGroupExclusions[category].length, 0),
+        [exactGroupExclusions]
+    );
 
     const visibleResults = React.useMemo(() => {
         const total = Math.min(games.length, 5000);
@@ -726,7 +813,108 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     )}
                 </section>
 
-                {/* 04. Padrões de Linha e Coluna (NEW) */}
+                {/* 04. Exclusão por Grupo de Dezenas */}
+                <section className="animate-fade-in border-t border-white/5 pt-6" data-testid="exact-group-exclusions">
+                    <div className="section-header">
+                        <div className="flex items-center gap-3">
+                            <h3 className="section-title">04. Exclusão por Grupo de Dezenas</h3>
+                            {totalExactGroups > 0 && (
+                                <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[9px] text-red-400 font-black tabular-nums">
+                                    {totalExactGroups}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-4">
+                        {EXACT_GROUP_CATEGORIES.map(category => {
+                            const groups = exactGroupExclusions[category];
+                            return (
+                                <div
+                                    key={category}
+                                    data-testid={`exact-group-card-${category}`}
+                                    className="col-span-12 md:col-span-6 xl:col-span-3 rounded-lg border border-white/5 bg-white/[0.02] p-3 space-y-3"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <h4 className="text-[10px] text-gray-300 font-black uppercase tracking-widest">
+                                                {EXACT_GROUP_LABELS[category]}
+                                            </h4>
+                                            <span className="text-[9px] text-gray-600 font-bold tabular-nums">
+                                                {groups.length} grupo{groups.length === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
+                                        {groups.length > 0 && (
+                                            <button
+                                                onClick={() => clearExactGroups(category)}
+                                                className="text-[9px] text-gray-600 hover:text-red-400 font-black uppercase tracking-widest transition-colors"
+                                            >
+                                                Limpar
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                data-testid={`exact-group-input-${category}`}
+                                                value={exactGroupInputs[category]}
+                                                onChange={event => updateExactGroupInput(category, event.target.value)}
+                                                onKeyDown={event => event.key === 'Enter' && addExactGroup(category)}
+                                                className={`desktop-control h-[36px] min-w-0 flex-1 font-mono text-brand-300 ${exactGroupErrors[category] ? 'border-red-500/50' : ''}`}
+                                                placeholder={EXACT_GROUP_PLACEHOLDERS[category]}
+                                            />
+                                            <button
+                                                onClick={() => addExactGroup(category)}
+                                                data-testid={`exact-group-add-${category}`}
+                                                className="btn-premium-primary h-[36px] !px-3 !py-0 text-[9px] shrink-0"
+                                            >
+                                                Adicionar grupo
+                                            </button>
+                                        </div>
+                                        {exactGroupErrors[category] && (
+                                            <p className="text-[10px] text-red-500 font-bold animate-fade-in">
+                                                {exactGroupErrors[category]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="min-h-[78px] max-h-[128px] overflow-y-auto rounded-lg border border-dashed border-white/5 bg-black/20 p-2 custom-scrollbar">
+                                        {groups.length === 0 ? (
+                                            <div className="h-full min-h-[58px] flex items-center justify-center text-[9px] text-gray-700 font-black uppercase tracking-widest text-center">
+                                                Nenhum grupo cadastrado
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {groups.map((group, index) => (
+                                                    <div
+                                                        key={`${category}-${formatExactGroup(group)}-${index}`}
+                                                        data-testid={`exact-group-item-${category}`}
+                                                        className="flex items-center justify-between gap-2 rounded-md border border-white/5 bg-white/[0.03] px-2 py-1.5 group"
+                                                    >
+                                                        <span className="min-w-0 truncate font-mono text-[11px] font-black text-brand-300">
+                                                            {formatExactGroup(group)}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => removeExactGroup(category, index)}
+                                                            aria-label={`Remover grupo ${formatExactGroup(group)} de ${EXACT_GROUP_LABELS[category]}`}
+                                                            className="w-6 h-6 flex items-center justify-center rounded text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors font-black"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* 05. Padrões de Linha e Coluna */}
                 <section className="animate-fade-in border-t border-white/5 pt-6">
                     {(() => {
                         const activeMode = patternTab === 'column' ? colPatternMode : rowPatternMode;
@@ -738,7 +926,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             <>
                                 <div className="section-header">
                                     <div className="flex items-center gap-3">
-                                        <h3 className="section-title">04. Padrões de Distribuição</h3>
+                                        <h3 className="section-title">05. Padrões de Distribuição</h3>
                                         {totalAll > 0 && (
                                             <span className="px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-[9px] text-brand-400 font-black tabular-nums">
                                                 {list.length}

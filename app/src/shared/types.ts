@@ -33,6 +33,15 @@ export interface PatternExclusion {
     pattern: number[];
 }
 
+export type ExactGroupCategory = 'coreOdd' | 'coreEven' | 'borderOdd' | 'borderEven';
+
+export interface ExactGroupExclusions {
+    coreOdd: number[][];
+    coreEven: number[][];
+    borderOdd: number[][];
+    borderEven: number[][];
+}
+
 export interface GeneratorConfig {
     mode: 'lastN' | 'range';
     lastN: number;
@@ -45,6 +54,7 @@ export interface GeneratorConfig {
     exclusions: Exclusion[];
     patternExclusions: PatternExclusion[];
     patternIncludes?: PatternExclusion[];
+    exactGroupExclusions?: ExactGroupExclusions;
     colPatternMode?: 'exclude' | 'include';
     rowPatternMode?: 'exclude' | 'include';
     noRepeatDrawn: boolean;

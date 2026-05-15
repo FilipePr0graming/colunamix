@@ -1,13 +1,14 @@
 {
   "name": "colunamix",
-  "version": "1.8.13",
+  "version": "1.8.14",
   "description": "ColunaMix - Gerador Lotofácil por Grupos de Coluna",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "dist": "vite build && electron-builder",
-    "test:e2e": "npm run build && playwright test"
+    "test:unit": "playwright test tests/unit",
+    "test:e2e": "npm run build && playwright test tests/e2e"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

@@ -350,7 +350,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button:has-text("Padrão Linhas")').click();
       await page.locator('button:has-text("Usar Somente")').click();
       await page.locator('input[placeholder="Ex: 43332"]').fill('33333');
-      await page.locator('button:has-text("ADICIONAR")').click();
+      await page.getByRole('button', { name: 'ADICIONAR', exact: true }).click();
 
       await page.locator('button:has-text("Modo Excluir")').click();
       await page.locator('button:has-text("Puxar e Excluir Padrões")').click();
@@ -376,6 +376,192 @@ test.describe('ColunaMix Desktop - E2E', () => {
       });
       expect(apiResult).toHaveLength(0);
     } finally {
+      await app.close();
+    }
+  });
+
+  test('EXCLUSÃO POR GRUPO EXATO: UI, preview, geração e lote removem só a categoria exata', async () => {
+    const savePath = path.join(os.tmpdir(), `cmx_exact_groups_${Date.now()}.txt`);
+    const { app, page } = await launchApp({ PW_TEST_SAVE_PATH: savePath });
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_exact_groups_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rows = [
+        '9101,01,02,03,04,05,06,07,08,10,11,12,13,14,19,20',
+        '9102,01,02,03,04,05,06,07,08,10,11,12,13,14,20,21',
+        '9103,01,02,03,04,05,07,08,09,10,11,12,13,14,19,20',
+        '9104,01,02,03,04,05,06,07,08,09,11,12,13,14,21,23',
+        '9105,01,02,03,04,05,07,08,09,11,12,13,14,21,23,25',
+      ];
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      const coreExactKey = '01,02,03,04,05,06,07,08,10,11,12,13,14,19,20';
+      const coreLessKey = '01,02,03,04,05,06,07,08,10,11,12,13,14,20,21';
+      const coreMoreKey = '01,02,03,04,05,07,08,09,10,11,12,13,14,19,20';
+      const borderExactKey = '01,02,03,04,05,06,07,08,09,11,12,13,14,21,23';
+      const borderExtraKey = '01,02,03,04,05,07,08,09,11,12,13,14,21,23,25';
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+      await expect(page.getByTestId('exact-group-exclusions')).toBeVisible();
+
+      await page.getByTestId('exact-group-input-coreOdd').fill('19, 07, 13');
+      await page.getByTestId('exact-group-add-coreOdd').click();
+      await expect(page.getByTestId('exact-group-item-coreOdd').filter({ hasText: '07,13,19' })).toBeVisible();
+
+      await page.waitForFunction(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return saved.exactGroupExclusions?.coreOdd?.[0]?.join(',') === '7,13,19';
+      });
+
+      const coreConfig = await page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return {
+          mode: 'lastN',
+          lastN: 5,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 10000,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          exactGroupExclusions: saved.exactGroupExclusions,
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+      });
+
+      const coreResult = await page.evaluate(async (config) => {
+        const api = (window as any).electronAPI;
+        const preview = await api.generatorPreview(config);
+        const games = await api.generatorGenerate(config);
+        return { preview, keys: games.map((game: { key: string }) => game.key) };
+      }, coreConfig);
+
+      expect(coreResult.keys).not.toContain(coreExactKey);
+      expect(coreResult.keys).toContain(coreLessKey);
+      expect(coreResult.keys).toContain(coreMoreKey);
+      expect(coreResult.preview.totalCombinations).toBe(coreResult.keys.length);
+
+      await page.getByTestId('exact-group-input-borderOdd').fill('01,03,05,11,21,23');
+      await page.getByTestId('exact-group-add-borderOdd').click();
+      await expect(page.getByTestId('exact-group-item-borderOdd').filter({ hasText: '01,03,05,11,21,23' })).toBeVisible();
+
+      await page.waitForFunction(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return saved.exactGroupExclusions?.borderOdd?.[0]?.join(',') === '1,3,5,11,21,23';
+      });
+
+      const bothConfig = await page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return {
+          mode: 'lastN',
+          lastN: 5,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 10000,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          exactGroupExclusions: saved.exactGroupExclusions,
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+      });
+
+      const bothResult = await page.evaluate(async (config) => {
+        const api = (window as any).electronAPI;
+        const preview = await api.generatorPreview(config);
+        const games = await api.generatorGenerate(config);
+        const mass = await api.generatorSaveMass(config, games.length);
+        return { preview, mass, keys: games.map((game: { key: string }) => game.key) };
+      }, bothConfig);
+
+      expect(bothResult.keys).not.toContain(coreExactKey);
+      expect(bothResult.keys).not.toContain(borderExactKey);
+      expect(bothResult.keys).toContain(coreLessKey);
+      expect(bothResult.keys).toContain(coreMoreKey);
+      expect(bothResult.keys).toContain(borderExtraKey);
+      expect(bothResult.preview.totalCombinations).toBe(bothResult.keys.length);
+      expect(bothResult.mass.success).toBeTruthy();
+      expect(bothResult.mass.count).toBe(bothResult.keys.length);
+      expect(fs.existsSync(savePath)).toBeTruthy();
+
+      await page.getByLabel(/Remover grupo 07,13,19/).click();
+      await expect(page.getByTestId('exact-group-item-coreOdd').filter({ hasText: '07,13,19' })).toHaveCount(0);
+
+      const withoutCoreConfig = await page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return {
+          mode: 'lastN',
+          lastN: 5,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 10000,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          exactGroupExclusions: saved.exactGroupExclusions,
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+      });
+
+      const withoutCoreKeys = await page.evaluate(async (config) => {
+        const games = await (window as any).electronAPI.generatorGenerate(config);
+        return games.map((game: { key: string }) => game.key);
+      }, withoutCoreConfig);
+
+      expect(withoutCoreKeys).toContain(coreExactKey);
+      expect(withoutCoreKeys).not.toContain(borderExactKey);
+
+      await page.getByLabel(/Remover grupo 01,03,05,11,21,23/).click();
+      await expect(page.getByTestId('exact-group-item-borderOdd').filter({ hasText: '01,03,05,11,21,23' })).toHaveCount(0);
+
+      const withoutBorderConfig = await page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return {
+          mode: 'lastN',
+          lastN: 5,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 10000,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          exactGroupExclusions: saved.exactGroupExclusions,
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+      });
+
+      const withoutBorderKeys = await page.evaluate(async (config) => {
+        const games = await (window as any).electronAPI.generatorGenerate(config);
+        return games.map((game: { key: string }) => game.key);
+      }, withoutBorderConfig);
+
+      expect(withoutBorderKeys).toContain(borderExactKey);
+    } finally {
+      if (fs.existsSync(savePath)) fs.unlinkSync(savePath);
       await app.close();
     }
   });

@@ -1,5 +1,6 @@
 import { GeneratorConfig, GeneratedGame } from './types';
 import { collectUniquePatterns, getRowPattern, getColPattern } from './columns';
+import { buildExactGroupExclusionKeySets, shouldExcludeByExactGroupWithKeySets } from './exactGroupExclusions';
 
 export class ChunkedGenerator {
     private colPatterns: number[][][];
@@ -17,6 +18,7 @@ export class ChunkedGenerator {
     private includedColPatterns: Set<string>;
     private colPatternMode: 'exclude' | 'include';
     private rowPatternMode: 'exclude' | 'include';
+    private exactGroupExclusionKeys: ReturnType<typeof buildExactGroupExclusionKeySets>;
 
     // Search stack: { colIdx, currentSet, currentSum, nextPatternIdx }
     private stack: { colIdx: number, currentSet: number[], currentSum: number, nextPatternIdx: number }[] = [];
@@ -35,6 +37,7 @@ export class ChunkedGenerator {
         const includeList = config.patternIncludes || [];
         this.includedRowPatterns = new Set(includeList.filter(p => p.type === 'row').map(p => p.pattern.join(',')));
         this.includedColPatterns = new Set(includeList.filter(p => p.type === 'column').map(p => p.pattern.join(',')));
+        this.exactGroupExclusionKeys = buildExactGroupExclusionKeySets(config.exactGroupExclusions);
 
         this.colPatterns = [];
         for (let col = 1; col <= 5; col++) {
@@ -105,7 +108,7 @@ export class ChunkedGenerator {
                             const rowPattern = getRowPattern(gameResult);
                             const colPattern = getColPattern(gameResult);
 
-                            let allowed = true;
+                            let allowed = !shouldExcludeByExactGroupWithKeySets(gameResult, this.exactGroupExclusionKeys);
                             // Column Pattern Mode
                             if (this.colPatternMode === 'include') {
                                 if (!this.includedColPatterns.has(colPattern)) allowed = false;
