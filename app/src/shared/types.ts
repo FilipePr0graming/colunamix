@@ -88,6 +88,13 @@ export interface ApplyHistoryResult {
     available: number;
 }
 
+export interface ApplyExactGroupHistoryResult {
+    groups: number[][];
+    drawsUsed: number;
+    requested: number;
+    available: number;
+}
+
 export interface DbStatus {
     path: string;
     drawCount: number;
@@ -138,6 +145,7 @@ export interface ElectronAPI {
     generatorExportConfig: (config: any) => Promise<boolean>;
     generatorImportConfig: () => Promise<any>;
     generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => Promise<ApplyHistoryResult>;
+    generatorApplyExactGroupHistory: (count: number, category: ExactGroupCategory, range: HistoryRangeConfig) => Promise<ApplyExactGroupHistoryResult>;
     onGeneratorProgress: (callback: (data: { current: number; total: number }) => void) => () => void;
     exportSave: (content: string) => Promise<boolean>;
     licenseGetStatus: () => Promise<LicenseInfo>;

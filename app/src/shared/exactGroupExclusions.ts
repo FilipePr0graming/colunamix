@@ -66,6 +66,20 @@ export function parseExactGroupInput(input: string): { valid: boolean; numbers: 
     }
 }
 
+export function formatExactGroupInputText(input: string): string {
+    const cleaned = input.replace(/[^\d,]/g, '');
+    const segments = cleaned.split(',');
+
+    if (!cleaned.includes(',') || segments.some(segment => segment.length > 2)) {
+        const digits = cleaned.replace(/\D/g, '');
+        return digits.match(/.{1,2}/g)?.join(',') || '';
+    }
+
+    return segments
+        .filter((segment, index) => segment.length > 0 || (index === segments.length - 1 && cleaned.endsWith(',')))
+        .join(',');
+}
+
 export function areGroupsEqual(groupA: number[], groupB: number[]): boolean {
     const normalizedA = normalizeGroup(groupA);
     const normalizedB = normalizeGroup(groupB);
@@ -124,6 +138,16 @@ export function getBorderEvenNumbers(gameNumbers: number[]): number[] {
     return normalizeGameSubset(gameNumbers.filter(number => BORDER_SET.has(number) && number % 2 === 0));
 }
 
+export function getExactGroupNumbersForCategory(gameNumbers: number[], category: ExactGroupCategory): number[] {
+    return category === 'coreOdd'
+        ? getCoreOddNumbers(gameNumbers)
+        : category === 'coreEven'
+            ? getCoreEvenNumbers(gameNumbers)
+            : category === 'borderOdd'
+                ? getBorderOddNumbers(gameNumbers)
+                : getBorderEvenNumbers(gameNumbers);
+}
+
 export function buildExactGroupExclusionKeySets(exclusions?: Partial<ExactGroupExclusions> | null): Record<ExactGroupCategory, Set<string>> {
     const normalized = normalizeExactGroupExclusions(exclusions);
 
@@ -136,13 +160,7 @@ export function buildExactGroupExclusionKeySets(exclusions?: Partial<ExactGroupE
 }
 
 function getCategoryKey(gameNumbers: number[], category: ExactGroupCategory): string | null {
-    const numbers = category === 'coreOdd'
-        ? getCoreOddNumbers(gameNumbers)
-        : category === 'coreEven'
-            ? getCoreEvenNumbers(gameNumbers)
-            : category === 'borderOdd'
-                ? getBorderOddNumbers(gameNumbers)
-                : getBorderEvenNumbers(gameNumbers);
+    const numbers = getExactGroupNumbersForCategory(gameNumbers, category);
 
     return numbers.length > 0
         ? numbers.map(number => number.toString().padStart(2, '0')).join('-')

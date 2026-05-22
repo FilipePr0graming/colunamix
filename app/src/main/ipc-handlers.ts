@@ -4,8 +4,9 @@ import { once } from 'events';
 import { getDbStatus, importDraws, getDraws, clearDraws, getState, setState } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { ChunkedGenerator } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, PatternExclusion, ApplyHistoryResult, SaveMassResult } from '../shared/types';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory } from '../shared/types';
 import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
+import { getExactGroupNumbersForCategory, toExactGroupKey } from '../shared/exactGroupExclusions';
 import { analyzeSmartMode } from '../core/smart-mode/analyzer';
 import { parseSmartModeMemory, rememberSmartModeUse, serializeSmartModeMemory } from '../core/smart-mode/memory';
 import { applySmartSuggestions, buildSmartSuggestions, scoreAndRankGames } from '../core/smart-mode/suggestions';
@@ -520,6 +521,32 @@ export function registerIpcHandlers(): void {
         }
         return {
             patterns: exclusions,
+            drawsUsed: history.draws.length,
+            requested: history.requested,
+            available: history.available,
+        };
+    });
+
+    ipcMain.handle('generator:apply-exact-group-history', async (_e, count: number, category: ExactGroupCategory, range: HistoryRangeConfig): Promise<ApplyExactGroupHistoryResult> => {
+        const safeRange: HistoryRangeConfig = range && (range.mode === 'lastN' || range.mode === 'range')
+            ? range
+            : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
+
+        const history = resolveHistoryDraws(count, safeRange);
+        const groups: number[][] = [];
+        const seen = new Set<string>();
+
+        for (const draw of history.draws) {
+            const group = getExactGroupNumbersForCategory(draw.numbers, category);
+            if (group.length === 0) continue;
+            const key = toExactGroupKey(group);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            groups.push(group);
+        }
+
+        return {
+            groups,
             drawsUsed: history.draws.length,
             requested: history.requested,
             available: history.available,

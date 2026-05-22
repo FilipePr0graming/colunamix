@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     generatorImportConfig: () => ipcRenderer.invoke('generator:import-config'),
     generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: any) =>
         ipcRenderer.invoke('generator:apply-history', count, scope, range),
+    generatorApplyExactGroupHistory: (count: number, category: string, range: any) =>
+        ipcRenderer.invoke('generator:apply-exact-group-history', count, category, range),
     onGeneratorProgress: (callback: any) => {
         const listener = (_e: any, data: any) => callback(data);
         ipcRenderer.on('generator:progress', listener);

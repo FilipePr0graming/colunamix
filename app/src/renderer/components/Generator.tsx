@@ -6,6 +6,7 @@ import {
     EXACT_GROUP_INPUT_ERROR,
     createDefaultExactGroupExclusions,
     formatExactGroup,
+    formatExactGroupInputText,
     normalizeExactGroupExclusions,
     parseExactGroupInput,
     toExactGroupKey,
@@ -35,6 +36,13 @@ const createExactGroupTextState = (): Record<ExactGroupCategory, string> => ({
     coreEven: '',
     borderOdd: '',
     borderEven: '',
+});
+
+const createExactGroupHistoryCountState = (): Record<ExactGroupCategory, number> => ({
+    coreOdd: 10,
+    coreEven: 10,
+    borderOdd: 10,
+    borderEven: 10,
 });
 
 const RADAR_HISTORICO_FEATURES = [
@@ -75,6 +83,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [exactGroupExclusions, setExactGroupExclusions] = useState<ExactGroupExclusions>(() => createDefaultExactGroupExclusions());
     const [exactGroupInputs, setExactGroupInputs] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
     const [exactGroupErrors, setExactGroupErrors] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
+    const [exactGroupHistoryCounts, setExactGroupHistoryCounts] = useState<Record<ExactGroupCategory, number>>(() => createExactGroupHistoryCountState());
     const [patternTab, setPatternTab] = useState<'column' | 'row'>('row');
     const [patternInput, setPatternInput] = useState('');
     const [patternError, setPatternError] = useState('');
@@ -158,6 +167,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exactGroupExclusions) {
                     setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
                 }
+                if (config.exactGroupHistoryCounts) {
+                    setExactGroupHistoryCounts({ ...createExactGroupHistoryCountState(), ...config.exactGroupHistoryCounts });
+                }
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (typeof config.smartMode === 'boolean') setSmartMode(config.smartMode);
                 if (typeof config.smartHistoryCount === 'number') setSmartHistoryCount(config.smartHistoryCount);
@@ -171,10 +183,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode, smartMode, smartHistoryCount
+            colPatternMode, rowPatternMode, smartMode, smartHistoryCount, exactGroupHistoryCounts
         };
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, smartMode, smartHistoryCount]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, smartMode, smartHistoryCount, exactGroupHistoryCounts]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -360,7 +372,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode
+            colPatternMode, rowPatternMode, exactGroupHistoryCounts
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
         if (success) {
@@ -388,6 +400,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
                 setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
+                if (config.exactGroupHistoryCounts) {
+                    setExactGroupHistoryCounts({ ...createExactGroupHistoryCountState(), ...config.exactGroupHistoryCounts });
+                }
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (config.colPatternMode) setColPatternMode(config.colPatternMode);
                 if (config.rowPatternMode) setRowPatternMode(config.rowPatternMode);
@@ -435,10 +450,17 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const updateExactGroupInput = (category: ExactGroupCategory, value: string) => {
-        setExactGroupInputs(prev => ({ ...prev, [category]: value }));
+        setExactGroupInputs(prev => ({ ...prev, [category]: formatExactGroupInputText(value) }));
         if (exactGroupErrors[category]) {
             setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
         }
+    };
+
+    const updateExactGroupHistoryCount = (category: ExactGroupCategory, value: string) => {
+        setExactGroupHistoryCounts(prev => ({
+            ...prev,
+            [category]: value === '' ? 0 : Math.max(1, Math.trunc(Number(value) || 1)),
+        }));
     };
 
     const addExactGroup = (category: ExactGroupCategory) => {
@@ -475,6 +497,55 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         if (confirm(`Remover todos os grupos de ${EXACT_GROUP_LABELS[category]}?`)) {
             setExactGroupExclusions(prev => ({ ...prev, [category]: [] }));
             setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
+        }
+    };
+
+    const applyExactGroupHistory = async (category: ExactGroupCategory) => {
+        if (noData) {
+            setError('Importe concursos primeiro na aba "Dados".');
+            return;
+        }
+
+        const count = Math.max(1, Math.trunc(exactGroupHistoryCounts[category] || 1));
+        setLoading(true);
+        setError('');
+
+        try {
+            const range = {
+                mode,
+                lastN: count,
+                rangeStart,
+                rangeEnd,
+            };
+            const pulled = await window.electronAPI.generatorApplyExactGroupHistory(count, category, range);
+            const existing = new Set(exactGroupExclusions[category].map(toExactGroupKey));
+            const groupsToAdd = (pulled.groups || []).filter(group => {
+                const key = toExactGroupKey(group);
+                if (existing.has(key)) return false;
+                existing.add(key);
+                return true;
+            });
+
+            if (groupsToAdd.length > 0) {
+                setExactGroupExclusions(prev => ({
+                    ...prev,
+                    [category]: [...prev[category], ...groupsToAdd],
+                }));
+            }
+            setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
+
+            const drawsLabel = `${pulled.drawsUsed.toLocaleString('pt-BR')} concurso${pulled.drawsUsed !== 1 ? 's' : ''}`;
+            setNotice({
+                tone: groupsToAdd.length > 0 ? 'success' : 'info',
+                title: 'Grupos históricos aplicados',
+                message: groupsToAdd.length > 0
+                    ? `${groupsToAdd.length} grupo(s) de ${EXACT_GROUP_LABELS[category]} adicionados a partir de ${drawsLabel}.`
+                    : `Nenhum grupo novo de ${EXACT_GROUP_LABELS[category]} foi encontrado em ${drawsLabel}.`,
+            });
+        } catch (e: any) {
+            setError(e?.message || 'Erro ao puxar grupos históricos.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -891,14 +962,36 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                                 {groups.length} grupo{groups.length === 1 ? '' : 's'}
                                             </span>
                                         </div>
-                                        {groups.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    data-testid={`exact-group-history-count-${category}`}
+                                                    value={exactGroupHistoryCounts[category]}
+                                                    onChange={event => updateExactGroupHistoryCount(category, event.target.value)}
+                                                    className="desktop-control h-[26px] w-[54px] px-2 text-center text-[10px] font-black tabular-nums"
+                                                    title={`Quantidade de concursos anteriores para adicionar em ${EXACT_GROUP_LABELS[category]}`}
+                                                />
+                                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">conc.</span>
+                                            </div>
                                             <button
-                                                onClick={() => clearExactGroups(category)}
-                                                className="text-[9px] text-gray-600 hover:text-red-400 font-black uppercase tracking-widest transition-colors"
+                                                onClick={() => applyExactGroupHistory(category)}
+                                                data-testid={`exact-group-history-apply-${category}`}
+                                                className="h-[26px] rounded-md border border-brand-500/30 bg-brand-500/10 px-2 text-[8px] font-black uppercase tracking-widest text-brand-300 transition-colors hover:bg-brand-500/20 hover:text-white"
+                                                title={`Adicionar grupos dos concursos anteriores em ${EXACT_GROUP_LABELS[category]}`}
                                             >
-                                                Limpar
+                                                Puxar
                                             </button>
-                                        )}
+                                            {groups.length > 0 && (
+                                                <button
+                                                    onClick={() => clearExactGroups(category)}
+                                                    className="text-[9px] text-gray-600 hover:text-red-400 font-black uppercase tracking-widest transition-colors"
+                                                >
+                                                    Limpar
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">

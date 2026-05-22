@@ -5,6 +5,8 @@ import {
   getBorderOddNumbers,
   getCoreEvenNumbers,
   getCoreOddNumbers,
+  getExactGroupNumbersForCategory,
+  formatExactGroupInputText,
   normalizeGroup,
   parseExactGroupInput,
   shouldExcludeByExactGroup,
@@ -102,6 +104,22 @@ test.describe('exact group exclusions', () => {
       valid: true,
       numbers: [7, 13, 19],
     });
+  });
+
+  test('adiciona vírgulas automaticamente ao digitar dezenas em pares', () => {
+    expect(formatExactGroupInputText('0204')).toBe('02,04');
+    expect(formatExactGroupInputText('061020')).toBe('06,10,20');
+    expect(formatExactGroupInputText('02,0410')).toBe('02,04,10');
+    expect(formatExactGroupInputText('7,13')).toBe('7,13');
+  });
+
+  test('extrai o grupo correto para cadastro histórico por categoria', () => {
+    const game = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 19, 20];
+
+    expect(getExactGroupNumbersForCategory(game, 'coreOdd')).toEqual([7, 13, 19]);
+    expect(getExactGroupNumbersForCategory(game, 'coreEven')).toEqual([8, 12, 14]);
+    expect(getExactGroupNumbersForCategory(game, 'borderOdd')).toEqual([1, 3, 5, 11]);
+    expect(getExactGroupNumbersForCategory(game, 'borderEven')).toEqual([2, 4, 6, 10, 20]);
   });
 
   test('normaliza duplicidade dentro do grupo', () => {
