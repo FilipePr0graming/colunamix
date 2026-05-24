@@ -6,7 +6,15 @@ on:
       - main
     tags:
       - 'v*'
+  release:
+    types:
+      - created
+      - published
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to attach the .exe to, for example v1.8.17
+        required: false
 
 permissions:
   contents: write
@@ -42,8 +50,9 @@ jobs:
             app/release/*.exe
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.release.tag_name || github.event.inputs.release_tag || github.ref_name }}
           files: |
             app/release/*.exe
