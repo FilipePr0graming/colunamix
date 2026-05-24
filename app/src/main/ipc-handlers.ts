@@ -15,6 +15,13 @@ import { SmartModeGenerateResult, SmartModeOptions, SmartModePayload } from '../
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
 type HistoryDraw = { contest: number; numbers: number[] };
 const SMART_MEMORY_KEY = 'smartModeMemory';
+const latestPreviewRequestBySender = new Map<number, number>();
+
+type PreviewOptions = {
+    requestId?: number;
+    maxDurationMs?: number;
+    shouldContinue?: () => boolean;
+};
 
 function waitForTick(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
@@ -162,17 +169,28 @@ async function finalizeTextStream(stream: import('fs').WriteStream): Promise<voi
     await once(stream, 'finish');
 }
 
-async function countGeneratedGames(draws: HistoryDraw[], config: GeneratorConfig): Promise<number> {
-    const gen = new ChunkedGenerator(draws, { ...config, maxJogos: Number.MAX_SAFE_INTEGER, countOnly: true });
+async function countGeneratedGames(draws: HistoryDraw[], config: GeneratorConfig, options: PreviewOptions = {}): Promise<{ count: number; isPartial: boolean }> {
+    const isBoundedPreview = Boolean(options.maxDurationMs || options.shouldContinue);
+    const maxJogos = isBoundedPreview
+        ? Math.max(0, Math.trunc(config.maxJogos || 0))
+        : Number.MAX_SAFE_INTEGER;
+    const gen = new ChunkedGenerator(draws, { ...config, maxJogos, countOnly: true });
+    const startedAt = Date.now();
+
     while (true) {
-        const result = gen.generateNextChunk(5000, 20);
-        if (!result.hasMore) break;
+        const result = gen.generateNextChunk(5000, 12);
+        if (!result.hasMore) return { count: gen.getProcessedCount(), isPartial: false };
+        if (options.shouldContinue && !options.shouldContinue()) {
+            return { count: gen.getProcessedCount(), isPartial: true };
+        }
+        if (options.maxDurationMs && Date.now() - startedAt >= options.maxDurationMs) {
+            return { count: gen.getProcessedCount(), isPartial: true };
+        }
         await waitForTick();
     }
-    return gen.getProcessedCount();
 }
 
-async function buildPreview(draws: HistoryDraw[], config: GeneratorConfig): Promise<CombinationPreview> {
+async function buildPreview(draws: HistoryDraw[], config: GeneratorConfig, options: PreviewOptions = {}): Promise<CombinationPreview> {
     if (draws.length === 0) {
         return { totalCombinations: 0, patternsPerCol: [0, 0, 0, 0, 0], drawCount: 0 };
     }
@@ -232,16 +250,17 @@ async function buildPreview(draws: HistoryDraw[], config: GeneratorConfig): Prom
         patternsPerCol.push(selectedKeys.size);
     }
 
-    const totalCombinations = await countGeneratedGames(draws, config);
+    const generatedCount = await countGeneratedGames(draws, config, options);
     const hasRowExclusions =
         (config.patternExclusions || []).some(p => p.type === 'row') ||
         (config.patternIncludes || []).some(p => p.type === 'row');
 
     return {
-        totalCombinations,
+        totalCombinations: generatedCount.count,
         patternsPerCol,
         drawCount: draws.length,
-        hasRowExclusions
+        hasRowExclusions,
+        isPartial: generatedCount.isPartial,
     };
 }
 
@@ -299,9 +318,20 @@ export function registerIpcHandlers(): void {
         return results;
     });
 
-    ipcMain.handle('generator:preview', async (_e, config: GeneratorConfig): Promise<CombinationPreview> => {
+    ipcMain.handle('generator:preview', async (event, config: GeneratorConfig, options?: PreviewOptions): Promise<CombinationPreview> => {
+        const senderId = event.sender.id;
+        const requestId = options?.requestId;
+        if (typeof requestId === 'number') {
+            latestPreviewRequestBySender.set(senderId, requestId);
+        }
+
         const draws = resolveBaseDraws(config);
-        return buildPreview(draws, config);
+        return buildPreview(draws, config, {
+            maxDurationMs: options?.maxDurationMs,
+            shouldContinue: typeof requestId === 'number'
+                ? () => latestPreviewRequestBySender.get(senderId) === requestId
+                : undefined,
+        });
     });
 
     ipcMain.handle('generator:generate', async (_e, config: GeneratorConfig): Promise<GeneratedGame[]> => {

@@ -72,6 +72,7 @@ export interface CombinationPreview {
     patternsPerCol: number[];
     drawCount: number;
     hasRowExclusions?: boolean;
+    isPartial?: boolean;
 }
 
 export interface SaveMassResult {
@@ -137,7 +138,7 @@ export interface ElectronAPI {
     dbClear: () => Promise<{ success: boolean }>;
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) => Promise<Draw[]>;
     dbGetStats: (startContest: number) => Promise<PatternStatsEntry[]>;
-    generatorPreview: (config: GeneratorConfig) => Promise<CombinationPreview>;
+    generatorPreview: (config: GeneratorConfig, options?: { requestId?: number; maxDurationMs?: number }) => Promise<CombinationPreview>;
     generatorGenerate: (config: GeneratorConfig) => Promise<GeneratedGame[]>;
     smartModeAnalyze: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModePayload>;
     smartModeGenerate: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModeGenerateResult>;

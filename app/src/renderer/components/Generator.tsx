@@ -97,6 +97,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [smartLoading, setSmartLoading] = useState(false);
     const [games, setGames] = useState<GeneratedGame[]>([]);
     const [loading, setLoading] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
     const [error, setError] = useState('');
     const [showHelp, setShowHelp] = useState(false);
     const [preview, setPreview] = useState<CombinationPreview | null>(null);
@@ -215,7 +216,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const requestId = ++previewRequestRef.current;
         const timer = window.setTimeout(async () => {
             try {
-                const res = await window.electronAPI.generatorPreview(buildGeneratorConfig());
+                const res = await window.electronAPI.generatorPreview(buildGeneratorConfig(), {
+                    requestId,
+                    maxDurationMs: 350,
+                });
                 if (previewRequestRef.current !== requestId) return;
                 setPreview(res);
             } catch (e: any) {
@@ -276,7 +280,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
     const handleMassGenerate = async () => {
         if (noData) return;
-        const total = preview?.totalCombinations ? Math.min(maxJogos, preview.totalCombinations) : maxJogos;
+        const total = preview?.totalCombinations && !preview.isPartial ? Math.min(maxJogos, preview.totalCombinations) : maxJogos;
         setLoading(true); setError(''); setNotice(null); setMassProgress({ current: 0, total: Math.max(total, 1) });
         try {
             const res = await window.electronAPI.generatorSaveMass(buildGeneratorConfig(), total);
@@ -507,7 +511,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         }
 
         const count = Math.max(1, Math.trunc(exactGroupHistoryCounts[category] || 1));
-        setLoading(true);
+        setHistoryLoading(true);
         setError('');
 
         try {
@@ -545,7 +549,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         } catch (e: any) {
             setError(e?.message || 'Erro ao puxar grupos históricos.');
         } finally {
-            setLoading(false);
+            setHistoryLoading(false);
         }
     };
 
@@ -599,7 +603,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             setError('Importe concursos primeiro na aba "Dados".');
             return;
         }
-        setLoading(true);
+        setHistoryLoading(true);
         setError('');
         try {
             const range = {
@@ -646,7 +650,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         } catch (e: any) {
             setError(e?.message || 'Erro ao puxar padrões históricos.');
         } finally {
-            setLoading(false);
+            setHistoryLoading(false);
         }
     };
 
@@ -758,7 +762,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 ))}
                             </div>
                         </div>
-                        <FullNumberBadge n={preview.totalCombinations} label="Capacidade" />
+                        <FullNumberBadge n={preview.totalCombinations} label={preview.isPartial ? 'Capacidade+' : 'Capacidade'} />
                         {preview.hasRowExclusions && (
                             <span className="text-[10px] text-amber-500 cursor-help" title="A capacidade real pode ser menor devido aos filtros de linha ativos.">⚠️</span>
                         )}
@@ -836,7 +840,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 <input type="number" value={maxJogos}
                                     onChange={e => setMaxJogos(e.target.value === '' ? 0 : Number(e.target.value))}
                                     className="desktop-control w-full tabular-nums font-bold" />
-                                {preview && preview.totalCombinations > 0 && (
+                                {preview && !preview.isPartial && preview.totalCombinations > 0 && (
                                     <button onClick={() => setMaxJogos(preview.totalCombinations)}
                                         className="absolute right-3 top-[11px] text-[10px] text-brand-500 hover:text-brand-400 font-black uppercase tracking-tighter"
                                         title="Máximo Disponível">MAX</button>
@@ -977,11 +981,12 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                             </div>
                                             <button
                                                 onClick={() => applyExactGroupHistory(category)}
+                                                disabled={historyLoading || noData}
                                                 data-testid={`exact-group-history-apply-${category}`}
-                                                className="h-[26px] rounded-md border border-brand-500/30 bg-brand-500/10 px-2 text-[8px] font-black uppercase tracking-widest text-brand-300 transition-colors hover:bg-brand-500/20 hover:text-white"
+                                                className="h-[26px] rounded-md border border-brand-500/30 bg-brand-500/10 px-2 text-[8px] font-black uppercase tracking-widest text-brand-300 transition-colors hover:bg-brand-500/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                                 title={`Adicionar grupos dos concursos anteriores em ${EXACT_GROUP_LABELS[category]}`}
                                             >
-                                                Puxar
+                                                {historyLoading ? '...' : 'Puxar'}
                                             </button>
                                             {groups.length > 0 && (
                                                 <button
@@ -1158,8 +1163,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     </div>
                                 </div>
                                 <button onClick={handleApplyHistory}
-                                    className="w-full py-2 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded text-[10px] text-brand-300 font-black uppercase transition-all">
-                                    Puxar e Excluir Padrões
+                                    disabled={historyLoading || noData}
+                                    className="w-full py-2 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded text-[10px] text-brand-300 font-black uppercase transition-all disabled:cursor-not-allowed disabled:opacity-50">
+                                    {historyLoading ? 'Puxando...' : 'Puxar e Excluir Padrões'}
                                 </button>
                             </div>
 
