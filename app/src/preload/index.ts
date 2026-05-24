@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.invoke('db:get-draws', mode, lastN, rangeStart, rangeEnd),
     dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),
+    generatorGenerateWithCount: (config: any) => ipcRenderer.invoke('generator:generate-with-count', config),
     generatorPreview: (config: any, options?: any) => ipcRenderer.invoke('generator:preview', config, options),
     smartModeAnalyze: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:analyze', config, historyCount),
     smartModeGenerate: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:generate', config, historyCount),

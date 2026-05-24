@@ -10,13 +10,15 @@ async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: 
 
   const releaseDir = path.join(process.cwd(), 'release');
   const unpackedExe = path.join(releaseDir, 'win-unpacked', 'ColunaMix.exe');
-  const releaseExe = fs.existsSync(unpackedExe)
-    ? unpackedExe
-    : (fs.existsSync(releaseDir)
-        ? fs.readdirSync(releaseDir).find((name) => /^ColunaMix-v.+\.exe$/i.test(name))
-        : null);
+  const portableExe = fs.existsSync(releaseDir)
+    ? fs.readdirSync(releaseDir)
+        .filter((name) => /^ColunaMix-v.+\.exe$/i.test(name))
+        .map((name) => path.join(releaseDir, name))
+        .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0]
+    : null;
+  const releaseExe = fs.existsSync(unpackedExe) ? unpackedExe : portableExe;
   const packagedPath = process.env.PW_TEST_USE_PACKAGED === 'true' && releaseExe
-    ? path.resolve(releaseExe)
+    ? releaseExe
     : null;
   const mainPath = path.join(process.cwd(), 'dist-electron', 'main', 'index.js');
   const app = await electron.launch({
@@ -222,6 +224,56 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=Erro na geração')).toHaveCount(0);
       const firstRow = page.locator('tbody tr').first();
       await expect(firstRow).toBeVisible();
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('GERADOR: capacidade da prévia bate com total gerado', async () => {
+    const { app, page } = await launchApp();
+    try {
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), '..', 'data', 'input', 'exemplo.csv'));
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      const result = await page.evaluate(async () => {
+        const api = (window as any).electronAPI;
+        const config = {
+          mode: 'lastN',
+          lastN: 20,
+          rangeStart: 1,
+          rangeEnd: 9999,
+          dezenasPorJogo: 15,
+          maxJogos: 200000,
+          fixas: [],
+          fixasModo: 'contem',
+          exclusions: [],
+          patternExclusions: [],
+          patternIncludes: [],
+          exactGroupExclusions: {
+            coreOdd: [],
+            coreEven: [],
+            borderOdd: [],
+            borderEven: [],
+          },
+          colPatternMode: 'exclude',
+          rowPatternMode: 'exclude',
+          noRepeatDrawn: false,
+        };
+        const preview = await api.generatorPreview(config);
+        const generated = await api.generatorGenerateWithCount(config);
+        return {
+          previewTotal: preview.totalCombinations,
+          previewPartial: preview.isPartial,
+          generatedTotal: generated.totalCount,
+          loadedCount: generated.games.length,
+          displayLimit: generated.displayLimit,
+        };
+      });
+
+      expect(result.previewPartial).toBeFalsy();
+      expect(result.generatedTotal).toBe(result.previewTotal);
+      expect(result.loadedCount).toBe(Math.min(result.generatedTotal, result.displayLimit));
     } finally {
       await app.close();
     }

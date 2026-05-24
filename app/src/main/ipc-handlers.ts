@@ -4,7 +4,7 @@ import { once } from 'events';
 import { getDbStatus, importDraws, getDraws, clearDraws, getState, setState } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { ChunkedGenerator } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory } from '../shared/types';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory } from '../shared/types';
 import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
 import { getExactGroupNumbersForCategory, toExactGroupKey } from '../shared/exactGroupExclusions';
 import { analyzeSmartMode } from '../core/smart-mode/analyzer';
@@ -170,11 +170,7 @@ async function finalizeTextStream(stream: import('fs').WriteStream): Promise<voi
 }
 
 async function countGeneratedGames(draws: HistoryDraw[], config: GeneratorConfig, options: PreviewOptions = {}): Promise<{ count: number; isPartial: boolean }> {
-    const isBoundedPreview = Boolean(options.maxDurationMs || options.shouldContinue);
-    const maxJogos = isBoundedPreview
-        ? Math.max(0, Math.trunc(config.maxJogos || 0))
-        : Number.MAX_SAFE_INTEGER;
-    const gen = new ChunkedGenerator(draws, { ...config, maxJogos, countOnly: true });
+    const gen = new ChunkedGenerator(draws, { ...config, maxJogos: Number.MAX_SAFE_INTEGER, countOnly: true });
     const startedAt = Date.now();
 
     while (true) {
@@ -362,6 +358,42 @@ export function registerIpcHandlers(): void {
         });
     });
 
+    ipcMain.handle('generator:generate-with-count', async (_e, config: GeneratorConfig): Promise<GenerateGamesResult> => {
+        const draws = resolveBaseDraws(config);
+        const MAX_UI_GAMES = 500000;
+        if (draws.length === 0) {
+            return { games: [], totalCount: 0, displayLimit: MAX_UI_GAMES };
+        }
+
+        const gen = new ChunkedGenerator(draws, config);
+        const allGames: GeneratedGame[] = [];
+
+        return new Promise((resolve, reject) => {
+            function processNext() {
+                try {
+                    const result = gen.generateNextChunk(10000, 20);
+
+                    if (allGames.length < MAX_UI_GAMES && result.games.length > 0) {
+                        allGames.push(...result.games.slice(0, MAX_UI_GAMES - allGames.length));
+                    }
+
+                    if (result.hasMore) {
+                        setImmediate(processNext);
+                    } else {
+                        resolve({
+                            games: allGames,
+                            totalCount: gen.getProcessedCount(),
+                            displayLimit: MAX_UI_GAMES,
+                        });
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            }
+            processNext();
+        });
+    });
+
     ipcMain.handle('smart-mode:analyze', async (_e, config: GeneratorConfig, historyCount?: number): Promise<SmartModePayload> => {
         return buildSmartPayload(config, historyCount);
     });
@@ -428,7 +460,7 @@ export function registerIpcHandlers(): void {
             return { success: false, count: 0, error: 'Nenhum jogo válido encontrado para salvar.' };
         }
 
-        const gen = new ChunkedGenerator(draws, config);
+        const gen = new ChunkedGenerator(draws, { ...config, maxJogos: effectiveTotal });
         const { createWriteStream } = await import('fs');
         const stream = createWriteStream(savePath, { encoding: 'utf-8' });
 

@@ -67,6 +67,12 @@ export interface GeneratedGame {
     score?: number;
 }
 
+export interface GenerateGamesResult {
+    games: GeneratedGame[];
+    totalCount: number;
+    displayLimit: number;
+}
+
 export interface CombinationPreview {
     totalCombinations: number;
     patternsPerCol: number[];
@@ -140,6 +146,7 @@ export interface ElectronAPI {
     dbGetStats: (startContest: number) => Promise<PatternStatsEntry[]>;
     generatorPreview: (config: GeneratorConfig, options?: { requestId?: number; maxDurationMs?: number }) => Promise<CombinationPreview>;
     generatorGenerate: (config: GeneratorConfig) => Promise<GeneratedGame[]>;
+    generatorGenerateWithCount: (config: GeneratorConfig) => Promise<GenerateGamesResult>;
     smartModeAnalyze: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModePayload>;
     smartModeGenerate: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModeGenerateResult>;
     generatorSaveMass: (config: GeneratorConfig, expectedTotal?: number) => Promise<SaveMassResult>;

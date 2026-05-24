@@ -96,6 +96,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [smartPayload, setSmartPayload] = useState<SmartModePayload | null>(null);
     const [smartLoading, setSmartLoading] = useState(false);
     const [games, setGames] = useState<GeneratedGame[]>([]);
+    const [generatedTotalCount, setGeneratedTotalCount] = useState(0);
+    const [generatedDisplayLimit, setGeneratedDisplayLimit] = useState(500000);
     const [loading, setLoading] = useState(false);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [error, setError] = useState('');
@@ -216,10 +218,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const requestId = ++previewRequestRef.current;
         const timer = window.setTimeout(async () => {
             try {
-                const res = await window.electronAPI.generatorPreview(buildGeneratorConfig(), {
-                    requestId,
-                    maxDurationMs: 350,
-                });
+                const config = buildGeneratorConfig();
+                const res = await window.electronAPI.generatorPreview(config, { requestId });
                 if (previewRequestRef.current !== requestId) return;
                 setPreview(res);
             } catch (e: any) {
@@ -231,6 +231,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
         return () => window.clearTimeout(timer);
     }, [noData, buildGeneratorConfig]);
+
+    useEffect(() => {
+        if (games.length === 0 && generatedTotalCount === 0) return;
+        setGames([]);
+        setGeneratedTotalCount(0);
+        setSelectedGame(null);
+        setResultsScrollTop(0);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
 
     useEffect(() => {
         if (noData || !smartMode) {
@@ -262,13 +270,13 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
     const handleGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
-        setLoading(true); setError(''); setNotice(null); setGames([]); setResultsScrollTop(0);
+        setLoading(true); setError(''); setNotice(null); setGames([]); setGeneratedTotalCount(0); setResultsScrollTop(0);
         try {
-            const result = await window.electronAPI.generatorGenerate(
-                buildGeneratorConfig(Math.min(effectiveMax, 500000))
-            );
-            setGames(result || []);
-            if (!result || result.length === 0) {
+            const result = await window.electronAPI.generatorGenerateWithCount(buildGeneratorConfig(effectiveMax));
+            setGames(result.games || []);
+            setGeneratedTotalCount(result.totalCount || 0);
+            setGeneratedDisplayLimit(result.displayLimit || 500000);
+            if (!result.games || result.totalCount === 0) {
                 setError('Nenhum jogo gerado. Verifique se há concursos importados e ajuste os parâmetros.');
             }
         } catch (e: any) {
@@ -302,6 +310,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const handleExport = async () => {
+        if (generatedTotalCount > games.length) {
+            await handleMassGenerate();
+            return;
+        }
+
         const content = games.map(g => g.key).join('\n') + '\n';
         const saved = await window.electronAPI.exportSave(content);
         if (saved) {
@@ -316,7 +329,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleSmartGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
         setSmartMode(true);
-        setLoading(true); setError(''); setNotice(null); setGames([]); setResultsScrollTop(0);
+        setLoading(true); setError(''); setNotice(null); setGames([]); setGeneratedTotalCount(0); setResultsScrollTop(0);
         try {
             const result = await window.electronAPI.smartModeGenerate(
                 buildGeneratorConfig(Math.min(effectiveMax, 500000)),
@@ -328,6 +341,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 memory: result.memory,
             });
             setGames(result.games || []);
+            setGeneratedTotalCount((result.games || []).length);
+            setGeneratedDisplayLimit(500000);
             if (!result.games || result.games.length === 0) {
                 setError('Nenhum jogo gerado pelo Modo Inteligente. Ajuste os parâmetros ou reduza filtros manuais.');
             } else {
@@ -346,6 +361,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
     const handleClearResults = () => {
         setGames([]);
+        setGeneratedTotalCount(0);
         setSelectedGame(null);
         setMassProgress(null);
         setError('');
@@ -1424,8 +1440,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 <div className="flex items-center justify-between mb-3 shrink-0">
                     <h3 className="text-sm font-semibold text-gray-300">
                         Resultados
-                        {games.length > 0 && (
-                            <span className="text-brand-400 ml-2 font-bold">{games.length} jogo{games.length !== 1 ? 's' : ''} gerados</span>
+                        {generatedTotalCount > 0 && (
+                            <span className="text-brand-400 ml-2 font-bold">
+                                {generatedTotalCount.toLocaleString('pt-BR')} jogo{generatedTotalCount !== 1 ? 's' : ''} gerados
+                            </span>
                         )}
                     </h3>
                     {games.length > 0 && (
@@ -1489,7 +1507,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                     {games.length > 5000 && (
                                         <tr>
                                             <td colSpan={3} className="py-4 text-center text-[10px] text-gray-500 italic">
-                                                Exibindo primeiros 5.000 de {games.length.toLocaleString()} resultados para manter fluidez. Use "Exportar" para ver todos.
+                                                Exibindo primeiros 5.000 de {generatedTotalCount.toLocaleString('pt-BR')} resultados para manter fluidez. Use "Exportar" para salvar todos.
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {generatedTotalCount > generatedDisplayLimit && (
+                                        <tr>
+                                            <td colSpan={3} className="py-3 text-center text-[10px] text-gray-500 italic">
+                                                {generatedDisplayLimit.toLocaleString('pt-BR')} jogos ficaram carregados na tela; o contador acima mostra o total real.
                                             </td>
                                         </tr>
                                     )}
