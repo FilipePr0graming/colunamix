@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Props {
     selected: number[];
@@ -8,12 +8,23 @@ interface Props {
 }
 
 export default function GridPicker({ selected, onChange, onClose, title }: Props) {
+    const [draft, setDraft] = useState<number[]>(selected);
+
+    useEffect(() => {
+        setDraft(selected);
+    }, [selected]);
+
     const toggleNumber = (num: number) => {
-        if (selected.includes(num)) {
-            onChange(selected.filter(n => n !== num));
+        if (draft.includes(num)) {
+            setDraft(draft.filter(n => n !== num));
         } else {
-            onChange([...selected, num].sort((a, b) => a - b));
+            setDraft([...draft, num].sort((a, b) => a - b));
         }
+    };
+
+    const confirmSelection = () => {
+        onChange(draft);
+        onClose();
     };
 
     return (
@@ -26,11 +37,13 @@ export default function GridPicker({ selected, onChange, onClose, title }: Props
 
                 <div className="grid grid-cols-5 gap-2 mb-8">
                     {Array.from({ length: 25 }, (_, i) => i + 1).map(num => {
-                        const isSelected = selected.includes(num);
+                        const isSelected = draft.includes(num);
                         return (
                             <button
                                 key={num}
+                                type="button"
                                 onClick={() => toggleNumber(num)}
+                                data-testid={`grid-picker-number-${num}`}
                                 className={`
                                     h-12 rounded-lg text-sm font-bold flex items-center justify-center transition-all duration-200
                                     ${isSelected
@@ -46,16 +59,19 @@ export default function GridPicker({ selected, onChange, onClose, title }: Props
 
                 <div className="flex flex-col gap-2">
                     <div className="text-[10px] text-gray-500 uppercase tracking-widest text-center mb-2">
-                        {selected.length} dezenas selecionadas
+                        {draft.length} dezenas selecionadas
                     </div>
                     <button
-                        onClick={onClose}
+                        type="button"
+                        onClick={confirmSelection}
+                        data-testid="grid-picker-confirm"
                         className="btn-primary w-full py-3 text-sm font-bold"
                     >
                         Confirmar Seleção
                     </button>
                     <button
-                        onClick={() => { onChange([]); }}
+                        type="button"
+                        onClick={() => setDraft([])}
                         className="text-xs text-gray-500 hover:text-gray-300 transition-colors py-2"
                     >
                         Limpar Tudo

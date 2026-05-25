@@ -94,6 +94,33 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
+  test('SELETOR DE DEZENAS: marca com mouse e libera digitação sem travar', async () => {
+    const { app, page } = await launchApp();
+    try {
+      await page.locator('button[title="Gerador"]').click();
+
+      await page.getByTestId('fixed-numbers-picker').click();
+      await page.getByTestId('grid-picker-number-1').click();
+      await page.getByTestId('grid-picker-number-2').click();
+      await page.getByTestId('grid-picker-number-3').click();
+      await page.getByTestId('grid-picker-number-4').click();
+      await page.getByTestId('grid-picker-number-5').click();
+
+      await expect(page.getByText('5 dezenas selecionadas')).toBeVisible();
+      await expect(page.getByTestId('fixed-numbers-input')).toHaveValue('');
+
+      await page.getByTestId('grid-picker-confirm').click();
+      await expect(page.getByTestId('fixed-numbers-input')).toHaveValue('01,02,03,04,05');
+
+      const start = Date.now();
+      await page.getByTestId('fixed-numbers-input').fill('09,10,11');
+      await expect(page.getByTestId('fixed-numbers-input')).toHaveValue('09,10,11');
+      expect(Date.now() - start).toBeLessThan(1500);
+    } finally {
+      await app.close();
+    }
+  });
+
   test('RADAR HISTÓRICO AVANÇADO: mostra card bloqueado e modal informativo sem links externos', async () => {
     const { app, page } = await launchApp();
     try {

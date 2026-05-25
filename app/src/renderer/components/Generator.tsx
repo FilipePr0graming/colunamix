@@ -878,9 +878,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <input type="text" value={fixas} onChange={e => setFixas(e.target.value)}
+                                        data-testid="fixed-numbers-input"
                                         className="desktop-control w-full font-mono text-brand-300" placeholder="Ex: 01, 12, 25..." />
                                 </div>
                                 <button onClick={() => setPickingFor({ type: 'fixas' })}
+                                    data-testid="fixed-numbers-picker"
                                     className="btn-premium-secondary w-[40px] !p-0 flex items-center justify-center text-lg">
                                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
