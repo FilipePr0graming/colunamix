@@ -1,0 +1,19 @@
+{
+  "source": "data\\input\\exemplo.csv",
+  "contests": 20,
+  "maxContest": 3220,
+  "rowExample": {
+    "patternKey": "3,3,3,3,3",
+    "occurrences": 3,
+    "lastContest": 3214,
+    "lag": 6,
+    "percentage": 15
+  },
+  "columnExample": {
+    "patternKey": "3,3,4,2,3",
+    "occurrences": 2,
+    "lastContest": 3220,
+    "lag": 0,
+    "percentage": 10
+  }
+}

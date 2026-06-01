@@ -119,53 +119,53 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
-  test('RADAR HISTÓRICO AVANÇADO: mostra card bloqueado e modal informativo sem links externos', async () => {
+  test('PADRÕES INTELIGENTES NO GERADOR: usa e exclui padrões com 1 clique', async () => {
     const { app, page } = await launchApp();
     try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_integrated_patterns_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rows = [
+        '1001,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
+        '1002,01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
+        '1003,01,02,04,05,06,07,09,10,11,12,14,15,16,17,19',
+        '1004,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
+      ];
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
       await page.locator('button[title="Gerador"]').click();
 
-      const card = page.getByTestId('locked-radar-card');
-      await expect(card).toBeVisible();
-      await expect(card).toContainText('Radar Histórico Avançado');
-      await expect(card).toContainText('Módulo avançado');
-      await expect(card).toContainText('Cruze configurações personalizadas com o histórico de concursos');
+      const panel = page.getByTestId('generator-pattern-panel');
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText('Painel de Padrões');
+      await expect(panel).toContainText('1 clique para usar ou excluir');
+      await expect(page.getByTestId('locked-radar-card')).toHaveCount(0);
 
-      const beforeUrl = page.url();
-      await page.getByTestId('locked-radar-details').click();
+      await expect(panel.getByText('4,3,3,3,2')).toBeVisible();
+      await page.getByTestId('generator-pattern-use-row-4-3-3-3-2').click();
+      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
+      await expect(page.locator('text=Usar Somente').first()).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-card-row-4-3-3-3-2')).toBeVisible();
 
-      const modal = page.getByTestId('locked-radar-modal');
-      await expect(modal).toBeVisible();
-      await expect(modal.getByRole('heading', { name: 'Radar Histórico Avançado' })).toBeVisible();
-      await expect(modal).toContainText('Este módulo permitirá cruzar configurações personalizadas com o histórico de concursos');
-      await expect(modal).toContainText('Buscar concursos por configuração personalizada');
-      await expect(modal).toContainText('Filtrar por pares e ímpares');
-      await expect(modal).toContainText('Filtrar por dezenas na borda');
-      await expect(modal).toContainText('Filtrar por números primos');
-      await expect(modal).toContainText('Analisar sequências entre dezenas');
-      await expect(modal).toContainText('Mostrar atraso atual');
-      await expect(modal).toContainText('Módulo avançado disponível para desenvolvimento futuro.');
+      await page.getByTestId('generator-pattern-kind-column').click();
+      await expect(panel.getByText('5,5,4,1,0')).toBeVisible();
+      await page.getByTestId('generator-pattern-exclude-column-5-5-4-1-0').click();
+      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
 
-      const externalTargets = await page.evaluate(() => {
-        const root = document.querySelector('[data-testid="locked-radar-modal"]');
-        const scopedLinks = Array.from(root?.querySelectorAll('a[href]') || []).map((link) => (link as HTMLAnchorElement).href);
-        return {
-          links: scopedLinks,
-          hasWhatsAppText: /whatsapp/i.test(root?.textContent || ''),
-          hasPhoneHref: scopedLinks.some((href) => href.startsWith('tel:')),
-        };
+      const saved = await page.waitForFunction(() => {
+        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        const hasRowInclude = config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '4,3,3,3,2');
+        const hasColumnExclude = config.patternExclusions?.some((item: any) => item.type === 'column' && item.pattern?.join(',') === '5,5,4,1,0');
+        return hasRowInclude && hasColumnExclude && config.rowPatternMode === 'include';
       });
-      expect(externalTargets.links).toHaveLength(0);
-      expect(externalTargets.hasWhatsAppText).toBeFalsy();
-      expect(externalTargets.hasPhoneHref).toBeFalsy();
+      expect(saved).toBeTruthy();
 
-      await page.getByTestId('locked-radar-contact').click();
-      await expect(page.getByTestId('locked-radar-contact-message')).toHaveText(
-        'Para ativar este módulo, entre em contato com o desenvolvedor responsável pelo sistema.'
-      );
-      expect(page.url()).toBe(beforeUrl);
-
-      await modal.getByRole('button', { name: 'Fechar', exact: true }).click();
-      await expect(modal).toHaveCount(0);
+      await page.locator('input[type="number"]').first().fill('4');
+      await page.locator('button:has-text("GERAR JOGOS")').click();
+      await expect(page.locator('text=jogos gerados').or(page.locator('text=Nenhum jogo gerado')).first()).toBeVisible();
     } finally {
       await app.close();
     }

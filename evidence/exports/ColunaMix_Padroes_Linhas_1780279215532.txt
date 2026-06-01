@@ -1,0 +1,3 @@
+Padrao 3,3,3,3,3 | Ocorrencias 1 | Ultima vez Concurso 1002 | Atraso 2 | Percentual 25.00%
+Padrao 4,4,4,3,0 | Ocorrencias 1 | Ultima vez Concurso 1003 | Atraso 1 | Percentual 25.00%
+Padrao 4,3,3,3,2 | Ocorrencias 2 | Ultima vez Concurso 1004 | Atraso 0 | Percentual 50.00%

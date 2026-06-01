@@ -1,0 +1,37 @@
+
+> colunamix@1.8.21 test:unit
+> playwright test tests/unit
+
+
+Running 28 tests using 3 workers
+
+  ok  1 tests\unit\exactGroupExclusions.spec.ts:16:7 › exact group exclusions › exclui quando Miolo Ímpares bate exatamente (14ms)
+  ok  3 tests\unit\patternRules.spec.ts:42:7 › pattern rule actions › inclui padrão em usar somente sem duplicar (14ms)
+  ok  2 tests\unit\patternStats.spec.ts:31:7 › pattern stats › calcula corretamente padrões de linha (15ms)
+  ok  4 tests\unit\exactGroupExclusions.spec.ts:28:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem menos dezenas (11ms)
+  ok  5 tests\unit\patternRules.spec.ts:62:7 › pattern rule actions › inclui padrão em excluir sem duplicar (11ms)
+  ok  6 tests\unit\patternStats.spec.ts:43:7 › pattern stats › calcula corretamente padrões de coluna (18ms)
+  ok  7 tests\unit\exactGroupExclusions.spec.ts:40:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem dezenas a mais (8ms)
+  ok  8 tests\unit\patternRules.spec.ts:82:7 › pattern rule actions › move padrão conflitante entre usar somente e excluir (16ms)
+  ok  9 tests\unit\patternStats.spec.ts:54:7 › pattern stats › calcula atraso pelo último concurso analisado (10ms)
+  ok 10 tests\unit\exactGroupExclusions.spec.ts:52:7 › exact group exclusions › não exclui quando o grupo está configurado em outra categoria (14ms)
+  ok 11 tests\unit\patternRules.spec.ts:103:7 › generator pattern filters › gerador respeita padrão de linha em usar somente (14ms)
+  ok 12 tests\unit\patternStats.spec.ts:65:7 › pattern stats › respeita filtro até concurso X (9ms)
+  ok 13 tests\unit\exactGroupExclusions.spec.ts:65:7 › exact group exclusions › exclui Borda Ímpares quando bate exatamente (8ms)
+  ok 14 tests\unit\patternRules.spec.ts:115:7 › generator pattern filters › gerador respeita padrão de coluna em usar somente (7ms)
+  ok 15 tests\unit\patternStats.spec.ts:78:7 › pattern stats › ordenação numérica crescente e decrescente preserva sequência do padrão (17ms)
+  ok 17 tests\unit\patternRules.spec.ts:127:7 › generator pattern filters › gerador respeita padrão de linha em excluir (7ms)
+  ok 16 tests\unit\exactGroupExclusions.spec.ts:77:7 › exact group exclusions › não exclui Borda Ímpares quando o jogo tem número extra (7ms)
+  ok 18 tests\unit\patternStats.spec.ts:87:7 › pattern stats › ordenação por frequência suporta mais e menos ocorrências primeiro (6ms)
+  ok 19 tests\unit\patternRules.spec.ts:138:7 › generator pattern filters › gerador respeita padrão de coluna em excluir (6ms)
+  ok 20 tests\unit\exactGroupExclusions.spec.ts:89:7 › exact group exclusions › separa também Miolo Pares e Borda Pares (8ms)
+  ok 21 tests\unit\patternStats.spec.ts:96:7 › pattern stats › exporta CSV (15ms)
+  ok 22 tests\unit\exactGroupExclusions.spec.ts:102:7 › exact group exclusions › normaliza entrada textual fora de ordem (6ms)
+  ok 23 tests\unit\patternStats.spec.ts:103:7 › pattern stats › exporta TXT (5ms)
+  ok 24 tests\unit\exactGroupExclusions.spec.ts:109:7 › exact group exclusions › adiciona vírgulas automaticamente ao digitar dezenas em pares (14ms)
+  ok 25 tests\unit\patternStats.spec.ts:109:7 › pattern stats › exporta Excel em formato SpreadsheetML legível pelo Excel (9ms)
+  ok 26 tests\unit\exactGroupExclusions.spec.ts:116:7 › exact group exclusions › extrai o grupo correto para cadastro histórico por categoria (12ms)
+  ok 27 tests\unit\exactGroupExclusions.spec.ts:125:7 › exact group exclusions › normaliza duplicidade dentro do grupo (6ms)
+  ok 28 tests\unit\exactGroupExclusions.spec.ts:130:7 › exact group exclusions › rejeita texto inválido, grupo vazio e dezenas fora de 01 a 25 (4ms)
+
+  28 passed (2.3s)

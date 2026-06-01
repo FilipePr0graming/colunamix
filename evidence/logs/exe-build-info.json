@@ -1,0 +1,11 @@
+{
+  "version": "v1.8.20",
+  "exePath": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.20.exe",
+  "fileName": "ColunaMix-v1.8.20.exe",
+  "sizeBytes": 74268333,
+  "sha256": "FA7E33D43504C72ADC2265EF53AB6DE65960857DC77A295320B65E39955EA109",
+  "createdAt": "2026-05-31T23:15:51.8376412-03:00",
+  "buildLog": "C:\\Users\\filip\\Local Sites\\colunamix\\evidence\\logs\\npm-run-dist.txt",
+  "githubReleaseStatus": "not_published_gh_cli_not_found",
+  "manualInstructions": "C:\\Users\\filip\\Local Sites\\colunamix\\evidence\\GITHUB-RELEASE-INSTRUCTIONS.md"
+}

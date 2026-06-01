@@ -1,0 +1,30 @@
+
+> colunamix@1.8.20 test:unit
+> playwright test tests/unit
+
+
+Running 21 tests using 2 workers
+
+  ok  1 tests\unit\exactGroupExclusions.spec.ts:16:7 › exact group exclusions › exclui quando Miolo Ímpares bate exatamente (9ms)
+  ok  2 tests\unit\patternStats.spec.ts:31:7 › pattern stats › calcula corretamente padrões de linha (10ms)
+  ok  3 tests\unit\exactGroupExclusions.spec.ts:28:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem menos dezenas (5ms)
+  ok  5 tests\unit\exactGroupExclusions.spec.ts:40:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem dezenas a mais (4ms)
+  ok  4 tests\unit\patternStats.spec.ts:43:7 › pattern stats › calcula corretamente padrões de coluna (9ms)
+  ok  6 tests\unit\exactGroupExclusions.spec.ts:52:7 › exact group exclusions › não exclui quando o grupo está configurado em outra categoria (4ms)
+  ok  7 tests\unit\patternStats.spec.ts:54:7 › pattern stats › calcula atraso pelo último concurso analisado (3ms)
+  ok  8 tests\unit\exactGroupExclusions.spec.ts:65:7 › exact group exclusions › exclui Borda Ímpares quando bate exatamente (6ms)
+  ok  9 tests\unit\patternStats.spec.ts:65:7 › pattern stats › respeita filtro até concurso X (7ms)
+  ok 10 tests\unit\exactGroupExclusions.spec.ts:77:7 › exact group exclusions › não exclui Borda Ímpares quando o jogo tem número extra (4ms)
+  ok 11 tests\unit\patternStats.spec.ts:78:7 › pattern stats › ordenação numérica crescente e decrescente preserva sequência do padrão (10ms)
+  ok 12 tests\unit\exactGroupExclusions.spec.ts:89:7 › exact group exclusions › separa também Miolo Pares e Borda Pares (5ms)
+  ok 13 tests\unit\patternStats.spec.ts:87:7 › pattern stats › ordenação por frequência suporta mais e menos ocorrências primeiro (4ms)
+  ok 14 tests\unit\exactGroupExclusions.spec.ts:102:7 › exact group exclusions › normaliza entrada textual fora de ordem (2ms)
+  ok 15 tests\unit\patternStats.spec.ts:96:7 › pattern stats › exporta CSV (6ms)
+  ok 16 tests\unit\exactGroupExclusions.spec.ts:109:7 › exact group exclusions › adiciona vírgulas automaticamente ao digitar dezenas em pares (8ms)
+  ok 17 tests\unit\patternStats.spec.ts:103:7 › pattern stats › exporta TXT (2ms)
+  ok 18 tests\unit\exactGroupExclusions.spec.ts:116:7 › exact group exclusions › extrai o grupo correto para cadastro histórico por categoria (4ms)
+  ok 20 tests\unit\exactGroupExclusions.spec.ts:125:7 › exact group exclusions › normaliza duplicidade dentro do grupo (3ms)
+  ok 19 tests\unit\patternStats.spec.ts:109:7 › pattern stats › exporta Excel em formato SpreadsheetML legível pelo Excel (5ms)
+  ok 21 tests\unit\exactGroupExclusions.spec.ts:130:7 › exact group exclusions › rejeita texto inválido, grupo vazio e dezenas fora de 01 a 25 (5ms)
+
+  21 passed (1.5s)
