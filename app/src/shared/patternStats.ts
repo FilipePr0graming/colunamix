@@ -1,0 +1,122 @@
+import { getColPatternArray, getRowPatternArray } from './columns';
+import { Draw, PatternStatsKind, PatternStatsRow } from './types';
+
+const statsCache = new Map<string, PatternStatsRow[]>();
+
+function normalizeUntilContest(untilContest?: number | null): number | null {
+    if (typeof untilContest !== 'number' || !Number.isFinite(untilContest)) return null;
+    const value = Math.trunc(untilContest);
+    return value > 0 ? value : null;
+}
+
+function getPatternArray(numbers: number[], kind: PatternStatsKind): number[] {
+    return kind === 'row' ? getRowPatternArray(numbers) : getColPatternArray(numbers);
+}
+
+function buildCacheKey(draws: Draw[], kind: PatternStatsKind, untilContest: number | null): string {
+    const lastContest = draws.length > 0 ? Math.max(...draws.map(draw => draw.contest)) : 0;
+    return `${kind}:${untilContest ?? 'all'}:${draws.length}:${lastContest}`;
+}
+
+export function clearPatternStatsCache(): void {
+    statsCache.clear();
+}
+
+export function calculatePatternStats(
+    draws: Pick<Draw, 'contest' | 'numbers'>[],
+    kind: PatternStatsKind,
+    untilContest?: number | null
+): PatternStatsRow[] {
+    const safeUntil = normalizeUntilContest(untilContest);
+    const eligible = draws
+        .filter(draw => safeUntil === null || draw.contest <= safeUntil)
+        .sort((a, b) => a.contest - b.contest);
+
+    if (eligible.length === 0) return [];
+
+    const cacheKey = buildCacheKey(eligible as Draw[], kind, safeUntil);
+    const cached = statsCache.get(cacheKey);
+    if (cached) return cached.map(row => ({ ...row, pattern: [...row.pattern] }));
+
+    const maxContest = eligible[eligible.length - 1].contest;
+    const grouped = new Map<string, { pattern: number[]; occurrences: number; lastContest: number }>();
+
+    for (const draw of eligible) {
+        const pattern = getPatternArray(draw.numbers, kind);
+        const key = pattern.join(',');
+        const current = grouped.get(key);
+        if (current) {
+            current.occurrences += 1;
+            current.lastContest = draw.contest;
+        } else {
+            grouped.set(key, { pattern, occurrences: 1, lastContest: draw.contest });
+        }
+    }
+
+    const totalDraws = eligible.length;
+    const rows = Array.from(grouped.values()).map(item => ({
+        pattern: item.pattern,
+        patternKey: item.pattern.join(','),
+        occurrences: item.occurrences,
+        lastContest: item.lastContest,
+        lag: Math.max(0, maxContest - item.lastContest),
+        percentage: totalDraws > 0 ? (item.occurrences / totalDraws) * 100 : 0,
+    }));
+
+    rows.sort((a, b) => b.lag - a.lag || b.occurrences - a.occurrences || a.patternKey.localeCompare(b.patternKey));
+    statsCache.set(cacheKey, rows.map(row => ({ ...row, pattern: [...row.pattern] })));
+    return rows;
+}
+
+function escapeCsv(value: string | number): string {
+    const text = String(value);
+    if (!/[",\r\n;]/.test(text)) return text;
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+function escapeXml(value: string | number): string {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+export function serializePatternStatsCsv(rows: PatternStatsRow[]): string {
+    const header = ['Padrao', 'Ocorrencias', 'Ultima vez', 'Atraso', 'Percentual'];
+    const body = rows.map(row => [
+        row.patternKey,
+        row.occurrences,
+        row.lastContest,
+        row.lag,
+        row.percentage.toFixed(2).replace('.', ',') + '%',
+    ].map(escapeCsv).join(';'));
+    return [header.join(';'), ...body].join('\r\n') + '\r\n';
+}
+
+export function serializePatternStatsTxt(rows: PatternStatsRow[]): string {
+    const lines = rows.map(row =>
+        `Padrao ${row.patternKey} | Ocorrencias ${row.occurrences} | Ultima vez Concurso ${row.lastContest} | Atraso ${row.lag} | Percentual ${row.percentage.toFixed(2)}%`
+    );
+    return lines.join('\r\n') + (lines.length > 0 ? '\r\n' : '');
+}
+
+export function serializePatternStatsExcel(rows: PatternStatsRow[]): string {
+    const cells = (values: Array<string | number>) => values.map(value => {
+        const isNumber = typeof value === 'number';
+        return `<Cell><Data ss:Type="${isNumber ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`;
+    }).join('');
+
+    const tableRows = [
+        `<Row>${cells(['Padrao', 'Ocorrencias', 'Ultima vez', 'Atraso', 'Percentual'])}</Row>`,
+        ...rows.map(row => `<Row>${cells([
+            row.patternKey,
+            row.occurrences,
+            row.lastContest,
+            row.lag,
+            Number(row.percentage.toFixed(2)),
+        ])}</Row>`),
+    ].join('');
+
+    return `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Padroes"><Table>${tableRows}</Table></Worksheet></Workbook>`;
+}

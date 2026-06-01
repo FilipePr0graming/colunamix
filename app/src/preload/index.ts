@@ -7,11 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) =>
         ipcRenderer.invoke('db:get-draws', mode, lastN, rangeStart, rangeEnd),
     dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
+    patternStatsGet: (kind: string, untilContest?: number | null) => ipcRenderer.invoke('patterns:get-stats', kind, untilContest),
+    patternStatsExport: (kind: string, format: string, rows: any[]) => ipcRenderer.invoke('patterns:export', kind, format, rows),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),
     generatorGenerateWithCount: (config: any) => ipcRenderer.invoke('generator:generate-with-count', config),
     generatorPreview: (config: any, options?: any) => ipcRenderer.invoke('generator:preview', config, options),
-    smartModeAnalyze: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:analyze', config, historyCount),
-    smartModeGenerate: (config: any, historyCount?: number) => ipcRenderer.invoke('smart-mode:generate', config, historyCount),
     generatorSaveMass: (config: any, expectedTotal?: number) => ipcRenderer.invoke('generator:save-mass', config, expectedTotal),
     generatorExportConfig: (config: any) => ipcRenderer.invoke('generator:export-config', config),
     generatorImportConfig: () => ipcRenderer.invoke('generator:import-config'),

@@ -119,6 +119,19 @@ export interface PatternStatsEntry {
     }[];
 }
 
+export type PatternStatsKind = 'row' | 'column';
+
+export type PatternExportFormat = 'csv' | 'txt' | 'excel';
+
+export interface PatternStatsRow {
+    pattern: number[];
+    patternKey: string;
+    occurrences: number;
+    lastContest: number;
+    lag: number;
+    percentage: number;
+}
+
 export interface LicenseInfo {
     status: LicenseStatus;
     daysLeft: number;
@@ -144,11 +157,11 @@ export interface ElectronAPI {
     dbClear: () => Promise<{ success: boolean }>;
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) => Promise<Draw[]>;
     dbGetStats: (startContest: number) => Promise<PatternStatsEntry[]>;
+    patternStatsGet: (kind: PatternStatsKind, untilContest?: number | null) => Promise<PatternStatsRow[]>;
+    patternStatsExport: (kind: PatternStatsKind, format: PatternExportFormat, rows: PatternStatsRow[]) => Promise<{ success: boolean; filePath?: string; error?: string }>;
     generatorPreview: (config: GeneratorConfig, options?: { requestId?: number; maxDurationMs?: number }) => Promise<CombinationPreview>;
     generatorGenerate: (config: GeneratorConfig) => Promise<GeneratedGame[]>;
     generatorGenerateWithCount: (config: GeneratorConfig) => Promise<GenerateGamesResult>;
-    smartModeAnalyze: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModePayload>;
-    smartModeGenerate: (config: GeneratorConfig, historyCount?: number) => Promise<import('../core/smart-mode/types').SmartModeGenerateResult>;
     generatorSaveMass: (config: GeneratorConfig, expectedTotal?: number) => Promise<SaveMassResult>;
     generatorExportConfig: (config: any) => Promise<boolean>;
     generatorImportConfig: () => Promise<any>;

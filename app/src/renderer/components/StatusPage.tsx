@@ -32,7 +32,7 @@ export default function StatusPage({ dbStatus, license }: Props) {
                 </Section>
 
                 <Section title="Sobre">
-                    <Row label="App" value="ColunaMix v1.8.19" />
+                    <Row label="App" value="ColunaMix v1.8.20" />
                     <Row label="Plataforma" value="Electron + React" />
                     <Row label="Segurança" value="ED25519 License Signing" />
                 </Section>

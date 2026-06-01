@@ -3,10 +3,10 @@ import { LicenseInfo, DbStatus, GeneratedGame, GeneratorConfig } from '../shared
 import BlockedScreen from './components/BlockedScreen';
 import ImportCSV from './components/ImportCSV';
 import Generator from './components/Generator';
-import ColumnStats from './components/ColumnStats';
+import PatternStatsPage from './components/PatternStatsPage';
 import StatusPage from './components/StatusPage';
 
-type Tab = 'gerador' | 'importar' | 'status' | 'estatisticas';
+type Tab = 'gerador' | 'importar' | 'status' | 'padroesLinha' | 'padroesColuna';
 
 export default function App() {
     const [license, setLicense] = useState<LicenseInfo | null>(null);
@@ -38,7 +38,8 @@ export default function App() {
 
     const tabs: { key: Tab; label: string; icon: string }[] = [
         { key: 'gerador', label: 'Gerador', icon: 'M12 2L2 7l10 5l10-5l-10-5zM2 17l10 5l10-5M2 12l10 5l10-5' }, // Layers Icon
-        { key: 'estatisticas', label: 'Estatísticas', icon: 'M16 18l2 2 4-4M2 12h20M2 6h20M2 18h10' }, // Stats/Check Icon
+        { key: 'padroesLinha', label: 'Padrões de Linha', icon: 'M4 6h16M4 12h16M4 18h16' },
+        { key: 'padroesColuna', label: 'Padrões de Coluna', icon: 'M6 4v16M12 4v16M18 4v16' },
         { key: 'importar', label: 'Dados', icon: 'M3 15v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5' }, // Upload/Import Icon
         { key: 'status', label: 'Dashboard', icon: 'M18 20V10M12 20V4M6 20v-6' }, // Bars Icon
     ];
@@ -82,7 +83,7 @@ export default function App() {
                     ))}
                     
                     <div className="mt-auto mb-2 text-[8px] font-black text-gray-600 uppercase tracking-tighter">
-                        v1.8.19
+                        v1.8.20
                     </div>
                 </nav>
 
@@ -90,7 +91,8 @@ export default function App() {
                 <main className="flex-1 p-3 overflow-auto">
                     <div className="animate-fade-in h-full">
                         {tab === 'gerador' && <Generator dbStatus={dbStatus} licenseStatus={license.status} />}
-                        {tab === 'estatisticas' && <ColumnStats dbStatus={dbStatus} />}
+                        {tab === 'padroesLinha' && <PatternStatsPage dbStatus={dbStatus} kind="row" />}
+                        {tab === 'padroesColuna' && <PatternStatsPage dbStatus={dbStatus} kind="column" />}
                         {tab === 'importar' && <ImportCSV onImported={refresh} />}
                         {tab === 'status' && <StatusPage dbStatus={dbStatus} license={license} />}
                     </div>

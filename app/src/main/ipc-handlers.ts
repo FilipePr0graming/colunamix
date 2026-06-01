@@ -1,20 +1,16 @@
-import { app, ipcMain, dialog } from 'electron';
+import { app, ipcMain, dialog, FileFilter } from 'electron';
 import path from 'path';
 import { once } from 'events';
-import { getDbStatus, importDraws, getDraws, clearDraws, getState, setState } from './database';
+import { getDbStatus, importDraws, getDraws, clearDraws } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { ChunkedGenerator } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory } from '../shared/types';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory, PatternExportFormat, PatternStatsKind, PatternStatsRow } from '../shared/types';
 import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
 import { getExactGroupNumbersForCategory, toExactGroupKey } from '../shared/exactGroupExclusions';
-import { analyzeSmartMode } from '../core/smart-mode/analyzer';
-import { parseSmartModeMemory, rememberSmartModeUse, serializeSmartModeMemory } from '../core/smart-mode/memory';
-import { applySmartSuggestions, buildSmartSuggestions, scoreAndRankGames } from '../core/smart-mode/suggestions';
-import { SmartModeGenerateResult, SmartModeOptions, SmartModePayload } from '../core/smart-mode/types';
+import { calculatePatternStats, clearPatternStatsCache, serializePatternStatsCsv, serializePatternStatsExcel, serializePatternStatsTxt } from '../shared/patternStats';
 
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
 type HistoryDraw = { contest: number; numbers: number[] };
-const SMART_MEMORY_KEY = 'smartModeMemory';
 const latestPreviewRequestBySender = new Map<number, number>();
 
 type PreviewOptions = {
@@ -101,50 +97,36 @@ function resolveHistoryDraws(count: number, range: HistoryRangeConfig): { draws:
     return selectHistoryDrawsFromList(getAllDrawsSorted(), count, range);
 }
 
-function resolveSmartHistoryDraws(config: GeneratorConfig, historyCount: number): HistoryDraw[] {
-    const allDraws = getAllDrawsSorted();
-    if (allDraws.length === 0) {
-        throw new Error('Nenhum concurso importado para analisar no Modo Inteligente.');
-    }
-
-    if (config.mode === 'range') {
-        const { rangeStart, rangeEnd } = normalizeContestRange(config.rangeStart, config.rangeEnd);
-        return allDraws
-            .filter(draw => draw.contest >= rangeStart && draw.contest <= rangeEnd)
-            .slice(-Math.max(1, Math.trunc(historyCount || 50)));
-    }
-
-    return allDraws.slice(-Math.max(1, Math.trunc(historyCount || 50)));
-}
-
-function resolveSmartGenerationDraws(config: GeneratorConfig): HistoryDraw[] {
-    if (config.mode === 'range') return resolveBaseDraws(config);
-
-    const allDraws = getAllDrawsSorted();
-    if (allDraws.length === 0) {
-        throw new Error('Nenhum concurso importado para gerar no Modo Inteligente.');
-    }
-
-    const requested = Math.max(1, Math.trunc(config.lastN || 0));
-    return allDraws.slice(-Math.min(requested, allDraws.length));
-}
-
-function buildSmartPayload(config: GeneratorConfig, historyCount?: number): SmartModePayload {
-    const options: SmartModeOptions = { historyCount: historyCount || 50, maxSuggestions: 8, recentWindow: 10 };
-    const draws = resolveSmartHistoryDraws(config, options.historyCount || 50);
-    const memory = parseSmartModeMemory(getState(SMART_MEMORY_KEY));
-    const analysis = analyzeSmartMode(draws, options);
-    const suggestions = buildSmartSuggestions(analysis, config, memory);
-
-    return { analysis, suggestions, memory };
-}
-
 function resolveAutomatedSavePath(defaultFileName: string): string | null {
     if (process.env.PW_TEST !== 'true') return null;
     if (process.env.PW_TEST_SAVE_PATH) return process.env.PW_TEST_SAVE_PATH;
 
     const baseDir = process.env.PW_TEST_OUTPUT_DIR || app.getPath('temp');
     return path.join(baseDir, defaultFileName);
+}
+
+function resolvePatternExportPath(kind: PatternStatsKind, format: PatternExportFormat): string | undefined {
+    const extension = format === 'excel' ? 'xls' : format;
+    const automatedPath = resolveAutomatedSavePath(`ColunaMix_Padroes_${kind === 'row' ? 'Linhas' : 'Colunas'}_${Date.now()}.${extension}`);
+    if (automatedPath) return automatedPath;
+
+    const filters = {
+        csv: [{ name: 'CSV', extensions: ['csv'] }],
+        txt: [{ name: 'Texto', extensions: ['txt'] }],
+        excel: [{ name: 'Excel', extensions: ['xls'] }],
+    } satisfies Record<PatternExportFormat, FileFilter[]>;
+
+    return dialog.showSaveDialogSync({
+        title: `Exportar padrões de ${kind === 'row' ? 'linha' : 'coluna'}`,
+        defaultPath: `padroes-${kind === 'row' ? 'linhas' : 'colunas'}.${extension}`,
+        filters: filters[format],
+    });
+}
+
+function serializePatternRows(format: PatternExportFormat, rows: PatternStatsRow[]): string {
+    if (format === 'csv') return serializePatternStatsCsv(rows);
+    if (format === 'txt') return serializePatternStatsTxt(rows);
+    return serializePatternStatsExcel(rows);
 }
 
 function resolveMassSavePath(defaultFileName: string): string | undefined {
@@ -263,8 +245,15 @@ async function buildPreview(draws: HistoryDraw[], config: GeneratorConfig, optio
 export function registerIpcHandlers(): void {
     ipcMain.handle('db:get-status', () => getDbStatus());
 
-    ipcMain.handle('db:import-csv', async (_e, csvContent: string) => importDraws(csvContent));
-    ipcMain.handle('db:clear', async () => clearDraws());
+    ipcMain.handle('db:import-csv', async (_e, csvContent: string) => {
+        const result = importDraws(csvContent);
+        if (result.imported > 0) clearPatternStatsCache();
+        return result;
+    });
+    ipcMain.handle('db:clear', async () => {
+        clearPatternStatsCache();
+        return clearDraws();
+    });
 
     ipcMain.handle('db:get-draws', (_e, mode: string, lastN: number, rangeStart: number, rangeEnd: number) =>
         getDraws(mode, lastN, rangeStart, rangeEnd)
@@ -312,6 +301,28 @@ export function registerIpcHandlers(): void {
             });
         }
         return results;
+    });
+
+    ipcMain.handle('patterns:get-stats', async (_e, kind: PatternStatsKind, untilContest?: number | null): Promise<PatternStatsRow[]> => {
+        if (kind !== 'row' && kind !== 'column') {
+            throw new Error('Tipo de padrão inválido.');
+        }
+        const draws = getAllDrawsSorted();
+        return calculatePatternStats(draws as any, kind, untilContest);
+    });
+
+    ipcMain.handle('patterns:export', async (_e, kind: PatternStatsKind, format: PatternExportFormat, rows: PatternStatsRow[]) => {
+        try {
+            if (kind !== 'row' && kind !== 'column') throw new Error('Tipo de padrão inválido.');
+            if (format !== 'csv' && format !== 'txt' && format !== 'excel') throw new Error('Formato de exportação inválido.');
+            const savePath = resolvePatternExportPath(kind, format);
+            if (!savePath) return { success: false };
+            const fs = await import('fs');
+            fs.writeFileSync(savePath, serializePatternRows(format, rows || []), 'utf-8');
+            return { success: true, filePath: savePath };
+        } catch (err: any) {
+            return { success: false, error: err?.message || 'Erro ao exportar padrões.' };
+        }
     });
 
     ipcMain.handle('generator:preview', async (event, config: GeneratorConfig, options?: PreviewOptions): Promise<CombinationPreview> => {
@@ -392,57 +403,6 @@ export function registerIpcHandlers(): void {
             }
             processNext();
         });
-    });
-
-    ipcMain.handle('smart-mode:analyze', async (_e, config: GeneratorConfig, historyCount?: number): Promise<SmartModePayload> => {
-        return buildSmartPayload(config, historyCount);
-    });
-
-    ipcMain.handle('smart-mode:generate', async (_e, config: GeneratorConfig, historyCount?: number): Promise<SmartModeGenerateResult> => {
-        const payload = buildSmartPayload(config, historyCount);
-        const baseDraws = resolveSmartGenerationDraws(config);
-        const smartConfig = applySmartSuggestions(config, payload.suggestions);
-        const MAX_UI_GAMES = 500000;
-
-        async function generateWith(candidateConfig: GeneratorConfig): Promise<GeneratedGame[]> {
-            const gen = new ChunkedGenerator(baseDraws, candidateConfig);
-            const allGames: GeneratedGame[] = [];
-
-            return new Promise((resolve, reject) => {
-                function processNext() {
-                    try {
-                        const result = gen.generateNextChunk(10000, 20);
-                        allGames.push(...result.games);
-
-                        if (result.hasMore && allGames.length < Math.min(candidateConfig.maxJogos, MAX_UI_GAMES)) {
-                            setImmediate(processNext);
-                        } else {
-                            resolve(allGames.slice(0, MAX_UI_GAMES));
-                        }
-                    } catch (err) {
-                        reject(err);
-                    }
-                }
-                processNext();
-            });
-        }
-
-        let rawGames = await generateWith(smartConfig);
-        const appliedConfig = rawGames.length > 0 ? smartConfig : config;
-        if (rawGames.length === 0) {
-            rawGames = await generateWith(config);
-        }
-
-        const games = scoreAndRankGames(rawGames, payload.analysis, payload.memory).slice(0, Math.min(config.maxJogos, MAX_UI_GAMES));
-        const nextMemory = rememberSmartModeUse(payload.memory, payload.suggestions);
-        setState(SMART_MEMORY_KEY, serializeSmartModeMemory(nextMemory));
-
-        return {
-            ...payload,
-            memory: nextMemory,
-            games,
-            appliedConfig,
-        };
     });
 
     // NEW: Mass generation directly to disk to avoid IPC/Memory bottlenecks

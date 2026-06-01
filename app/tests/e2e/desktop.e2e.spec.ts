@@ -85,10 +85,8 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button[title="Dashboard"]').click();
       await expect(page.locator('text=Status do Sistema')).toBeVisible();
 
-      await page.locator('button[title="Estatísticas"]').click();
-      await expect(
-        page.locator('text=Importe concursos para visualizar as estatísticas.').or(page.locator('text=Estatísticas por Padrão de Coluna'))
-      ).toBeVisible();
+      await page.locator('button[title="Padrões de Coluna"]').click();
+      await expect(page.getByText('Importe concursos para visualizar os padrões.', { exact: true })).toBeVisible();
     } finally {
       await app.close();
     }
@@ -306,37 +304,17 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
-  test('MODO INTELIGENTE: ativa, mostra sugestões, gera jogos e exibe score', async () => {
-    const { app, page } = await launchApp();
+  test('PADRÕES: linha e coluna recalculam até concurso X, ordenam e exportam CSV/TXT/Excel', async () => {
+    const savePath = path.join(os.tmpdir(), `cmx_patterns_${Date.now()}.csv`);
+    const { app, page } = await launchApp({ PW_TEST_SAVE_PATH: savePath });
     try {
-      await page.locator('button[title="Dados"]').click();
-      await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), '..', 'data', 'input', 'exemplo.csv'));
-      await expect(page.locator('text=importado')).toBeVisible();
-
-      await page.locator('button[title="Gerador"]').click();
-      await page.locator('[data-testid="smart-mode-toggle"] input').check({ force: true });
-
-      await expect(page.locator('text=Padrões recomendados')).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('text=Score médio esperado').first()).toBeVisible();
-
-      await page.locator('button:has-text("Gerar Inteligente")').click();
-      await expect(page.locator('text=Modo Inteligente aplicado')).toBeVisible({ timeout: 60_000 });
-      await expect(page.locator('text=Score:').first()).toBeVisible();
-      await expect(page.locator('text=Erro na Geração')).toHaveCount(0);
-    } finally {
-      await app.close();
-    }
-  });
-
-  test('MODO INTELIGENTE - POUCOS DADOS: mantém sugestões conservadoras e não trava UI', async () => {
-    const { app, page } = await launchApp();
-    try {
-      const tmpCsv = path.join(os.tmpdir(), `cmx_smart_few_${Date.now()}.csv`);
+      const tmpCsv = path.join(os.tmpdir(), `cmx_patterns_${Date.now()}.csv`);
       const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
       const rows = [
-        '7001,01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
-        '7002,01,02,04,06,07,09,11,12,14,16,17,19,21,22,24',
-        '7003,02,03,05,07,08,10,12,13,15,17,18,20,22,23,25',
+        '1001,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
+        '1002,01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
+        '1003,01,02,04,05,06,07,09,10,11,12,14,15,16,17,19',
+        '1004,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
       ];
       fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
 
@@ -344,67 +322,52 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('input[type="file"]').setInputFiles(tmpCsv);
       await expect(page.locator('text=importado')).toBeVisible();
 
-      await page.locator('button[title="Gerador"]').click();
-      await page.locator('input[type="number"]').first().fill('3');
-      await page.locator('[data-testid="smart-mode-toggle"] input').check({ force: true });
-      await expect(page.locator('text=Base pequena')).toBeVisible({ timeout: 20_000 });
-      await page.locator('button:has-text("Gerar Inteligente")').click();
+      await page.locator('button[title="Padrões de Linha"]').click();
+      await expect(page.getByRole('heading', { name: 'Padrões de Linha' })).toBeVisible();
+      await expect(page.locator('td', { hasText: '4,3,3,3,2' }).first()).toBeVisible();
+      await expect(page.locator('tr', { hasText: '4,3,3,3,2' })).toContainText('2');
 
-      await expect(
-        page.locator('text=Modo Inteligente aplicado').or(page.locator('text=Nenhum jogo gerado pelo Modo Inteligente'))
-      ).toBeVisible({ timeout: 60_000 });
-      await expect(page.locator('button:has-text("GERAR JOGOS")')).toBeEnabled();
-    } finally {
-      await app.close();
-    }
-  });
+      await page.locator('input[placeholder="1004"]').fill('1002');
+      await expect(page.locator('tr', { hasText: '4,3,3,3,2' })).toContainText('Concurso 1001');
+      await expect(page.locator('tr', { hasText: '4,3,3,3,2' })).toContainText('1');
 
-  test('MODO INTELIGENTE - HISTÓRICO GRANDE: análise e geração retornam scores consistentes', async () => {
-    const { app, page } = await launchApp();
-    try {
-      const tmpCsv = path.join(os.tmpdir(), `cmx_smart_large_${Date.now()}.csv`);
-      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
-      const patterns = [
-        '01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
-        '01,02,04,06,07,09,11,12,14,16,17,19,21,22,24',
-        '02,03,05,07,08,10,12,13,15,17,18,20,22,23,25',
-        '01,03,04,06,08,09,11,13,14,16,18,19,21,23,24',
-      ];
-      const rows: string[] = [];
-      for (let i = 0; i < 180; i++) rows.push(`${8000 + i},${patterns[i % patterns.length]}`);
-      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+      await page.locator('button:has-text("Ordem Numérica Crescente")').click();
+      await expect(page.locator('tbody tr').first()).toContainText('3,3,3,3,3');
+      await page.locator('button:has-text("Decrescente")').click();
+      await expect(page.locator('tbody tr').first()).toContainText('4,3,3,3,2');
 
-      await page.locator('button[title="Dados"]').click();
-      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
-      await expect(page.locator('text=importado')).toBeVisible();
+      await page.locator('input[placeholder="1004"]').fill('');
+      await page.locator('button[title="Mais frequentes primeiro"]').click();
+      await expect(page.locator('tbody tr').first()).toContainText('4,3,3,3,2');
+      await page.locator('button[title="Menos frequentes primeiro"]').click();
+      await expect(page.locator('tbody tr').first()).toContainText('3,3,3,3,3');
 
-      const result = await page.evaluate(async () => {
+      const exportChecks = await page.evaluate(async () => {
         const api = (window as any).electronAPI;
-        const config = {
-          mode: 'lastN',
-          lastN: 80,
-          rangeStart: 1,
-          rangeEnd: 9999,
-          dezenasPorJogo: 15,
-          maxJogos: 25,
-          fixas: [],
-          fixasModo: 'contem',
-          exclusions: [],
-          patternExclusions: [],
-          patternIncludes: [],
-          colPatternMode: 'exclude',
-          rowPatternMode: 'exclude',
-          noRepeatDrawn: false,
+        const lineRows = await api.patternStatsGet('row', null);
+        const columnRows = await api.patternStatsGet('column', null);
+        const csv = await api.patternStatsExport('row', 'csv', lineRows);
+        const txt = await api.patternStatsExport('row', 'txt', lineRows);
+        const excel = await api.patternStatsExport('column', 'excel', columnRows);
+        return {
+          lineHasExpected: lineRows.some((row: { patternKey: string; occurrences: number }) => row.patternKey === '4,3,3,3,2' && row.occurrences === 2),
+          columnHasExpected: columnRows.some((row: { patternKey: string; occurrences: number }) => row.patternKey === '5,5,4,1,0' && row.occurrences === 2),
+          csvSuccess: csv.success,
+          txtSuccess: txt.success,
+          excelSuccess: excel.success,
         };
-        return await api.smartModeGenerate(config, 120);
       });
 
-      expect(result.analysis.drawsAnalyzed).toBe(120);
-      expect(result.suggestions.recommendedPatterns.length).toBeGreaterThan(0);
-      expect(result.suggestions.expectedAverageScore).toBeGreaterThan(0);
-      expect(result.games.length).toBeGreaterThan(0);
-      expect(result.games.every((game: { score: number }) => game.score >= 0 && game.score <= 100)).toBeTruthy();
+      expect(exportChecks).toEqual({
+        lineHasExpected: true,
+        columnHasExpected: true,
+        csvSuccess: true,
+        txtSuccess: true,
+        excelSuccess: true,
+      });
+      expect(fs.existsSync(savePath)).toBeTruthy();
     } finally {
+      if (fs.existsSync(savePath)) fs.unlinkSync(savePath);
       await app.close();
     }
   });
