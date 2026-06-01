@@ -75,9 +75,11 @@ Arquivos removidos por substituição do módulo antigo:
 
 - Release pretendida: `v1.8.21`
 - Asset obrigatório: `ColunaMix-v1.8.21.exe`
-- Publicação automática: não realizada
-- Motivo real: GitHub CLI (`gh`) não encontrado neste ambiente (`GH_NOT_FOUND`)
-- Instruções manuais criadas em: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+- Publicação automática via GitHub Actions: realizada
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.21
+- Asset publicado: `ColunaMix-v1.8.21.exe`
+- Observação: o GitHub CLI (`gh`) não está instalado localmente; a publicação foi feita pelo workflow do repositório acionado pela tag `v1.8.21`.
+- Instruções manuais mantidas como fallback em: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
 - Página de releases: https://github.com/FilipePr0graming/colunamix/releases
 
 ## Evidências

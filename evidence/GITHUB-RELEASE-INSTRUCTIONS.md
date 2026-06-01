@@ -1,6 +1,8 @@
 # GitHub Release Instructions - ColunaMix v1.8.21
 
-Publicação automática não realizada porque o GitHub CLI (`gh`) não está instalado/autenticado neste ambiente.
+Publicação automática realizada via GitHub Actions em `v1.8.21`.
+
+Este arquivo fica como fallback manual caso seja necessário republicar ou substituir o asset.
 
 ## Arquivo obrigatório da release
 

@@ -136,10 +136,12 @@ Primeiros jogos:
 
 ## Status da publicação no GitHub Releases
 
-- Publicação automática: não realizada
-- Motivo real: GitHub CLI (`gh`) não encontrado neste ambiente (`GH_NOT_FOUND`)
+- Publicação automática via GitHub Actions: realizada
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.21
+- Asset publicado: `ColunaMix-v1.8.21.exe`
+- Motivo de não usar `gh`: GitHub CLI não está instalado localmente.
 - Caminho do `.exe` gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.21.exe`
-- Instruções manuais: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+- Instruções manuais de fallback: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
 - Release alvo: https://github.com/FilipePr0graming/colunamix/releases
 
 ## Checklist final
