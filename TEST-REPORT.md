@@ -30,7 +30,7 @@ npm run dist
 - Testes E2E: `14 passed`
 - Testes E2E no executável empacotado: `14 passed`
 - Build do executável `.exe`: aprovado
-- Publicação GitHub Releases v1.8.22: não realizada automaticamente porque `gh` não está instalado e não há `GITHUB_TOKEN`/`GH_TOKEN` neste ambiente
+- Publicação GitHub Releases v1.8.22: aprovada via GitHub Actions
 
 ## Evidências de tela
 
@@ -65,6 +65,7 @@ npm run dist
 - `evidence/logs/npm-run-dist-v1.8.22.txt`
 - `evidence/logs/pattern-variation-search-validation.json`
 - `evidence/logs/exe-build-info-v1.8.22.json`
+- `evidence/logs/github-release-v1.8.22.json`
 
 ## Evidências de exportação
 
@@ -282,11 +283,12 @@ Validação do executável v1.8.22:
 
 Status da publicação GitHub Releases v1.8.22:
 
-- GitHub CLI (`gh`): não instalado.
-- `GITHUB_TOKEN`/`GH_TOKEN`: não disponível.
-- API pública consultada em 2026-06-06: release mais recente encontrada foi `v1.8.21`.
-- Release `v1.8.22`: não publicada neste ambiente.
-- Instruções manuais/workflow atualizadas: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.22
+- Asset publicado: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.22/ColunaMix-v1.8.22.exe
+- Tamanho do asset publicado: `74245581` bytes
+- SHA256 do asset publicado: `26d954510fd5bd63a8390fe92dae40f62cf9e9de0ac3757c81a4ca22f69fd712`
+- Workflow: https://github.com/FilipePr0graming/colunamix/actions/runs/27078235275
+- Dados da release publicada: `evidence/logs/github-release-v1.8.22.json`
 
 ## Status final
 

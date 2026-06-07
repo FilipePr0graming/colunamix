@@ -231,10 +231,13 @@ Status da publicação GitHub v1.8.22:
 
 - Release alvo: `v1.8.22`
 - Asset obrigatório: `ColunaMix-v1.8.22.exe`
-- Publicação automática local: não realizada.
-- Motivo: GitHub CLI (`gh`) não está instalado e não há `GITHUB_TOKEN`/`GH_TOKEN` disponível neste ambiente.
-- API pública consultada em 2026-06-06: release mais recente encontrada foi `v1.8.21`.
-- Instruções de publicação atualizadas em: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+- Publicação automática via GitHub Actions: realizada.
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.22
+- Asset publicado: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.22/ColunaMix-v1.8.22.exe
+- Tamanho do asset publicado: `74245581` bytes
+- SHA256 do asset publicado: `26d954510fd5bd63a8390fe92dae40f62cf9e9de0ac3757c81a4ca22f69fd712`
+- Workflow: https://github.com/FilipePr0graming/colunamix/actions/runs/27078235275
+- Dados da publicação: `evidence/logs/github-release-v1.8.22.json`
 
 ## Status final
 

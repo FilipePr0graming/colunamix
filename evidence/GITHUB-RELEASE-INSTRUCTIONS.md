@@ -1,36 +1,24 @@
-# GitHub Release Instructions - ColunaMix v1.8.22
+# GitHub Release - ColunaMix v1.8.22
 
-Publicação automática não realizada neste ambiente porque o GitHub CLI (`gh`) não está instalado e não há `GITHUB_TOKEN`/`GH_TOKEN` disponível.
+Publicação automática realizada via GitHub Actions em `v1.8.22`.
 
-A API pública do GitHub foi consultada em 2026-06-06 e a release mais recente encontrada foi `v1.8.21`. A release `v1.8.22` ainda precisa ser criada/publicada.
+Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.22
 
-## Arquivo obrigatório da release
+## Asset publicado
 
 - Arquivo: `ColunaMix-v1.8.22.exe`
+- URL: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.22/ColunaMix-v1.8.22.exe
+- Tamanho publicado: `74245581` bytes
+- SHA256 publicado: `26d954510fd5bd63a8390fe92dae40f62cf9e9de0ac3757c81a4ca22f69fd712`
+- Workflow: https://github.com/FilipePr0graming/colunamix/actions/runs/27078235275
+
+## Build local validado
+
 - Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.22.exe`
-- Tamanho: `74268761` bytes
-- SHA256: `54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e`
+- Tamanho local: `74268761` bytes
+- SHA256 local: `54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e`
 
-## Publicação via GitHub UI
-
-1. Acesse: https://github.com/FilipePr0graming/colunamix/releases
-2. Clique em `Draft a new release`.
-3. Em `Choose a tag`, informe `v1.8.22`.
-4. Se a tag ainda não existir, escolha criar a nova tag a partir da branch principal.
-5. Em `Release title`, informe `ColunaMix v1.8.22`.
-6. Anexe o arquivo:
-   `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.22.exe`
-7. Cole o changelog abaixo.
-8. Clique em `Publish release`.
-
-## Publicação via workflow
-
-O repositório possui `.github/workflows/release.yml`. Também é possível publicar por:
-
-- push da tag `v1.8.22`; ou
-- execução manual do workflow `Build & Release (Windows)` com `release_tag=v1.8.22`.
-
-## Changelog sugerido
+## Changelog
 
 ColunaMix v1.8.22
 
@@ -58,4 +46,5 @@ ColunaMix v1.8.22
 - Testes E2E no executável empacotado: `evidence/logs/npm-run-test-e2e-packaged-v1.8.22.txt`
 - Build do executável: `evidence/logs/npm-run-dist-v1.8.22.txt`
 - Dados do executável: `evidence/logs/exe-build-info-v1.8.22.json`
+- Dados da release publicada: `evidence/logs/github-release-v1.8.22.json`
 - Validação da busca: `evidence/logs/pattern-variation-search-validation.json`
