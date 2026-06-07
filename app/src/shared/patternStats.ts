@@ -7,6 +7,19 @@ export interface PatternSearchOptions {
     variationSearch?: boolean;
 }
 
+export type PatternStatsSort =
+    | 'numeric-asc'
+    | 'numeric-desc'
+    | 'occurrences-desc'
+    | 'occurrences-asc'
+    | 'lag-desc';
+
+export interface PatternStatsFilterOptions extends PatternSearchOptions {
+    searchText?: string;
+    minOccurrences?: string | number | null;
+    sort?: PatternStatsSort;
+}
+
 function normalizeUntilContest(untilContest?: number | null): number | null {
     if (typeof untilContest !== 'number' || !Number.isFinite(untilContest)) return null;
     const value = Math.trunc(untilContest);
@@ -86,6 +99,61 @@ export function filterPatternsBySearch(
 
         return directMatch || compactMatch || variationMatch;
     });
+}
+
+export function comparePatternValues(a: number[], b: number[]): number {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const av = a[i] ?? 0;
+        const bv = b[i] ?? 0;
+        if (av !== bv) return av - bv;
+    }
+    return 0;
+}
+
+function normalizeMinOccurrences(value: string | number | null | undefined): number {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+    }
+    if (typeof value !== 'string' || !value.trim()) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
+}
+
+export function sortPatternStatsRows(rows: PatternStatsRow[], sort: PatternStatsSort = 'lag-desc'): PatternStatsRow[] {
+    const nextRows = [...rows];
+    nextRows.sort((a, b) => {
+        if (sort === 'numeric-asc' || sort === 'numeric-desc') {
+            const result = comparePatternValues(a.pattern, b.pattern);
+            if (result !== 0) return sort === 'numeric-asc' ? result : -result;
+            return b.occurrences - a.occurrences || b.lag - a.lag;
+        }
+
+        if (sort === 'occurrences-desc') {
+            return b.occurrences - a.occurrences || b.lag - a.lag || comparePatternValues(a.pattern, b.pattern);
+        }
+
+        if (sort === 'occurrences-asc') {
+            return a.occurrences - b.occurrences || b.lag - a.lag || comparePatternValues(a.pattern, b.pattern);
+        }
+
+        return b.lag - a.lag || b.occurrences - a.occurrences || comparePatternValues(a.pattern, b.pattern);
+    });
+    return nextRows;
+}
+
+export function filterPatternStatsRows(
+    rows: PatternStatsRow[],
+    options: PatternStatsFilterOptions = {}
+): PatternStatsRow[] {
+    const minOccurrences = normalizeMinOccurrences(options.minOccurrences);
+    const searched = filterPatternsBySearch(rows, options.searchText || '', {
+        variationSearch: options.variationSearch,
+    });
+    const filtered = minOccurrences > 0
+        ? searched.filter(row => row.occurrences >= minOccurrences)
+        : searched;
+
+    return sortPatternStatsRows(filtered, options.sort);
 }
 
 export function calculatePatternStats(

@@ -83,7 +83,7 @@ export default function App() {
                     ))}
                     
                     <div className="mt-auto mb-2 text-[8px] font-black text-gray-600 uppercase tracking-tighter">
-                        v1.8.22
+                        v1.8.23
                     </div>
                 </nav>
 

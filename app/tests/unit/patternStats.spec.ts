@@ -3,12 +3,14 @@ import {
   calculatePatternStats,
   canonicalPatternKey,
   clearPatternStatsCache,
+  filterPatternStatsRows,
   filterPatternsBySearch,
   isPatternVariation,
   parsePatternInput,
   serializePatternStatsCsv,
   serializePatternStatsExcel,
   serializePatternStatsTxt,
+  sortPatternStatsRows,
 } from '../../src/shared/patternStats';
 import { PatternStatsRow } from '../../src/shared/types';
 
@@ -90,11 +92,41 @@ test.describe('pattern stats', () => {
 
   test('ordenação por frequência suporta mais e menos ocorrências primeiro', () => {
     const rows = calculatePatternStats(draws, 'row');
-    const most = [...rows].sort((a, b) => b.occurrences - a.occurrences);
-    const least = [...rows].sort((a, b) => a.occurrences - b.occurrences);
+    const most = sortPatternStatsRows(rows, 'occurrences-desc');
+    const least = sortPatternStatsRows(rows, 'occurrences-asc');
 
     expect(most[0].patternKey).toBe('4,3,3,3,2');
     expect(least[0].occurrences).toBe(1);
+  });
+
+  test('filtra por mínimo de ocorrências', () => {
+    const rows = calculatePatternStats(draws, 'row');
+    const filtered = filterPatternStatsRows(rows, {
+      minOccurrences: '2',
+      sort: 'occurrences-desc',
+    });
+
+    expect(filtered.map(row => row.patternKey)).toEqual(['4,3,3,3,2']);
+    expect(filtered.every(row => row.occurrences >= 2)).toBeTruthy();
+  });
+
+  test('busca exata encontra padrão informado', () => {
+    const rows = calculatePatternStats(draws, 'column');
+    const filtered = filterPatternStatsRows(rows, {
+      searchText: '5,5,4,1,0',
+      sort: 'occurrences-desc',
+    });
+
+    expect(filtered.map(row => row.patternKey)).toContain('5,5,4,1,0');
+  });
+
+  test('ordena pelo helper compartilhado em crescente e decrescente', () => {
+    const rows = calculatePatternStats(draws, 'row');
+    const asc = sortPatternStatsRows(rows, 'numeric-asc').map(row => row.patternKey);
+    const desc = sortPatternStatsRows(rows, 'numeric-desc').map(row => row.patternKey);
+
+    expect(asc).toEqual(['3,3,3,3,3', '4,3,3,3,2', '4,4,4,3,0']);
+    expect(desc).toEqual(['4,4,4,3,0', '4,3,3,3,2', '3,3,3,3,3']);
   });
 
   test('exporta CSV', () => {

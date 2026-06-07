@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import { applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
-import { filterPatternsBySearch } from '../../shared/patternStats';
+import { filterPatternStatsRows, type PatternStatsSort } from '../../shared/patternStats';
 import {
     EXACT_GROUP_CATEGORIES,
     EXACT_GROUP_INPUT_ERROR,
@@ -69,9 +69,239 @@ const ADVANCED_GROUP_ENGINE_FEATURES = [
     'Mais segurança antes de gerar jogos com muitos filtros',
 ];
 
-type IntegratedPatternSort = 'most' | 'least' | 'lag';
-
 const formatPatternPercent = (value: number) => `${value.toFixed(2).replace('.', ',')}%`;
+
+interface GeneratorPatternTableProps {
+    kind: PatternStatsKind;
+    title: string;
+    rows: PatternStatsRow[];
+    rawCount: number;
+    loading: boolean;
+    error: string;
+    noData: boolean;
+    untilContest: string;
+    minOccurrences: string;
+    search: string;
+    sort: PatternStatsSort;
+    onUntilContestChange: (value: string) => void;
+    onMinOccurrencesChange: (value: string) => void;
+    onSearchChange: (value: string) => void;
+    onSortChange: (value: PatternStatsSort) => void;
+    onApplyPattern: (row: PatternStatsRow, action: PatternRuleAction, kind: PatternStatsKind) => void;
+}
+
+function patternTestId(patternKey: string): string {
+    return patternKey.replace(/,/g, '-');
+}
+
+function sortButtonClass(active: boolean, tone: 'brand' | 'green' | 'amber' = 'brand'): string {
+    const activeClass = tone === 'green'
+        ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100'
+        : tone === 'amber'
+            ? 'border-amber-300/60 bg-amber-400/20 text-amber-100'
+            : 'border-brand-400/60 bg-brand-500/20 text-brand-100';
+
+    return `h-7 w-7 rounded-md border text-[12px] font-black transition-colors ${active ? activeClass : 'border-white/10 bg-white/[0.03] text-gray-500 hover:border-white/20 hover:text-white'}`;
+}
+
+function GeneratorPatternTable({
+    kind,
+    title,
+    rows,
+    rawCount,
+    loading,
+    error,
+    noData,
+    untilContest,
+    minOccurrences,
+    search,
+    sort,
+    onUntilContestChange,
+    onMinOccurrencesChange,
+    onSearchChange,
+    onSortChange,
+    onApplyPattern,
+}: GeneratorPatternTableProps) {
+    const kindLabel = kind === 'row' ? 'linha' : 'coluna';
+
+    return (
+        <div
+            data-testid={`generator-pattern-${kind}-panel`}
+            className="flex min-h-[500px] min-w-0 flex-col rounded-lg border border-white/10 bg-black/25"
+        >
+            <div className="shrink-0 border-b border-white/5 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                        <h4 className="text-[13px] font-black uppercase tracking-widest text-white">{title}</h4>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            {rows.length.toLocaleString('pt-BR')} de {rawCount.toLocaleString('pt-BR')} padrão(s) encontrados
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-1" data-testid={`generator-pattern-sortbar-${kind}`}>
+                        <button
+                            type="button"
+                            title="Ordem decrescente"
+                            aria-label={`Ordenar ${title} em ordem decrescente`}
+                            data-testid={`generator-pattern-sort-${kind}-numeric-desc`}
+                            onClick={() => onSortChange('numeric-desc')}
+                            className={sortButtonClass(sort === 'numeric-desc')}
+                        >
+                            {'<'}
+                        </button>
+                        <button
+                            type="button"
+                            title="Ordem crescente"
+                            aria-label={`Ordenar ${title} em ordem crescente`}
+                            data-testid={`generator-pattern-sort-${kind}-numeric-asc`}
+                            onClick={() => onSortChange('numeric-asc')}
+                            className={sortButtonClass(sort === 'numeric-asc')}
+                        >
+                            {'>'}
+                        </button>
+                        <button
+                            type="button"
+                            title="Maiores ocorrências"
+                            aria-label={`Ordenar ${title} por maiores ocorrências`}
+                            data-testid={`generator-pattern-sort-${kind}-occurrences-desc`}
+                            onClick={() => onSortChange('occurrences-desc')}
+                            className={sortButtonClass(sort === 'occurrences-desc', 'green')}
+                        >
+                            +
+                        </button>
+                        <button
+                            type="button"
+                            title="Menores ocorrências"
+                            aria-label={`Ordenar ${title} por menores ocorrências`}
+                            data-testid={`generator-pattern-sort-${kind}-occurrences-asc`}
+                            onClick={() => onSortChange('occurrences-asc')}
+                            className={sortButtonClass(sort === 'occurrences-asc', 'amber')}
+                        >
+                            -
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <label>
+                        <span className="desktop-label !mb-1 !text-[9px]">Analisar até concurso</span>
+                        <input
+                            type="number"
+                            value={untilContest}
+                            onChange={event => onUntilContestChange(event.target.value)}
+                            data-testid={`generator-pattern-until-${kind}`}
+                            className="desktop-control h-9 w-full !rounded-md !text-[12px]"
+                            placeholder="Concurso"
+                        />
+                    </label>
+                    <label>
+                        <span className="desktop-label !mb-1 !text-[9px]">Mínimo de ocorrências</span>
+                        <input
+                            type="number"
+                            min={0}
+                            value={minOccurrences}
+                            onChange={event => onMinOccurrencesChange(event.target.value)}
+                            data-testid={`generator-pattern-min-${kind}`}
+                            className="desktop-control h-9 w-full !rounded-md !text-[12px]"
+                            placeholder="0"
+                        />
+                    </label>
+                    <label>
+                        <span className="desktop-label !mb-1 !text-[9px]">Busca</span>
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={event => onSearchChange(event.target.value)}
+                            data-testid={`generator-pattern-search-${kind}`}
+                            className="desktop-control h-9 w-full !rounded-md !font-mono !text-[12px]"
+                            placeholder="4,3,3,3,2"
+                        />
+                    </label>
+                </div>
+            </div>
+
+            <div
+                data-testid={`generator-pattern-table-${kind}`}
+                className="min-h-0 flex-1 overflow-auto custom-scrollbar"
+            >
+                <table className="w-full min-w-[480px] border-collapse text-left">
+                    <thead className="sticky top-0 z-10 bg-[#10101a] text-[9px] uppercase tracking-widest text-gray-500">
+                        <tr>
+                            <th className="px-3 py-2">Padrão</th>
+                            <th className="px-2 py-2 text-right">Ocorrências</th>
+                            <th className="px-2 py-2 text-right">Última vez</th>
+                            <th className="px-2 py-2 text-right">Atraso</th>
+                            <th className="px-2 py-2 text-right">Percentual</th>
+                            <th className="px-3 py-2 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-[11px]">
+                        {noData ? (
+                            <tr>
+                                <td colSpan={6} className="px-3 py-10 text-center text-[10px] font-black uppercase tracking-widest text-gray-600">
+                                    Importe concursos para visualizar os padrões.
+                                </td>
+                            </tr>
+                        ) : loading ? (
+                            <tr>
+                                <td colSpan={6} className="px-3 py-10 text-center text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                    Calculando padrões...
+                                </td>
+                            </tr>
+                        ) : error ? (
+                            <tr>
+                                <td colSpan={6} className="px-3 py-4 text-[12px] font-bold text-red-300">
+                                    {error}
+                                </td>
+                            </tr>
+                        ) : rows.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="px-3 py-10 text-center text-[10px] font-black uppercase tracking-widest text-gray-600">
+                                    Nenhum padrão encontrado.
+                                </td>
+                            </tr>
+                        ) : rows.map(row => (
+                            <tr
+                                key={`${kind}-${row.patternKey}`}
+                                data-testid={`generator-pattern-row-${kind}-${patternTestId(row.patternKey)}`}
+                                className="h-9 hover:bg-white/[0.035]"
+                            >
+                                <td className="whitespace-nowrap px-3 py-2 font-mono text-[12px] font-black text-brand-200">{row.patternKey}</td>
+                                <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-200">{row.occurrences.toLocaleString('pt-BR')}</td>
+                                <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-300">{row.lastContest}</td>
+                                <td className="px-2 py-2 text-right font-black tabular-nums text-amber-200">{row.lag.toLocaleString('pt-BR')}</td>
+                                <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-300">{formatPatternPercent(row.percentage)}</td>
+                                <td className="px-3 py-1.5">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            title="Usar somente"
+                                            aria-label={`Usar padrão de ${kindLabel} ${row.patternKey}`}
+                                            onClick={() => onApplyPattern(row, 'include', kind)}
+                                            data-testid={`generator-pattern-use-${kind}-${patternTestId(row.patternKey)}`}
+                                            className="h-6 w-6 rounded-full border border-blue-300/50 bg-blue-500/20 text-[10px] font-black text-blue-100 transition-colors hover:bg-blue-500/35"
+                                        >
+                                            U
+                                        </button>
+                                        <button
+                                            type="button"
+                                            title="Excluir padrão"
+                                            aria-label={`Excluir padrão de ${kindLabel} ${row.patternKey}`}
+                                            onClick={() => onApplyPattern(row, 'exclude', kind)}
+                                            data-testid={`generator-pattern-exclude-${kind}-${patternTestId(row.patternKey)}`}
+                                            className="h-6 w-6 rounded-full border border-red-300/50 bg-red-500/20 text-[10px] font-black text-red-100 transition-colors hover:bg-red-500/35"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
 
 export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [mode, setMode] = useState<'lastN' | 'range'>('lastN');
@@ -92,13 +322,21 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [patternTab, setPatternTab] = useState<'column' | 'row'>('row');
     const [patternInput, setPatternInput] = useState('');
     const [patternError, setPatternError] = useState('');
-    const [integratedPatternKind, setIntegratedPatternKind] = useState<PatternStatsKind>('row');
-    const [integratedPatternSort, setIntegratedPatternSort] = useState<IntegratedPatternSort>('most');
-    const [integratedUntilContest, setIntegratedUntilContest] = useState('');
-    const [integratedPatternSearch, setIntegratedPatternSearch] = useState('');
-    const [integratedPatternRows, setIntegratedPatternRows] = useState<PatternStatsRow[]>([]);
-    const [integratedPatternLoading, setIntegratedPatternLoading] = useState(false);
-    const [integratedPatternError, setIntegratedPatternError] = useState('');
+    const [patternPanelEnabled, setPatternPanelEnabled] = useState(true);
+    const [rowPatternUntil, setRowPatternUntil] = useState('');
+    const [rowPatternMinOccurrences, setRowPatternMinOccurrences] = useState('');
+    const [rowPatternSearch, setRowPatternSearch] = useState('');
+    const [rowPatternSort, setRowPatternSort] = useState<PatternStatsSort>('occurrences-desc');
+    const [rowPatternRows, setRowPatternRows] = useState<PatternStatsRow[]>([]);
+    const [rowPatternLoading, setRowPatternLoading] = useState(false);
+    const [rowPatternError, setRowPatternError] = useState('');
+    const [columnPatternUntil, setColumnPatternUntil] = useState('');
+    const [columnPatternMinOccurrences, setColumnPatternMinOccurrences] = useState('');
+    const [columnPatternSearch, setColumnPatternSearch] = useState('');
+    const [columnPatternSort, setColumnPatternSort] = useState<PatternStatsSort>('occurrences-desc');
+    const [columnPatternRows, setColumnPatternRows] = useState<PatternStatsRow[]>([]);
+    const [columnPatternLoading, setColumnPatternLoading] = useState(false);
+    const [columnPatternError, setColumnPatternError] = useState('');
     const [noRepeat, setNoRepeat] = useState(false);
     const [colPatternMode, setColPatternMode] = useState<'exclude' | 'include'>('exclude');
     const [rowPatternMode, setRowPatternMode] = useState<'exclude' | 'include'>('exclude');
@@ -159,27 +397,28 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     }, [notice]);
 
     useEffect(() => {
-        if (noData) {
-            setIntegratedPatternRows([]);
-            setIntegratedPatternError('');
+        if (!patternPanelEnabled || noData) {
+            setRowPatternRows([]);
+            setRowPatternError('');
+            setRowPatternLoading(false);
             return;
         }
 
         let cancelled = false;
         const timer = window.setTimeout(async () => {
-            setIntegratedPatternLoading(true);
-            setIntegratedPatternError('');
-            const safeUntil = integratedUntilContest.trim() ? Number(integratedUntilContest) : null;
+            setRowPatternLoading(true);
+            setRowPatternError('');
+            const safeUntil = rowPatternUntil.trim() ? Number(rowPatternUntil) : null;
             try {
-                const rows = await window.electronAPI.patternStatsGet(integratedPatternKind, safeUntil);
-                if (!cancelled) setIntegratedPatternRows(rows);
+                const rows = await window.electronAPI.patternStatsGet('row', safeUntil);
+                if (!cancelled) setRowPatternRows(rows);
             } catch (e: any) {
                 if (!cancelled) {
-                    setIntegratedPatternRows([]);
-                    setIntegratedPatternError(e?.message || 'Erro ao carregar padrões.');
+                    setRowPatternRows([]);
+                    setRowPatternError(e?.message || 'Erro ao carregar padrões de linha.');
                 }
             } finally {
-                if (!cancelled) setIntegratedPatternLoading(false);
+                if (!cancelled) setRowPatternLoading(false);
             }
         }, 180);
 
@@ -187,7 +426,39 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [integratedPatternKind, integratedUntilContest, noData, dbStatus?.drawCount]);
+    }, [patternPanelEnabled, rowPatternUntil, noData, dbStatus?.drawCount]);
+
+    useEffect(() => {
+        if (!patternPanelEnabled || noData) {
+            setColumnPatternRows([]);
+            setColumnPatternError('');
+            setColumnPatternLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        const timer = window.setTimeout(async () => {
+            setColumnPatternLoading(true);
+            setColumnPatternError('');
+            const safeUntil = columnPatternUntil.trim() ? Number(columnPatternUntil) : null;
+            try {
+                const rows = await window.electronAPI.patternStatsGet('column', safeUntil);
+                if (!cancelled) setColumnPatternRows(rows);
+            } catch (e: any) {
+                if (!cancelled) {
+                    setColumnPatternRows([]);
+                    setColumnPatternError(e?.message || 'Erro ao carregar padrões de coluna.');
+                }
+            } finally {
+                if (!cancelled) setColumnPatternLoading(false);
+            }
+        }, 180);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [patternPanelEnabled, columnPatternUntil, noData, dbStatus?.drawCount]);
 
     // LocalStorage Persistence
     useEffect(() => {
@@ -212,6 +483,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exactGroupHistoryCounts) {
                     setExactGroupHistoryCounts({ ...createExactGroupHistoryCountState(), ...config.exactGroupHistoryCounts });
                 }
+                if (typeof config.patternPanelEnabled === 'boolean') setPatternPanelEnabled(config.patternPanelEnabled);
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
             } catch (e) {
                 console.error('Erro ao carregar configurações salvas:', e);
@@ -223,10 +495,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode, exactGroupHistoryCounts
+            colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
         };
         localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -368,7 +640,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode, exactGroupHistoryCounts
+            colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
         if (success) {
@@ -402,6 +674,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.noRepeat !== undefined) setNoRepeat(config.noRepeat);
                 if (config.colPatternMode) setColPatternMode(config.colPatternMode);
                 if (config.rowPatternMode) setRowPatternMode(config.rowPatternMode);
+                if (typeof config.patternPanelEnabled === 'boolean') setPatternPanelEnabled(config.patternPanelEnabled);
                 setNotice({
                     tone: 'success',
                     title: 'Configuração carregada',
@@ -646,20 +919,20 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         }
     };
 
-    const applyPatternFromPanel = (row: PatternStatsRow, action: PatternRuleAction) => {
+    const applyPatternFromPanel = (row: PatternStatsRow, action: PatternRuleAction, kind: PatternStatsKind) => {
         const result = applyPatternRuleAction({
             includes: patternIncludes,
             exclusions: patternExclusions,
-            rule: { type: integratedPatternKind, pattern: row.pattern },
+            rule: { type: kind, pattern: row.pattern },
             action,
         });
 
         setPatternIncludes(result.includes);
         setPatternExclusions(result.exclusions);
-        setPatternTab(integratedPatternKind);
+        setPatternTab(kind);
 
-        const hasIncludesForKind = result.includes.some(item => item.type === integratedPatternKind);
-        if (integratedPatternKind === 'column') {
+        const hasIncludesForKind = result.includes.some(item => item.type === kind);
+        if (kind === 'column') {
             setColPatternMode(action === 'include' || hasIncludesForKind ? 'include' : 'exclude');
         } else {
             setRowPatternMode(action === 'include' || hasIncludesForKind ? 'include' : 'exclude');
@@ -679,18 +952,19 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         });
     };
 
-    const integratedPatternPreviewRows = React.useMemo(() => {
-        const sorted = [...filterPatternsBySearch(integratedPatternRows, integratedPatternSearch, { variationSearch: true })].sort((a, b) => {
-            if (integratedPatternSort === 'least') {
-                return a.occurrences - b.occurrences || b.lag - a.lag || a.patternKey.localeCompare(b.patternKey);
-            }
-            if (integratedPatternSort === 'lag') {
-                return b.lag - a.lag || b.occurrences - a.occurrences || a.patternKey.localeCompare(b.patternKey);
-            }
-            return b.occurrences - a.occurrences || b.lag - a.lag || a.patternKey.localeCompare(b.patternKey);
-        });
-        return sorted.slice(0, 10);
-    }, [integratedPatternRows, integratedPatternSearch, integratedPatternSort]);
+    const rowPatternPanelRows = React.useMemo(() => filterPatternStatsRows(rowPatternRows, {
+        searchText: rowPatternSearch,
+        minOccurrences: rowPatternMinOccurrences,
+        sort: rowPatternSort,
+        variationSearch: true,
+    }), [rowPatternRows, rowPatternSearch, rowPatternMinOccurrences, rowPatternSort]);
+
+    const columnPatternPanelRows = React.useMemo(() => filterPatternStatsRows(columnPatternRows, {
+        searchText: columnPatternSearch,
+        minOccurrences: columnPatternMinOccurrences,
+        sort: columnPatternSort,
+        variationSearch: true,
+    }), [columnPatternRows, columnPatternSearch, columnPatternMinOccurrences, columnPatternSort]);
 
     // Calculate combined excluded dozens for visualization
     const allExcludedDozens = React.useMemo(() => 
@@ -821,6 +1095,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         className="w-full h-1.5 accent-brand-500 cursor-pointer bg-white/5 rounded-full" />
                                 </div>
                                 <input type="number" value={lastN}
+                                    data-testid="generator-last-n-input"
                                     onChange={e => setLastN(e.target.value === '' ? 0 : Number(e.target.value))}
                                     className="desktop-control w-[72px] text-center font-bold" />
                             </div>
@@ -1257,11 +1532,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     })()}
                 </section>
 
-                {/* Painel integrado no antigo espaço do Radar Histórico */}
+                {/* Painel de padrões no antigo espaço do Modo Inteligente/Radar Histórico */}
                 <section className="animate-fade-in border-t border-white/5 pt-6">
                     <div className="section-header">
                         <div className="flex items-center gap-3">
-                            <h3 className="section-title">Padrões Inteligentes</h3>
+                            <h3 className="section-title">Painel de Padrões</h3>
                             <span className="px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/10 text-[9px] text-gray-500 font-black uppercase tracking-widest">
                                 Dentro do Gerador
                             </span>
@@ -1274,146 +1549,83 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     >
                         <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
                         <div className="relative space-y-4">
-                            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                                <div className="min-w-0 space-y-2">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                            <div className="flex flex-col items-center gap-3 border-b border-white/5 pb-4 text-center">
+                                <label
+                                    data-testid="generator-pattern-toggle"
+                                    className="inline-flex cursor-pointer items-center gap-3 rounded-full border border-white/10 bg-black/30 px-4 py-2"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={patternPanelEnabled}
+                                        onChange={event => setPatternPanelEnabled(event.target.checked)}
+                                        className="peer sr-only"
+                                    />
+                                    <span className={`relative h-5 w-10 rounded-full border transition-colors ${patternPanelEnabled ? 'border-brand-400/70 bg-brand-500/70' : 'border-white/10 bg-white/5'}`}>
+                                        <span className={`absolute top-1 h-3 w-3 rounded-full transition-all ${patternPanelEnabled ? 'left-6 bg-white' : 'left-1 bg-gray-500'}`}></span>
+                                    </span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
+                                        {patternPanelEnabled ? 'Painel ligado' : 'Painel desligado'}
+                                    </span>
+                                </label>
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <h4 className="text-sm font-black uppercase tracking-widest text-white">
                                             Painel de Padrões
                                         </h4>
                                         <span className="rounded-full border border-brand-500/25 bg-brand-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-brand-300">
                                             1 clique para usar ou excluir
                                         </span>
                                     </div>
-                                    <p className="max-w-3xl text-[12px] leading-relaxed text-gray-400">
-                                        Visualize os padrões do histórico e envie direto para o painel de usar somente ou excluir padrões.
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-wrap items-end gap-3">
-                                    <div className="flex rounded-lg border border-white/10 bg-black/20 p-1">
-                                        {(['row', 'column'] as const).map(kind => (
-                                            <button
-                                                key={kind}
-                                                type="button"
-                                                data-testid={`generator-pattern-kind-${kind}`}
-                                                onClick={() => setIntegratedPatternKind(kind)}
-                                                className={`h-9 px-3 text-[10px] font-black uppercase tracking-widest transition-colors ${integratedPatternKind === kind ? 'rounded-md bg-brand-500 text-white' : 'text-gray-500 hover:text-gray-200'}`}
-                                            >
-                                                {kind === 'row' ? 'Linha' : 'Coluna'}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <select
-                                        value={integratedPatternSort}
-                                        onChange={event => setIntegratedPatternSort(event.target.value as IntegratedPatternSort)}
-                                        data-testid="generator-pattern-sort"
-                                        className="desktop-control desktop-select h-10 min-w-[160px] text-[10px] font-black uppercase tracking-widest"
-                                    >
-                                        <option value="most">Mais frequentes</option>
-                                        <option value="least">Menos frequentes</option>
-                                        <option value="lag">Mais atrasados</option>
-                                    </select>
-
-                                    <label className="min-w-[170px]">
-                                        <span className="desktop-label">Busca</span>
-                                        <input
-                                            type="text"
-                                            value={integratedPatternSearch}
-                                            onChange={event => setIntegratedPatternSearch(event.target.value)}
-                                            data-testid="generator-pattern-search"
-                                            className="desktop-control h-10 w-full font-mono"
-                                            placeholder="4,3,3,3,2"
-                                        />
-                                    </label>
-
-                                    <label className="min-w-[150px]">
-                                        <span className="desktop-label">Analisar até</span>
-                                        <input
-                                            type="number"
-                                            value={integratedUntilContest}
-                                            onChange={event => setIntegratedUntilContest(event.target.value)}
-                                            data-testid="generator-pattern-until"
-                                            className="desktop-control h-10 w-full"
-                                            placeholder={dbStatus?.maxContest ? String(dbStatus.maxContest) : 'Concurso'}
-                                        />
-                                    </label>
                                 </div>
                             </div>
 
-                            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5" data-testid="generator-pattern-list">
-                                {noData ? (
-                                    <div className="col-span-full rounded-lg border border-white/5 bg-black/20 px-4 py-8 text-center text-[11px] font-black uppercase tracking-widest text-gray-600">
-                                        Importe concursos para visualizar os padrões.
-                                    </div>
-                                ) : integratedPatternLoading ? (
-                                    <div className="col-span-full rounded-lg border border-white/5 bg-black/20 px-4 py-8 text-center text-[11px] font-black uppercase tracking-widest text-gray-500">
-                                        Calculando padrões...
-                                    </div>
-                                ) : integratedPatternError ? (
-                                    <div className="col-span-full rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-4 text-[12px] font-bold text-red-300">
-                                        {integratedPatternError}
-                                    </div>
-                                ) : integratedPatternPreviewRows.length === 0 ? (
-                                    <div className="col-span-full rounded-lg border border-white/5 bg-black/20 px-4 py-8 text-center text-[11px] font-black uppercase tracking-widest text-gray-600">
-                                        Nenhum padrão encontrado.
-                                    </div>
-                                ) : integratedPatternPreviewRows.map(row => (
-                                    <div
-                                        key={`${integratedPatternKind}-${row.patternKey}`}
-                                        data-testid={`generator-pattern-card-${integratedPatternKind}-${row.patternKey.replace(/,/g, '-')}`}
-                                        className="rounded-lg border border-white/10 bg-black/25 p-3 transition-colors hover:border-brand-500/35 hover:bg-white/[0.035]"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">
-                                                    {integratedPatternKind === 'row' ? 'Padrão de linha' : 'Padrão de coluna'}
-                                                </span>
-                                                <div className="mt-1 font-mono text-lg font-black text-white" data-testid="generator-pattern-key">
-                                                    {row.patternKey}
-                                                </div>
-                                            </div>
-                                            <span className="rounded-md border border-brand-500/20 bg-brand-500/10 px-2 py-1 text-[10px] font-black text-brand-200">
-                                                {formatPatternPercent(row.percentage)}
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
-                                            <div>
-                                                <span className="block font-black uppercase tracking-widest text-gray-600">Ocorr.</span>
-                                                <span className="font-bold text-gray-200">{row.occurrences}</span>
-                                            </div>
-                                            <div>
-                                                <span className="block font-black uppercase tracking-widest text-gray-600">Último</span>
-                                                <span className="font-bold text-gray-200">{row.lastContest}</span>
-                                            </div>
-                                            <div>
-                                                <span className="block font-black uppercase tracking-widest text-gray-600">Atraso</span>
-                                                <span className="font-bold text-amber-200">{row.lag}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-3 grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => applyPatternFromPanel(row, 'include')}
-                                                data-testid={`generator-pattern-use-${integratedPatternKind}-${row.patternKey.replace(/,/g, '-')}`}
-                                                className="h-8 rounded-md border border-brand-500/30 bg-brand-500/10 text-[9px] font-black uppercase tracking-widest text-brand-200 transition-colors hover:bg-brand-500/20 hover:text-white"
-                                            >
-                                                Usar
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => applyPatternFromPanel(row, 'exclude')}
-                                                data-testid={`generator-pattern-exclude-${integratedPatternKind}-${row.patternKey.replace(/,/g, '-')}`}
-                                                className="h-8 rounded-md border border-red-500/30 bg-red-500/10 text-[9px] font-black uppercase tracking-widest text-red-200 transition-colors hover:bg-red-500/20 hover:text-white"
-                                            >
-                                                Excluir
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            {!patternPanelEnabled ? (
+                                <div
+                                    data-testid="generator-pattern-panel-disabled"
+                                    className="rounded-lg border border-white/5 bg-black/25 px-4 py-10 text-center text-[11px] font-black uppercase tracking-widest text-gray-500"
+                                >
+                                    Painel de padrões desligado para preservar performance.
+                                </div>
+                            ) : (
+                                <div className="grid gap-4 lg:grid-cols-2" data-testid="generator-pattern-tables">
+                                    <GeneratorPatternTable
+                                        kind="row"
+                                        title="Padrões de Linha"
+                                        rows={rowPatternPanelRows}
+                                        rawCount={rowPatternRows.length}
+                                        loading={rowPatternLoading}
+                                        error={rowPatternError}
+                                        noData={noData}
+                                        untilContest={rowPatternUntil}
+                                        minOccurrences={rowPatternMinOccurrences}
+                                        search={rowPatternSearch}
+                                        sort={rowPatternSort}
+                                        onUntilContestChange={setRowPatternUntil}
+                                        onMinOccurrencesChange={setRowPatternMinOccurrences}
+                                        onSearchChange={setRowPatternSearch}
+                                        onSortChange={setRowPatternSort}
+                                        onApplyPattern={applyPatternFromPanel}
+                                    />
+                                    <GeneratorPatternTable
+                                        kind="column"
+                                        title="Padrões de Coluna"
+                                        rows={columnPatternPanelRows}
+                                        rawCount={columnPatternRows.length}
+                                        loading={columnPatternLoading}
+                                        error={columnPatternError}
+                                        noData={noData}
+                                        untilContest={columnPatternUntil}
+                                        minOccurrences={columnPatternMinOccurrences}
+                                        search={columnPatternSearch}
+                                        sort={columnPatternSort}
+                                        onUntilContestChange={setColumnPatternUntil}
+                                        onMinOccurrencesChange={setColumnPatternMinOccurrences}
+                                        onSearchChange={setColumnPatternSearch}
+                                        onSortChange={setColumnPatternSort}
+                                        onApplyPattern={applyPatternFromPanel}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>

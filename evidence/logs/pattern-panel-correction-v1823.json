@@ -1,0 +1,12 @@
+{
+  "version": "v1.8.23",
+  "panelLocation": "generator",
+  "oldSmartModeReplaced": true,
+  "layout": "two-column-table",
+  "rowPatternsPanel": true,
+  "columnPatternsPanel": true,
+  "infiniteScrollWithoutPagination": true,
+  "toggleEnabled": true,
+  "cardsRemoved": true,
+  "compactTableEnabled": true
+}

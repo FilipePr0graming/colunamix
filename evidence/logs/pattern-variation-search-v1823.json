@@ -1,0 +1,131 @@
+{
+  "version": "v1.8.23",
+  "sourceCsv": "C:\\Users\\filip\\Local Sites\\colunamix\\data\\input\\exemplo.csv",
+  "totalDraws": 20,
+  "rowVariationSearch": {
+    "query": "2,3,3,3,4",
+    "canonicalKey": "2,3,3,3,4",
+    "matchedPatterns": [
+      {
+        "pattern": "3,4,2,3,3",
+        "occurrences": 3,
+        "lastContest": 3218,
+        "lag": 2,
+        "percentage": 15
+      },
+      {
+        "pattern": "3,3,2,4,3",
+        "occurrences": 2,
+        "lastContest": 3220,
+        "lag": 0,
+        "percentage": 10
+      },
+      {
+        "pattern": "2,3,4,3,3",
+        "occurrences": 2,
+        "lastContest": 3219,
+        "lag": 1,
+        "percentage": 10
+      },
+      {
+        "pattern": "4,3,3,3,2",
+        "occurrences": 1,
+        "lastContest": 3201,
+        "lag": 19,
+        "percentage": 5
+      },
+      {
+        "pattern": "3,4,3,2,3",
+        "occurrences": 1,
+        "lastContest": 3203,
+        "lag": 17,
+        "percentage": 5
+      },
+      {
+        "pattern": "3,3,3,4,2",
+        "occurrences": 1,
+        "lastContest": 3204,
+        "lag": 16,
+        "percentage": 5
+      }
+    ]
+  },
+  "columnVariationSearch": {
+    "query": "2,2,3,4,4",
+    "canonicalKey": "2,2,3,4,4",
+    "matchedPatterns": [
+      {
+        "pattern": "4,2,4,3,2",
+        "occurrences": 1,
+        "lastContest": 3204,
+        "lag": 16,
+        "percentage": 5
+      },
+      {
+        "pattern": "2,3,4,4,2",
+        "occurrences": 1,
+        "lastContest": 3206,
+        "lag": 14,
+        "percentage": 5
+      },
+      {
+        "pattern": "2,4,2,3,4",
+        "occurrences": 1,
+        "lastContest": 3210,
+        "lag": 10,
+        "percentage": 5
+      },
+      {
+        "pattern": "4,2,4,2,3",
+        "occurrences": 1,
+        "lastContest": 3211,
+        "lag": 9,
+        "percentage": 5
+      },
+      {
+        "pattern": "2,4,2,4,3",
+        "occurrences": 1,
+        "lastContest": 3214,
+        "lag": 6,
+        "percentage": 5
+      },
+      {
+        "pattern": "4,4,3,2,2",
+        "occurrences": 1,
+        "lastContest": 3217,
+        "lag": 3,
+        "percentage": 5
+      }
+    ]
+  },
+  "repetitionValidation": {
+    "method": "canonical sorted multiset key",
+    "preservesRepetitions": true,
+    "example": {
+      "input": "4,3,3,3,2",
+      "canonicalKey": "2,3,3,3,4",
+      "sameComposition": [
+        {
+          "pattern": "3,4,3,3,2",
+          "canonicalKey": "2,3,3,3,4"
+        },
+        {
+          "pattern": "3,3,4,2,3",
+          "canonicalKey": "2,3,3,3,4"
+        },
+        {
+          "pattern": "2,3,3,4,3",
+          "canonicalKey": "2,3,3,3,4"
+        },
+        {
+          "pattern": "4,3,3,3,2",
+          "canonicalKey": "2,3,3,3,4"
+        }
+      ],
+      "rejectedDifferentComposition": {
+        "pattern": "4,4,3,2,2",
+        "canonicalKey": "2,2,3,4,4"
+      }
+    }
+  }
+}

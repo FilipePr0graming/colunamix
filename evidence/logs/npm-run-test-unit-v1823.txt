@@ -1,0 +1,44 @@
+
+> colunamix@1.8.23 test:unit
+> playwright test tests/unit
+
+
+Running 35 tests using 3 workers
+
+  ok  1 tests\unit\patternStats.spec.ts:37:7 › pattern stats › calcula corretamente padrões de linha (17ms)
+  ok  2 tests\unit\patternRules.spec.ts:42:7 › pattern rule actions › inclui padrão em usar somente sem duplicar (17ms)
+  ok  3 tests\unit\exactGroupExclusions.spec.ts:16:7 › exact group exclusions › exclui quando Miolo Ímpares bate exatamente (17ms)
+  ok  4 tests\unit\patternStats.spec.ts:49:7 › pattern stats › calcula corretamente padrões de coluna (8ms)
+  ok  5 tests\unit\patternRules.spec.ts:62:7 › pattern rule actions › inclui padrão em excluir sem duplicar (12ms)
+  ok  6 tests\unit\exactGroupExclusions.spec.ts:28:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem menos dezenas (9ms)
+  ok  7 tests\unit\patternStats.spec.ts:60:7 › pattern stats › calcula atraso pelo último concurso analisado (7ms)
+  ok  9 tests\unit\exactGroupExclusions.spec.ts:40:7 › exact group exclusions › não exclui Miolo Ímpares quando o jogo tem dezenas a mais (7ms)
+  ok  8 tests\unit\patternRules.spec.ts:82:7 › pattern rule actions › move padrão conflitante entre usar somente e excluir (11ms)
+  ok 10 tests\unit\patternStats.spec.ts:71:7 › pattern stats › respeita filtro até concurso X (23ms)
+  ok 11 tests\unit\patternRules.spec.ts:103:7 › generator pattern filters › gerador respeita padrão de linha em usar somente (11ms)
+  ok 12 tests\unit\exactGroupExclusions.spec.ts:52:7 › exact group exclusions › não exclui quando o grupo está configurado em outra categoria (14ms)
+  ok 14 tests\unit\patternRules.spec.ts:115:7 › generator pattern filters › gerador respeita padrão de coluna em usar somente (9ms)
+  ok 13 tests\unit\patternStats.spec.ts:84:7 › pattern stats › ordenação numérica crescente e decrescente preserva sequência do padrão (10ms)
+  ok 15 tests\unit\exactGroupExclusions.spec.ts:65:7 › exact group exclusions › exclui Borda Ímpares quando bate exatamente (9ms)
+  ok 16 tests\unit\patternRules.spec.ts:127:7 › generator pattern filters › gerador respeita padrão de linha em excluir (8ms)
+  ok 17 tests\unit\patternStats.spec.ts:93:7 › pattern stats › ordenação por frequência suporta mais e menos ocorrências primeiro (8ms)
+  ok 18 tests\unit\exactGroupExclusions.spec.ts:77:7 › exact group exclusions › não exclui Borda Ímpares quando o jogo tem número extra (6ms)
+  ok 19 tests\unit\patternRules.spec.ts:138:7 › generator pattern filters › gerador respeita padrão de coluna em excluir (7ms)
+  ok 20 tests\unit\patternStats.spec.ts:102:7 › pattern stats › filtra por mínimo de ocorrências (7ms)
+  ok 21 tests\unit\exactGroupExclusions.spec.ts:89:7 › exact group exclusions › separa também Miolo Pares e Borda Pares (10ms)
+  ok 22 tests\unit\patternStats.spec.ts:113:7 › pattern stats › busca exata encontra padrão informado (10ms)
+  ok 23 tests\unit\exactGroupExclusions.spec.ts:102:7 › exact group exclusions › normaliza entrada textual fora de ordem (7ms)
+  ok 24 tests\unit\patternStats.spec.ts:123:7 › pattern stats › ordena pelo helper compartilhado em crescente e decrescente (10ms)
+  ok 25 tests\unit\exactGroupExclusions.spec.ts:109:7 › exact group exclusions › adiciona vírgulas automaticamente ao digitar dezenas em pares (19ms)
+  ok 26 tests\unit\patternStats.spec.ts:132:7 › pattern stats › exporta CSV (10ms)
+  ok 27 tests\unit\exactGroupExclusions.spec.ts:116:7 › exact group exclusions › extrai o grupo correto para cadastro histórico por categoria (8ms)
+  ok 28 tests\unit\patternStats.spec.ts:139:7 › pattern stats › exporta TXT (3ms)
+  ok 29 tests\unit\exactGroupExclusions.spec.ts:125:7 › exact group exclusions › normaliza duplicidade dentro do grupo (7ms)
+  ok 30 tests\unit\patternStats.spec.ts:145:7 › pattern stats › exporta Excel em formato SpreadsheetML legível pelo Excel (7ms)
+  ok 31 tests\unit\exactGroupExclusions.spec.ts:130:7 › exact group exclusions › rejeita texto inválido, grupo vazio e dezenas fora de 01 a 25 (7ms)
+  ok 32 tests\unit\patternStats.spec.ts:153:7 › pattern stats › normaliza entrada com vírgulas, espaços e formato compacto (15ms)
+  ok 33 tests\unit\patternStats.spec.ts:160:7 › pattern stats › busca por variações compara multiconjunto e preserva repetições (10ms)
+  ok 34 tests\unit\patternStats.spec.ts:169:7 › pattern stats › filtra padrões equivalentes em linha e coluna sem depender de ordem textual (3ms)
+  ok 35 tests\unit\patternStats.spec.ts:193:7 › pattern stats › busca inválida não quebra e mantém resultado vazio quando não há texto compatível (5ms)
+
+  35 passed (2.3s)

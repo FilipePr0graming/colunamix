@@ -1,0 +1,42 @@
+{
+  "version": "v1.8.23",
+  "source": "compiled actual shared generator/patternRules modules from app/src/shared",
+  "fixtures": {
+    "draws": 4,
+    "maxJogos": 300
+  },
+  "actionRules": {
+    "rowPattern": "4,3,3,3,2",
+    "columnPattern": "5,5,4,1,0",
+    "includeDoesNotDuplicate": true,
+    "excludeMovesFromInclude": true
+  },
+  "generatorValidations": {
+    "rowInclude": {
+      "pattern": "4,3,3,3,2",
+      "generatedGames": 3,
+      "allGamesMatch": true
+    },
+    "columnInclude": {
+      "pattern": "5,5,4,1,0",
+      "generatedGames": 1,
+      "allGamesMatch": true
+    },
+    "rowExclude": {
+      "pattern": "4,3,3,3,2",
+      "generatedGames": 4,
+      "allGamesAvoidPattern": true
+    },
+    "columnExclude": {
+      "pattern": "5,5,4,1,0",
+      "generatedGames": 6,
+      "allGamesAvoidPattern": true
+    }
+  },
+  "preservedControls": {
+    "fixedNumbers": true,
+    "dynamicExclusions": true,
+    "exactGroupExclusions": true,
+    "noRepeatDrawn": true
+  }
+}

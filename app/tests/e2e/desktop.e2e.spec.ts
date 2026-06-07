@@ -34,6 +34,22 @@ async function saveEvidenceScreenshot(page: Page, filename: string) {
   await page.screenshot({ path: path.join(screenshotDir, filename), fullPage: true });
 }
 
+async function saveEvidenceViewportScreenshot(page: Page, filename: string) {
+  const screenshotDir = path.join(process.cwd(), '..', 'evidence', 'screenshots');
+  fs.mkdirSync(screenshotDir, { recursive: true });
+  await page.screenshot({ path: path.join(screenshotDir, filename), fullPage: false });
+}
+
+async function scrollPatternPanelToTop(page: Page) {
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="generator-pattern-panel"]')?.scrollIntoView({
+      block: 'start',
+      inline: 'nearest',
+    });
+  });
+  await page.waitForTimeout(150);
+}
+
 async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: ElectronApplication; page: Page }> {
   const launchEnv = { ...process.env };
   delete launchEnv.ELECTRON_RUN_AS_NODE;
@@ -149,16 +165,27 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
-  test('PADRÕES INTELIGENTES NO GERADOR: usa e exclui padrões com 1 clique', async () => {
+  test('PAINEL DE PADRÕES NO GERADOR: tabelas lado a lado, filtros, toggle e geração com regras', async () => {
     const { app, page } = await launchApp();
     try {
-      const tmpCsv = path.join(os.tmpdir(), `cmx_integrated_patterns_${Date.now()}.csv`);
+      const tmpCsv = path.join(os.tmpdir(), `cmx_generator_pattern_panel_${Date.now()}.csv`);
       const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rowPatterns = [
+        [5, 4, 3, 2, 1],
+        [2, 4, 5, 3, 1],
+        [4, 5, 3, 2, 1],
+        [3, 4, 3, 3, 2],
+        [3, 3, 4, 2, 3],
+        [4, 4, 3, 2, 2],
+      ];
+      const columnPatterns = [
+        [5, 4, 3, 2, 1],
+        [2, 4, 5, 3, 1],
+        [4, 5, 3, 2, 1],
+      ];
       const rows = [
-        '1001,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
-        '1002,01,02,03,06,07,08,11,12,13,16,17,18,21,22,23',
-        '1003,01,02,04,05,06,07,09,10,11,12,14,15,16,17,19',
-        '1004,01,02,03,04,06,07,08,11,12,13,16,17,18,21,22',
+        ...rowPatterns.map((pattern, index) => csvRow(2101 + index, numbersFromPattern(pattern, rowBuckets))),
+        ...columnPatterns.map((pattern, index) => csvRow(2201 + index, numbersFromPattern(pattern, columnBuckets))),
       ];
       fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
 
@@ -167,41 +194,109 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
+      await page.getByTestId('generator-last-n-input').fill('9');
+      await page.locator('button:has-text("GERAR JOGOS")').click();
+      await expect(page.locator('text=jogos gerados').first()).toBeVisible();
 
       const panel = page.getByTestId('generator-pattern-panel');
       await expect(panel).toBeVisible();
       await expect(panel).toContainText('Painel de Padrões');
       await expect(panel).toContainText('1 clique para usar ou excluir');
+      await expect(panel).toContainText('Padrões de Linha');
+      await expect(panel).toContainText('Padrões de Coluna');
       await expect(page.getByTestId('locked-radar-card')).toHaveCount(0);
+      await expect(page.locator('[data-testid^="generator-pattern-card-"]')).toHaveCount(0);
+      await expect(page.getByTestId('generator-pattern-row-panel')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-column-panel')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-table-row')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-table-column')).toBeVisible();
+      await expect(panel.getByText('Página')).toHaveCount(0);
+      await expect(panel.getByText('Próxima')).toHaveCount(0);
 
-      await expect(panel.getByText('4,3,3,3,2')).toBeVisible();
-      await page.getByTestId('generator-pattern-use-row-4-3-3-3-2').click();
+      await expect(page.getByTestId('generator-pattern-until-row')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-min-row')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-search-row')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-until-column')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-min-column')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-search-column')).toBeVisible();
+
+      await expect(page.getByTestId('generator-pattern-sort-row-numeric-desc')).toHaveText('<');
+      await expect(page.getByTestId('generator-pattern-sort-row-numeric-asc')).toHaveText('>');
+      await expect(page.getByTestId('generator-pattern-sort-row-occurrences-desc')).toHaveText('+');
+      await expect(page.getByTestId('generator-pattern-sort-row-occurrences-asc')).toHaveText('-');
+      await expect(page.getByTestId('generator-pattern-toggle')).toBeVisible();
+
+      await expect(page.getByTestId('generator-pattern-row-row-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-row-column-5-4-3-2-1')).toBeVisible();
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '20-gerador-painel-padroes-corrigido-v1823.png');
+      await saveEvidenceViewportScreenshot(page, '21-padroes-linha-coluna-lado-a-lado-v1823.png');
+
+      await page.getByTestId('generator-pattern-min-row').fill('2');
+      await expect(page.getByTestId('generator-pattern-row-row-3-4-3-3-2')).toHaveCount(0);
+      await page.getByTestId('generator-pattern-min-row').fill('');
+
+      await page.getByTestId('generator-pattern-until-row').fill('2103');
+      await expect(page.getByTestId('generator-pattern-row-row-3-4-3-3-2')).toHaveCount(0);
+      await page.getByTestId('generator-pattern-until-row').fill('');
+
+      await page.getByTestId('generator-pattern-search-row').fill('1,2,3,4,5');
+      await expect(page.getByTestId('generator-pattern-row-row-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-row-row-2-4-5-3-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-row-row-4-5-3-2-1')).toBeVisible();
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '22-busca-variacoes-linha-v1823.png');
+
+      await page.getByTestId('generator-pattern-search-column').fill('1,2,3,4,5');
+      await expect(page.getByTestId('generator-pattern-row-column-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-row-column-2-4-5-3-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-row-column-4-5-3-2-1')).toBeVisible();
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '23-busca-variacoes-coluna-v1823.png');
+
+      await page.getByTestId('generator-pattern-use-row-5-4-3-2-1').click();
       await expect(page.locator('text=Padrão aplicado')).toBeVisible();
       await expect(page.locator('text=Usar Somente').first()).toBeVisible();
-      await expect(page.getByTestId('generator-pattern-card-row-4-3-3-3-2')).toBeVisible();
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '24-botao-azul-usar-padrao-v1823.png');
 
-      await page.getByTestId('generator-pattern-kind-column').click();
-      await expect(panel.getByText('5,5,4,1,0')).toBeVisible();
-      await page.getByTestId('generator-pattern-exclude-column-5-5-4-1-0').click();
+      await page.getByTestId('generator-pattern-exclude-row-2-4-5-3-1').click();
       await expect(page.locator('text=Padrão aplicado')).toBeVisible();
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '25-botao-vermelho-excluir-padrao-v1823.png');
 
       const saved = await page.waitForFunction(() => {
         const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
-        const hasRowInclude = config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '4,3,3,3,2');
-        const hasColumnExclude = config.patternExclusions?.some((item: any) => item.type === 'column' && item.pattern?.join(',') === '5,5,4,1,0');
-        return hasRowInclude && hasColumnExclude && config.rowPatternMode === 'include';
+        const hasRowInclude = config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '5,4,3,2,1');
+        const hasRowExclude = config.patternExclusions?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '2,4,5,3,1');
+        return hasRowInclude && hasRowExclude && config.rowPatternMode === 'include';
       });
       expect(saved).toBeTruthy();
 
-      await page.locator('input[type="number"]').first().fill('4');
+      await page.getByTestId('generator-pattern-exclude-row-5-4-3-2-1').click();
+      await page.waitForFunction(() => {
+        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        const includeRemoved = !config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '5,4,3,2,1');
+        const movedToExclude = config.patternExclusions?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '5,4,3,2,1');
+        return includeRemoved && movedToExclude && config.rowPatternMode === 'exclude';
+      });
+
+      await page.getByTestId('generator-pattern-toggle').click();
+      await expect(page.getByTestId('generator-pattern-panel-disabled')).toContainText('Painel de padrões desligado para preservar performance.');
+      await scrollPatternPanelToTop(page);
+      await saveEvidenceViewportScreenshot(page, '26-toggle-painel-padroes-desligado-v1823.png');
+      await page.getByTestId('generator-pattern-toggle').click();
+      await expect(page.getByTestId('generator-pattern-table-row')).toBeVisible();
+
       await page.locator('button:has-text("GERAR JOGOS")').click();
-      await expect(page.locator('text=jogos gerados').or(page.locator('text=Nenhum jogo gerado')).first()).toBeVisible();
+      await expect(page.locator('text=jogos gerados').first()).toBeVisible();
+      await saveEvidenceScreenshot(page, '27-gerador-jogos-com-padroes-v1823.png');
     } finally {
       await app.close();
     }
   });
 
-  test('BUSCA POR VARIAÇÕES: filtra padrões equivalentes no Gerador e nas abas de estatísticas', async () => {
+  test('BUSCA POR VARIAÇÕES: preserva abas separadas de estatísticas de linha e coluna', async () => {
     const { app, page } = await launchApp();
     try {
       const tmpCsv = path.join(os.tmpdir(), `cmx_variation_search_${Date.now()}.csv`);
@@ -228,41 +323,6 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button[title="Dados"]').click();
       await page.locator('input[type="file"]').setInputFiles(tmpCsv);
       await expect(page.locator('text=importado')).toBeVisible();
-
-      await page.locator('button[title="Gerador"]').click();
-      const panel = page.getByTestId('generator-pattern-panel');
-      await expect(panel).toBeVisible();
-      await page.getByTestId('generator-pattern-search').fill('1,2,3,4,5');
-      await expect(page.getByTestId('generator-pattern-card-row-5-4-3-2-1')).toBeVisible();
-      await expect(page.getByTestId('generator-pattern-card-row-2-4-5-3-1')).toBeVisible();
-      await expect(page.getByTestId('generator-pattern-card-row-4-5-3-2-1')).toBeVisible();
-      await saveEvidenceScreenshot(page, '17-busca-variacoes-gerador.png');
-
-      await page.getByTestId('generator-pattern-use-row-5-4-3-2-1').click();
-      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
-      await page.waitForFunction(() => {
-        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
-        return config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '5,4,3,2,1');
-      });
-      await saveEvidenceScreenshot(page, '18-busca-variacoes-usar-padrao.png');
-
-      await page.getByTestId('generator-pattern-exclude-row-2-4-5-3-1').click();
-      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
-      await page.waitForFunction(() => {
-        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
-        return config.patternExclusions?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '2,4,5,3,1');
-      });
-      await saveEvidenceScreenshot(page, '19-busca-variacoes-excluir-padrao.png');
-
-      await page.getByTestId('generator-pattern-kind-column').click();
-      await page.getByTestId('generator-pattern-search').fill('1,2,3,4,5');
-      await expect(page.getByTestId('generator-pattern-card-column-5-4-3-2-1')).toBeVisible();
-      await expect(page.getByTestId('generator-pattern-card-column-2-4-5-3-1')).toBeVisible();
-      await expect(page.getByTestId('generator-pattern-card-column-4-5-3-2-1')).toBeVisible();
-
-      await page.locator('input[type="number"]').first().fill('9');
-      await page.locator('button:has-text("GERAR JOGOS")').click();
-      await expect(page.locator('text=jogos gerados').or(page.locator('text=Nenhum jogo gerado')).first()).toBeVisible();
 
       await page.locator('button[title="Padrões de Linha"]').click();
       await expect(page.getByRole('heading', { name: 'Padrões de Linha' })).toBeVisible();

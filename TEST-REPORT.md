@@ -294,3 +294,83 @@ Status da publicação GitHub Releases v1.8.22:
 
 Nenhuma pendência funcional identificada na implementação solicitada. A entrega v1.8.22 está pronta para publicação, incluindo documentação, evidências e executável Windows `.exe`.
 
+## Validação v1.8.23 - Correção do painel conforme cliente
+
+Contexto:
+
+- Cliente Anderson testou a v1.8.22 e informou que o painel ainda estava no formato incorreto.
+- O layout em cards grandes dentro do Gerador foi removido.
+- O novo painel foi validado visualmente com duas tabelas compactas lado a lado.
+
+Prints validados:
+
+- Painel corrigido: `evidence/screenshots/20-gerador-painel-padroes-corrigido-v1823.png`
+- Duas tabelas lado a lado: `evidence/screenshots/21-padroes-linha-coluna-lado-a-lado-v1823.png`
+- Busca por variações em linha: `evidence/screenshots/22-busca-variacoes-linha-v1823.png`
+- Busca por variações em coluna: `evidence/screenshots/23-busca-variacoes-coluna-v1823.png`
+- Botão azul usar: `evidence/screenshots/24-botao-azul-usar-padrao-v1823.png`
+- Botão vermelho excluir: `evidence/screenshots/25-botao-vermelho-excluir-padrao-v1823.png`
+- Toggle desligado: `evidence/screenshots/26-toggle-painel-padroes-desligado-v1823.png`
+- Gerador com jogos: `evidence/screenshots/27-gerador-jogos-com-padroes-v1823.png`
+
+Resultados dos comandos:
+
+- `npm run build`: aprovado.
+- Log: `evidence/logs/npm-run-build-v1823.txt`
+- `npm run test:unit`: aprovado, `35 passed`.
+- Log: `evidence/logs/npm-run-test-unit-v1823.txt`
+- `npm run test:e2e`: aprovado, `14 passed`.
+- Log: `evidence/logs/npm-run-test-e2e-v1823.txt`
+- `npm run dist`: aprovado.
+- Log: `evidence/logs/npm-run-dist-v1.8.23.txt`
+
+Validações funcionais registradas:
+
+- `evidence/logs/pattern-panel-correction-v1823.json`
+- `evidence/logs/pattern-variation-search-v1823.json`
+- `evidence/logs/generator-pattern-rules-v1823.json`
+
+Validação visual:
+
+- O painel no Gerador está em tabela compacta, não em cards.
+- Padrões de Linha e Padrões de Coluna aparecem lado a lado.
+- Cada painel possui campos de `Analisar até concurso`, `Mínimo de ocorrências` e `Busca`.
+- As ordenações `<`, `>`, `+` e `-` aparecem por painel.
+- As ações por linha usam botão azul `U` para usar somente e botão vermelho `X` para excluir.
+- Toggle liga/desliga mostra a mensagem `Painel de padrões desligado para preservar performance.` quando desligado.
+- Não há paginação no painel do Gerador.
+
+Validação do executável v1.8.23:
+
+- Versão gerada: `v1.8.23`
+- Nome do arquivo: `ColunaMix-v1.8.23.exe`
+- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.23.exe`
+- Tamanho: `74269394` bytes
+- SHA256: `041280a2434afeae2ef6ea713287feadcb21ac4e41d9ae963ccbb45450e32dad`
+- Dados do executável: `evidence/logs/exe-build-info-v1.8.23.json`
+
+Status da publicação GitHub Releases v1.8.23:
+
+- `gh auth status` não pôde ser concluído porque o GitHub CLI não está instalado neste ambiente.
+- Release não publicada automaticamente neste ambiente.
+- Instruções manuais criadas em `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`.
+
+Preservações confirmadas:
+
+- Gerador preservado.
+- Licença/trial preservados.
+- CSV/importação preservados.
+- Exportações preservadas.
+- Exclusões dinâmicas preservadas.
+- Exclusão por dezenas preservada.
+- Exclusão por grupo preservada.
+- Dezenas fixas preservadas.
+- Base histórica preservada.
+- Abas separadas de Padrões de Linha e Padrões de Coluna preservadas.
+
+Status final v1.8.23:
+
+- Correção implementada e validada.
+- `.exe` local gerado.
+- Release pendente apenas de publicação manual por ausência do GitHub CLI neste ambiente.
+

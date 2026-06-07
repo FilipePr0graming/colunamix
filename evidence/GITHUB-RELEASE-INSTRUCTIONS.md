@@ -1,50 +1,60 @@
-# GitHub Release - ColunaMix v1.8.22
+# GitHub Release - ColunaMix v1.8.23
 
-Publicação automática realizada via GitHub Actions em `v1.8.22`.
+A publicação da release `v1.8.23` deve ser feita pelo workflow `.github/workflows/release.yml`, acionado por push da tag `v1.8.23`.
 
-Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.22
+## Asset local validado
 
-## Asset publicado
+- Arquivo: `ColunaMix-v1.8.23.exe`
+- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.23.exe`
+- Tamanho local: `74269394` bytes
+- SHA256 local: `041280a2434afeae2ef6ea713287feadcb21ac4e41d9ae963ccbb45450e32dad`
+- Dados do executável local: `evidence/logs/exe-build-info-v1.8.23.json`
 
-- Arquivo: `ColunaMix-v1.8.22.exe`
-- URL: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.22/ColunaMix-v1.8.22.exe
-- Tamanho publicado: `74245581` bytes
-- SHA256 publicado: `26d954510fd5bd63a8390fe92dae40f62cf9e9de0ac3757c81a4ca22f69fd712`
-- Workflow: https://github.com/FilipePr0graming/colunamix/actions/runs/27078235275
+## Workflow esperado
 
-## Build local validado
+Ao enviar a tag:
 
-- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.22.exe`
-- Tamanho local: `74268761` bytes
-- SHA256 local: `54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e`
+```powershell
+git push origin main
+git push origin v1.8.23
+```
 
-## Changelog
+O GitHub Actions executa:
 
-ColunaMix v1.8.22
+- `npm ci`
+- `npm run dist`
+- upload do artefato `app/release/*.exe`
+- criação/atualização da release `v1.8.23`
+- anexo do asset `ColunaMix-v1.8.23.exe`
 
-- Implementada busca por variações de padrões.
-- Ao pesquisar `1,2,3,4,5`, o sistema encontra padrões equivalentes em outras ordens, como `5,4,3,2,1`.
-- Busca por variações disponível para Padrões de Linha.
-- Busca por variações disponível para Padrões de Coluna.
-- Busca integrada ao painel de padrões dentro do Gerador.
-- Repetições de valores são respeitadas na comparação.
-- Entradas inválidas são tratadas sem travar a tela.
-- Preservado funcionamento dos botões Usar e Excluir padrão.
-- Preservado funcionamento do Gerador.
-- Preservada licença/trial.
-- Preservadas importação, exportação, exclusões e dezenas fixas.
+## Changelog usado pela release
+
+O workflow usa `RELEASE-NOTES.md`, atualizado para:
+
+ColunaMix v1.8.23
+
+- Corrigido painel de padrões conforme PDF e feedback do cliente Anderson.
+- Painel agora fica dentro do Gerador no local do antigo Modo Inteligente.
+- Padrões de Linha e Padrões de Coluna exibidos lado a lado.
+- Substituído layout em cards por tabelas compactas com scroll interno.
+- Removida limitação visual de poucos padrões.
+- Adicionados filtros por painel: analisar até concurso, mínimo de ocorrências e busca.
+- Implementada busca por variações de padrão.
+- Adicionadas ordenações: decrescente, crescente, maiores ocorrências e menores ocorrências.
+- Botão azul adiciona padrão em usar somente.
+- Botão vermelho adiciona padrão em excluir padrões.
+- Adicionado toggle liga/desliga para preservar performance.
+- Gerador validado com padrões aplicados.
+- Preservados licença/trial, importação, exportação, exclusões e dezenas fixas.
 - Build aprovado.
-- Testes unitários aprovados: 32 passed.
-- Testes E2E aprovados: 14 passed.
-- Testes E2E no executável empacotado aprovados: 14 passed.
+- Testes unitários aprovados.
+- Testes E2E aprovados.
 
 ## Logs e evidências
 
-- Build: `evidence/logs/npm-run-build-after-variation-search.txt`
-- Testes unitários: `evidence/logs/npm-run-test-unit-after-variation-search.txt`
-- Testes E2E: `evidence/logs/npm-run-test-e2e-after-variation-search.txt`
-- Testes E2E no executável empacotado: `evidence/logs/npm-run-test-e2e-packaged-v1.8.22.txt`
-- Build do executável: `evidence/logs/npm-run-dist-v1.8.22.txt`
-- Dados do executável: `evidence/logs/exe-build-info-v1.8.22.json`
-- Dados da release publicada: `evidence/logs/github-release-v1.8.22.json`
-- Validação da busca: `evidence/logs/pattern-variation-search-validation.json`
+- Build: `evidence/logs/npm-run-build-v1823.txt`
+- Testes unitários: `evidence/logs/npm-run-test-unit-v1823.txt`
+- Testes E2E: `evidence/logs/npm-run-test-e2e-v1823.txt`
+- Build do executável local: `evidence/logs/npm-run-dist-v1.8.23.txt`
+- Dados do executável local: `evidence/logs/exe-build-info-v1.8.23.json`
+- Painel corrigido: `evidence/screenshots/20-gerador-painel-padroes-corrigido-v1823.png`

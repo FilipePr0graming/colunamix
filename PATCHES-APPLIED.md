@@ -243,3 +243,83 @@ Status da publicação GitHub v1.8.22:
 
 Entrega validada com build, testes unitários, testes E2E local, testes E2E no executável empacotado, prints, logs, exportações, exemplos reais de cálculo e executável Windows `.exe` v1.8.22 gerado para distribuição.
 
+## Correção v1.8.23 - Painel de padrões conforme PDF do cliente
+
+Cliente Anderson testou a v1.8.22 e informou que o layout ainda estava incorreto, permanecendo em cards dentro do Gerador.
+
+Alterações aplicadas:
+
+- Painel anterior em cards foi removido/substituído.
+- Novo painel foi colocado no Gerador, no local do antigo Modo Inteligente/Radar Histórico.
+- Padrões de Linha e Padrões de Coluna agora aparecem lado a lado.
+- Implementada tabela compacta com scroll interno em cada painel.
+- Removida limitação visual de poucos padrões.
+- Implementados filtros por painel:
+  - analisar até concurso
+  - mínimo de ocorrências
+  - busca
+- Implementada busca por variações usando chave canônica ordenada, preservando repetições.
+- Implementados botões:
+  - `<` decrescente
+  - `>` crescente
+  - `+` maiores ocorrências
+  - `-` menores ocorrências
+- Botão azul adiciona em usar somente.
+- Botão vermelho adiciona em excluir padrões.
+- Conflito usar/excluir resolve movendo o padrão entre listas sem duplicar.
+- Toggle liga/desliga implementado para não carregar a análise pesada quando desligado.
+- Gerador validado com padrão de linha/coluna em usar e excluir.
+- Licença/trial preservados.
+- Importação/exportação preservadas.
+- Exclusões/dezenas fixas preservadas.
+- Novo executável v1.8.23 gerado.
+
+Arquivos alterados nesta correção:
+
+- `app/package.json`
+- `app/package-lock.json`
+- `app/src/renderer/App.tsx`
+- `app/src/renderer/components/Generator.tsx`
+- `app/src/renderer/components/StatusPage.tsx`
+- `app/src/shared/patternStats.ts`
+- `app/tests/e2e/desktop.e2e.spec.ts`
+- `app/tests/unit/patternStats.spec.ts`
+- `PATCHES-APPLIED.md`
+- `TEST-REPORT.md`
+- `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+
+Novas evidências:
+
+- `evidence/screenshots/20-gerador-painel-padroes-corrigido-v1823.png`
+- `evidence/screenshots/21-padroes-linha-coluna-lado-a-lado-v1823.png`
+- `evidence/screenshots/22-busca-variacoes-linha-v1823.png`
+- `evidence/screenshots/23-busca-variacoes-coluna-v1823.png`
+- `evidence/screenshots/24-botao-azul-usar-padrao-v1823.png`
+- `evidence/screenshots/25-botao-vermelho-excluir-padrao-v1823.png`
+- `evidence/screenshots/26-toggle-painel-padroes-desligado-v1823.png`
+- `evidence/screenshots/27-gerador-jogos-com-padroes-v1823.png`
+- `evidence/logs/npm-run-build-v1823.txt`
+- `evidence/logs/npm-run-test-unit-v1823.txt`
+- `evidence/logs/npm-run-test-e2e-v1823.txt`
+- `evidence/logs/npm-run-dist-v1.8.23.txt`
+- `evidence/logs/pattern-panel-correction-v1823.json`
+- `evidence/logs/pattern-variation-search-v1823.json`
+- `evidence/logs/generator-pattern-rules-v1823.json`
+- `evidence/logs/exe-build-info-v1.8.23.json`
+
+Executável v1.8.23:
+
+- Versão: `v1.8.23`
+- Nome do arquivo: `ColunaMix-v1.8.23.exe`
+- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.23.exe`
+- Tamanho: `74269394` bytes
+- SHA256: `041280a2434afeae2ef6ea713287feadcb21ac4e41d9ae963ccbb45450e32dad`
+- Comando usado: `npm run dist`
+
+Status da publicação GitHub v1.8.23:
+
+- Release alvo: `v1.8.23`
+- Asset obrigatório: `ColunaMix-v1.8.23.exe`
+- Publicação automática não realizada neste ambiente porque `gh` não está instalado.
+- Instruções manuais criadas em `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`.
+
