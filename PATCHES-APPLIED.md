@@ -167,7 +167,76 @@ Novas evidências:
 - `evidence/logs/generator-pattern-include-exclude-validation.json`
 - `evidence/logs/exe-build-info-v1.8.21.json`
 
+## Atualização v1.8.22 - Busca por variações de padrões
+
+Implementada a busca por variações/permutação de padrões solicitada pelo cliente Anderson.
+
+Alterações aplicadas:
+
+- A busca não compara apenas texto exato.
+- O sistema cria uma chave canônica ordenando numericamente os valores do padrão.
+- Padrões com a mesma composição aparecem mesmo em ordens diferentes.
+- Repetições são respeitadas na comparação por multiconjunto.
+- Funciona para Padrões de Linha.
+- Funciona para Padrões de Coluna.
+- Funciona no painel integrado ao Gerador.
+- Campo `Busca` adicionado ao painel de padrões dentro do Gerador.
+- Entradas inválidas não travam a tela.
+- Formatos com vírgula, espaço e compacto foram validados.
+- Gerador, licença, trial, importação, exportação, exclusões e dezenas fixas foram preservados.
+
+Arquivos alterados nesta atualização:
+
+- `app/package.json`
+- `app/package-lock.json`
+- `app/src/renderer/App.tsx`
+- `app/src/renderer/components/Generator.tsx`
+- `app/src/renderer/components/PatternStatsPage.tsx`
+- `app/src/renderer/components/StatusPage.tsx`
+- `app/src/shared/patternStats.ts`
+- `app/tests/e2e/desktop.e2e.spec.ts`
+- `app/tests/unit/patternStats.spec.ts`
+- `RELEASE-NOTES.md`
+- `TEST-REPORT.md`
+- `PATCHES-APPLIED.md`
+- `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+
+Novas evidências:
+
+- `evidence/screenshots/15-busca-variacoes-linha.png`
+- `evidence/screenshots/16-busca-variacoes-coluna.png`
+- `evidence/screenshots/17-busca-variacoes-gerador.png`
+- `evidence/screenshots/18-busca-variacoes-usar-padrao.png`
+- `evidence/screenshots/19-busca-variacoes-excluir-padrao.png`
+- `evidence/logs/npm-run-build-after-variation-search.txt`
+- `evidence/logs/npm-run-test-unit-after-variation-search.txt`
+- `evidence/logs/npm-run-test-e2e-after-variation-search.txt`
+- `evidence/logs/npm-run-test-e2e-packaged-v1.8.22.txt`
+- `evidence/logs/npm-run-dist-v1.8.22.txt`
+- `evidence/logs/pattern-variation-search-validation.json`
+- `evidence/logs/exe-build-info-v1.8.22.json`
+
+Executável v1.8.22:
+
+- Versão: `v1.8.22`
+- Nome do arquivo: `ColunaMix-v1.8.22.exe`
+- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.22.exe`
+- Tamanho: `74268761` bytes
+- SHA256: `54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e`
+- Comando usado: `npm run dist`
+- Log do build do `.exe`: `evidence/logs/npm-run-dist-v1.8.22.txt`
+- Dados do executável: `evidence/logs/exe-build-info-v1.8.22.json`
+
+Status da publicação GitHub v1.8.22:
+
+- Release alvo: `v1.8.22`
+- Asset obrigatório: `ColunaMix-v1.8.22.exe`
+- Publicação automática local: não realizada.
+- Motivo: GitHub CLI (`gh`) não está instalado e não há `GITHUB_TOKEN`/`GH_TOKEN` disponível neste ambiente.
+- API pública consultada em 2026-06-06: release mais recente encontrada foi `v1.8.21`.
+- Instruções de publicação atualizadas em: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+
 ## Status final
 
-Entrega validada com build, testes unitários, testes E2E, prints, logs, exportações, exemplos reais de cálculo e executável Windows `.exe` gerado para distribuição.
+Entrega validada com build, testes unitários, testes E2E local, testes E2E no executável empacotado, prints, logs, exportações, exemplos reais de cálculo e executável Windows `.exe` v1.8.22 gerado para distribuição.
 

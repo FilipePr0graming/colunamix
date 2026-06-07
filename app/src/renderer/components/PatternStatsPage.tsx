@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DbStatus, PatternExportFormat, PatternStatsKind, PatternStatsRow } from '../../shared/types';
+import { filterPatternsBySearch } from '../../shared/patternStats';
 
 interface Props {
     dbStatus: DbStatus | null;
@@ -77,12 +78,10 @@ export default function PatternStatsPage({ dbStatus, kind }: Props) {
     }, [kind, noData, untilContest, drawCount]);
 
     const filteredRows = useMemo(() => {
-        const term = search.trim().replace(/\s/g, '');
         const minOcc = minOccurrences.trim() ? Number(minOccurrences) : 0;
         const minPct = minPercentage.trim() ? Number(minPercentage.replace(',', '.')) : 0;
 
-        const nextRows = rows.filter(row => {
-            if (term && !row.patternKey.includes(term)) return false;
+        const nextRows = filterPatternsBySearch(rows, search, { variationSearch: true }).filter(row => {
             if (onlyDelayed && row.lag <= 0) return false;
             if (Number.isFinite(minOcc) && minOcc > 0 && row.occurrences < minOcc) return false;
             if (Number.isFinite(minPct) && minPct > 0 && row.percentage < minPct) return false;
@@ -170,6 +169,7 @@ export default function PatternStatsPage({ dbStatus, kind }: Props) {
                                 type="text"
                                 value={search}
                                 onChange={event => setSearch(event.target.value)}
+                                data-testid="pattern-stats-search"
                                 className="desktop-control w-full font-mono"
                                 placeholder="4,3,3,3,2"
                             />

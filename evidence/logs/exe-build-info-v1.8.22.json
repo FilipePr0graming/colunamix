@@ -1,0 +1,11 @@
+{
+  "version": "v1.8.22",
+  "fileName": "ColunaMix-v1.8.22.exe",
+  "filePath": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.22.exe",
+  "sizeBytes": 74268761,
+  "sha256": "54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e",
+  "command": "npm run dist",
+  "distLog": "evidence/logs/npm-run-dist-v1.8.22.txt",
+  "builtAtLocal": "2026-06-06 19:13:52",
+  "status": "built"
+}

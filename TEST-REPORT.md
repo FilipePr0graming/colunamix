@@ -8,7 +8,7 @@ A implementação foi validada com build, testes unitários, testes E2E, prints,
 
 - Projeto: ColunaMix
 - Aplicação: Desktop Windows (`.exe`)
-- Versão validada: `v1.8.21`
+- Versão validada: `v1.8.22`
 - Base de teste: `data/input/exemplo.csv`
 - Evidências: `evidence/`
 - Repositório: https://github.com/FilipePr0graming/colunamix
@@ -26,10 +26,11 @@ npm run dist
 ## Resultados
 
 - Build: aprovado
-- Testes unitários: `21 passed`
-- Testes E2E: `13 passed`
+- Testes unitários: `32 passed`
+- Testes E2E: `14 passed`
+- Testes E2E no executável empacotado: `14 passed`
 - Build do executável `.exe`: aprovado
-- Publicação GitHub Releases: não realizada automaticamente porque `gh` não está instalado neste ambiente
+- Publicação GitHub Releases v1.8.22: não realizada automaticamente porque `gh` não está instalado e não há `GITHUB_TOKEN`/`GH_TOKEN` neste ambiente
 
 ## Evidências de tela
 
@@ -41,6 +42,11 @@ npm run dist
 - `evidence/screenshots/06-ordenacao-crescente.png`
 - `evidence/screenshots/07-ordenacao-decrescente.png`
 - `evidence/screenshots/08-gerador-10-jogos.png`
+- `evidence/screenshots/15-busca-variacoes-linha.png`
+- `evidence/screenshots/16-busca-variacoes-coluna.png`
+- `evidence/screenshots/17-busca-variacoes-gerador.png`
+- `evidence/screenshots/18-busca-variacoes-usar-padrao.png`
+- `evidence/screenshots/19-busca-variacoes-excluir-padrao.png`
 
 ## Evidências de logs
 
@@ -52,6 +58,13 @@ npm run dist
 - `evidence/logs/license-validation.json`
 - `evidence/logs/generator-10-games.json`
 - `evidence/logs/exe-build-info.json`
+- `evidence/logs/npm-run-build-after-variation-search.txt`
+- `evidence/logs/npm-run-test-unit-after-variation-search.txt`
+- `evidence/logs/npm-run-test-e2e-after-variation-search.txt`
+- `evidence/logs/npm-run-test-e2e-packaged-v1.8.22.txt`
+- `evidence/logs/npm-run-dist-v1.8.22.txt`
+- `evidence/logs/pattern-variation-search-validation.json`
+- `evidence/logs/exe-build-info-v1.8.22.json`
 
 ## Evidências de exportação
 
@@ -223,7 +236,59 @@ Validação do executável pós-feedback:
 - SHA256: `6ac796ee85bbfb5689c22c9b02c40eb915e82e00c344a3c7f4a3099986d00d12`
 - Dados do executável: `evidence/logs/exe-build-info-v1.8.21.json`
 
+## Validação da busca por variações
+
+- Entrada `1,2,3,4,5` validada.
+- Variações `5,4,3,2,1`, `2,4,5,3,1` e `4,5,3,2,1` validadas em dados reais criados pelo teste E2E.
+- Entrada com repetição validada: `4,3,3,3,2`.
+- Variações com repetição `3,4,3,3,2` e `3,3,4,2,3` validadas por testes unitários.
+- Caso diferente `4,4,3,2,2` validado como não equivalente.
+- Busca por variações validada em Padrões de Linha.
+- Busca por variações validada em Padrões de Coluna.
+- Busca por variações validada no painel integrado ao Gerador.
+- Botão `Usar` validado após busca por variações.
+- Botão `Excluir` validado após busca por variações.
+- Entradas inválidas não quebram o sistema.
+- Build aprovado.
+- Testes unitários aprovados: `32 passed`.
+- Testes E2E aprovados: `14 passed`.
+- Testes E2E no executável empacotado aprovados: `14 passed`.
+
+Log de validação:
+
+```json
+{
+  "searchInput": "1,2,3,4,5",
+  "canonicalKey": "1,2,3,4,5",
+  "matchedExamples": [
+    "5,4,3,2,1",
+    "2,4,5,3,1",
+    "4,5,3,2,1"
+  ],
+  "rowSearchValidated": true,
+  "columnSearchValidated": true,
+  "invalidInputHandled": true
+}
+```
+
+Validação do executável v1.8.22:
+
+- Versão gerada: `v1.8.22`
+- Nome do arquivo: `ColunaMix-v1.8.22.exe`
+- Caminho local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.22.exe`
+- Tamanho: `74268761` bytes
+- SHA256: `54bd9998147bd48f519091cb17d0a9f4c4f58bbe86dea6ea7686049dda414e4e`
+- Dados do executável: `evidence/logs/exe-build-info-v1.8.22.json`
+
+Status da publicação GitHub Releases v1.8.22:
+
+- GitHub CLI (`gh`): não instalado.
+- `GITHUB_TOKEN`/`GH_TOKEN`: não disponível.
+- API pública consultada em 2026-06-06: release mais recente encontrada foi `v1.8.21`.
+- Release `v1.8.22`: não publicada neste ambiente.
+- Instruções manuais/workflow atualizadas: `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`
+
 ## Status final
 
-Nenhuma pendência funcional identificada na implementação solicitada. A entrega está pronta para apresentação ao cliente Anderson, incluindo documentação, evidências e executável Windows `.exe`.
+Nenhuma pendência funcional identificada na implementação solicitada. A entrega v1.8.22 está pronta para publicação, incluindo documentação, evidências e executável Windows `.exe`.
 

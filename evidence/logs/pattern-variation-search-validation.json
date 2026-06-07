@@ -1,0 +1,26 @@
+{
+  "searchInput": "1,2,3,4,5",
+  "canonicalKey": "1,2,3,4,5",
+  "matchedExamples": [
+    "5,4,3,2,1",
+    "2,4,5,3,1",
+    "4,5,3,2,1"
+  ],
+  "repeatedSearchInput": "4,3,3,3,2",
+  "repeatedCanonicalKey": "2,3,3,3,4",
+  "repeatedMatchedExamples": [
+    "3,4,3,3,2",
+    "3,3,4,2,3"
+  ],
+  "repeatedRejectedExamples": [
+    "4,4,3,2,2"
+  ],
+  "rowSearchValidated": true,
+  "columnSearchValidated": true,
+  "generatorPanelSearchValidated": true,
+  "patternUseButtonValidated": true,
+  "patternExcludeButtonValidated": true,
+  "generatorStillRunsAfterVariationSearch": true,
+  "invalidInputHandled": true,
+  "notes": "Os exemplos foram criados em CSV temporario no teste E2E BUSCA POR VARIACOES e validados na UI de Padrões de Linha, Padrões de Coluna e no painel integrado ao Gerador."
+}

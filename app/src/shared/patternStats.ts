@@ -3,6 +3,10 @@ import { Draw, PatternStatsKind, PatternStatsRow } from './types';
 
 const statsCache = new Map<string, PatternStatsRow[]>();
 
+export interface PatternSearchOptions {
+    variationSearch?: boolean;
+}
+
 function normalizeUntilContest(untilContest?: number | null): number | null {
     if (typeof untilContest !== 'number' || !Number.isFinite(untilContest)) return null;
     const value = Math.trunc(untilContest);
@@ -20,6 +24,68 @@ function buildCacheKey(draws: Draw[], kind: PatternStatsKind, untilContest: numb
 
 export function clearPatternStatsCache(): void {
     statsCache.clear();
+}
+
+export function parsePatternInput(input: string): number[] | null {
+    const value = input.trim();
+    if (!value) return null;
+
+    if (!/^[\d,\s]+$/.test(value)) return null;
+    if (/,\s*,/.test(value)) return null;
+
+    const parts = value.includes(',') || /\s/.test(value)
+        ? value.replace(/,/g, ' ').split(/\s+/)
+        : value.split('');
+
+    if (parts.length === 0) return null;
+
+    const numbers = parts.map(part => {
+        if (!/^\d+$/.test(part)) return NaN;
+        return Number(part);
+    });
+
+    if (numbers.some(number => !Number.isSafeInteger(number) || number < 0)) return null;
+    return numbers;
+}
+
+export function canonicalPatternKey(pattern: string | number[]): string | null {
+    const numbers = Array.isArray(pattern) ? pattern : parsePatternInput(pattern);
+    if (!numbers || numbers.length === 0) return null;
+    if (numbers.some(number => !Number.isSafeInteger(number) || number < 0)) return null;
+    return [...numbers].sort((a, b) => a - b).join(',');
+}
+
+export function isPatternVariation(patternA: string | number[], patternB: string | number[]): boolean {
+    const keyA = canonicalPatternKey(patternA);
+    const keyB = canonicalPatternKey(patternB);
+    return keyA !== null && keyA === keyB;
+}
+
+export function filterPatternsBySearch(
+    rows: PatternStatsRow[],
+    searchText: string,
+    options: PatternSearchOptions = {}
+): PatternStatsRow[] {
+    const term = searchText.trim();
+    if (!term) return rows;
+
+    const directTerm = term.replace(/\s/g, '');
+    const compactTerm = term.replace(/[,\s]/g, '');
+    const queryPattern = parsePatternInput(term);
+    const queryCanonicalKey = options.variationSearch !== false && queryPattern
+        ? canonicalPatternKey(queryPattern)
+        : null;
+
+    return rows.filter(row => {
+        const directMatch = directTerm !== '' && row.patternKey.includes(directTerm);
+        const compactMatch = compactTerm !== '' && row.patternKey.replace(/,/g, '').includes(compactTerm);
+        const variationMatch = queryCanonicalKey !== null
+            && queryPattern !== null
+            && queryPattern.length === row.pattern.length
+            && canonicalPatternKey(row.pattern) === queryCanonicalKey;
+
+        return directMatch || compactMatch || variationMatch;
+    });
 }
 
 export function calculatePatternStats(

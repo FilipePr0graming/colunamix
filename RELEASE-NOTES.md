@@ -1,15 +1,17 @@
-ColunaMix v1.8.21
+ColunaMix v1.8.22
 
-- Ajustado painel de padrões conforme feedback do cliente Anderson.
-- Padrões de Linha e Padrões de Coluna agora ficam acessíveis dentro da tela do Gerador.
-- Painel inserido no local do antigo Modo Inteligente / Radar Histórico Avançado.
-- Adicionada ação de 1 clique para usar padrão.
-- Adicionada ação de 1 clique para excluir padrão.
-- Gerador integrado diretamente aos padrões selecionados.
-- Preservadas abas estatísticas de Padrões de Linha e Padrões de Coluna.
-- Preservado funcionamento do gerador.
-- Preservada validação de licença/trial.
+- Implementada busca por variações de padrões.
+- Ao pesquisar `1,2,3,4,5`, o sistema encontra padrões equivalentes em outras ordens, como `5,4,3,2,1`.
+- Busca por variações disponível para Padrões de Linha.
+- Busca por variações disponível para Padrões de Coluna.
+- Busca integrada ao painel de padrões dentro do Gerador.
+- Repetições de valores são respeitadas na comparação.
+- Entradas inválidas são tratadas sem travar a tela.
+- Preservado funcionamento dos botões Usar e Excluir padrão.
+- Preservado funcionamento do Gerador.
+- Preservada licença/trial.
 - Preservadas importação, exportação, exclusões e dezenas fixas.
 - Build aprovado.
 - Testes unitários aprovados.
 - Testes E2E aprovados.
+- Testes E2E no executável empacotado aprovados.

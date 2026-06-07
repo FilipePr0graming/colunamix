@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
 import {
   calculatePatternStats,
+  canonicalPatternKey,
   clearPatternStatsCache,
+  filterPatternsBySearch,
+  isPatternVariation,
+  parsePatternInput,
   serializePatternStatsCsv,
   serializePatternStatsExcel,
   serializePatternStatsTxt,
@@ -112,5 +116,54 @@ test.describe('pattern stats', () => {
     expect(excel).toContain('<?mso-application progid="Excel.Sheet"?>');
     expect(excel).toContain('<Worksheet ss:Name="Padroes">');
     expect(excel).toContain('4,3,3,3,2');
+  });
+
+  test('normaliza entrada com vírgulas, espaços e formato compacto', () => {
+    expect(parsePatternInput(' 1, 2, 3, 4, 5 ')).toEqual([1, 2, 3, 4, 5]);
+    expect(parsePatternInput('1 2 3 4 5')).toEqual([1, 2, 3, 4, 5]);
+    expect(parsePatternInput('12345')).toEqual([1, 2, 3, 4, 5]);
+    expect(canonicalPatternKey('5,4,3,2,1')).toBe('1,2,3,4,5');
+  });
+
+  test('busca por variações compara multiconjunto e preserva repetições', () => {
+    expect(isPatternVariation('1,2,3,4,5', '5,4,3,2,1')).toBeTruthy();
+    expect(isPatternVariation('1,2,3,4,5', '2,4,5,3,1')).toBeTruthy();
+    expect(isPatternVariation('1,2,3,4,5', '4,5,3,2,1')).toBeTruthy();
+    expect(isPatternVariation('4,3,3,3,2', '3,4,3,3,2')).toBeTruthy();
+    expect(isPatternVariation('4,3,3,3,2', '3,3,4,2,3')).toBeTruthy();
+    expect(isPatternVariation('4,3,3,3,2', '4,4,3,2,2')).toBeFalsy();
+  });
+
+  test('filtra padrões equivalentes em linha e coluna sem depender de ordem textual', () => {
+    const rows: PatternStatsRow[] = [
+      { pattern: [5, 4, 3, 2, 1], patternKey: '5,4,3,2,1', occurrences: 1, lastContest: 10, lag: 0, percentage: 10 },
+      { pattern: [2, 4, 5, 3, 1], patternKey: '2,4,5,3,1', occurrences: 1, lastContest: 11, lag: 0, percentage: 10 },
+      { pattern: [4, 5, 3, 2, 1], patternKey: '4,5,3,2,1', occurrences: 1, lastContest: 12, lag: 0, percentage: 10 },
+      { pattern: [4, 4, 3, 2, 2], patternKey: '4,4,3,2,2', occurrences: 1, lastContest: 13, lag: 0, percentage: 10 },
+    ];
+    const columns: PatternStatsRow[] = [
+      { pattern: [3, 4, 3, 3, 2], patternKey: '3,4,3,3,2', occurrences: 1, lastContest: 20, lag: 0, percentage: 10 },
+      { pattern: [3, 3, 4, 2, 3], patternKey: '3,3,4,2,3', occurrences: 1, lastContest: 21, lag: 0, percentage: 10 },
+      { pattern: [4, 4, 3, 2, 2], patternKey: '4,4,3,2,2', occurrences: 1, lastContest: 22, lag: 0, percentage: 10 },
+    ];
+
+    expect(filterPatternsBySearch(rows, '1,2,3,4,5').map(row => row.patternKey)).toEqual([
+      '5,4,3,2,1',
+      '2,4,5,3,1',
+      '4,5,3,2,1',
+    ]);
+    expect(filterPatternsBySearch(columns, '4,3,3,3,2').map(row => row.patternKey)).toEqual([
+      '3,4,3,3,2',
+      '3,3,4,2,3',
+    ]);
+  });
+
+  test('busca inválida não quebra e mantém resultado vazio quando não há texto compatível', () => {
+    const rows = calculatePatternStats(draws, 'row');
+
+    expect(parsePatternInput('1,2,a,4,5')).toBeNull();
+    expect(parsePatternInput('1,,2,3')).toBeNull();
+    expect(parsePatternInput('texto')).toBeNull();
+    expect(filterPatternsBySearch(rows, 'texto')).toEqual([]);
   });
 });

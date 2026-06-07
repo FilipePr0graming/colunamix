@@ -4,6 +4,36 @@ import os from 'os';
 import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 
+const rowBuckets = [
+  [1, 2, 3, 4, 5],
+  [6, 7, 8, 9, 10],
+  [11, 12, 13, 14, 15],
+  [16, 17, 18, 19, 20],
+  [21, 22, 23, 24, 25],
+];
+
+const columnBuckets = [
+  [1, 6, 11, 16, 21],
+  [2, 7, 12, 17, 22],
+  [3, 8, 13, 18, 23],
+  [4, 9, 14, 19, 24],
+  [5, 10, 15, 20, 25],
+];
+
+function numbersFromPattern(pattern: number[], buckets: number[][]): number[] {
+  return pattern.flatMap((count, index) => buckets[index].slice(0, count)).sort((a, b) => a - b);
+}
+
+function csvRow(contest: number, numbers: number[]): string {
+  return [contest, ...numbers.map(number => String(number).padStart(2, '0'))].join(',');
+}
+
+async function saveEvidenceScreenshot(page: Page, filename: string) {
+  const screenshotDir = path.join(process.cwd(), '..', 'evidence', 'screenshots');
+  fs.mkdirSync(screenshotDir, { recursive: true });
+  await page.screenshot({ path: path.join(screenshotDir, filename), fullPage: true });
+}
+
 async function launchApp(extraEnv: Record<string, string> = {}): Promise<{ app: ElectronApplication; page: Page }> {
   const launchEnv = { ...process.env };
   delete launchEnv.ELECTRON_RUN_AS_NODE;
@@ -166,6 +196,89 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('input[type="number"]').first().fill('4');
       await page.locator('button:has-text("GERAR JOGOS")').click();
       await expect(page.locator('text=jogos gerados').or(page.locator('text=Nenhum jogo gerado')).first()).toBeVisible();
+    } finally {
+      await app.close();
+    }
+  });
+
+  test('BUSCA POR VARIAÇÕES: filtra padrões equivalentes no Gerador e nas abas de estatísticas', async () => {
+    const { app, page } = await launchApp();
+    try {
+      const tmpCsv = path.join(os.tmpdir(), `cmx_variation_search_${Date.now()}.csv`);
+      const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
+      const rowPatterns = [
+        [5, 4, 3, 2, 1],
+        [2, 4, 5, 3, 1],
+        [4, 5, 3, 2, 1],
+        [3, 4, 3, 3, 2],
+        [3, 3, 4, 2, 3],
+        [4, 4, 3, 2, 2],
+      ];
+      const columnPatterns = [
+        [5, 4, 3, 2, 1],
+        [2, 4, 5, 3, 1],
+        [4, 5, 3, 2, 1],
+      ];
+      const rows = [
+        ...rowPatterns.map((pattern, index) => csvRow(2101 + index, numbersFromPattern(pattern, rowBuckets))),
+        ...columnPatterns.map((pattern, index) => csvRow(2201 + index, numbersFromPattern(pattern, columnBuckets))),
+      ];
+      fs.writeFileSync(tmpCsv, header + rows.join('\n') + '\n', 'utf-8');
+
+      await page.locator('button[title="Dados"]').click();
+      await page.locator('input[type="file"]').setInputFiles(tmpCsv);
+      await expect(page.locator('text=importado')).toBeVisible();
+
+      await page.locator('button[title="Gerador"]').click();
+      const panel = page.getByTestId('generator-pattern-panel');
+      await expect(panel).toBeVisible();
+      await page.getByTestId('generator-pattern-search').fill('1,2,3,4,5');
+      await expect(page.getByTestId('generator-pattern-card-row-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-card-row-2-4-5-3-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-card-row-4-5-3-2-1')).toBeVisible();
+      await saveEvidenceScreenshot(page, '17-busca-variacoes-gerador.png');
+
+      await page.getByTestId('generator-pattern-use-row-5-4-3-2-1').click();
+      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
+      await page.waitForFunction(() => {
+        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return config.patternIncludes?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '5,4,3,2,1');
+      });
+      await saveEvidenceScreenshot(page, '18-busca-variacoes-usar-padrao.png');
+
+      await page.getByTestId('generator-pattern-exclude-row-2-4-5-3-1').click();
+      await expect(page.locator('text=Padrão aplicado')).toBeVisible();
+      await page.waitForFunction(() => {
+        const config = JSON.parse(localStorage.getItem('colunamix_generator_settings') || '{}');
+        return config.patternExclusions?.some((item: any) => item.type === 'row' && item.pattern?.join(',') === '2,4,5,3,1');
+      });
+      await saveEvidenceScreenshot(page, '19-busca-variacoes-excluir-padrao.png');
+
+      await page.getByTestId('generator-pattern-kind-column').click();
+      await page.getByTestId('generator-pattern-search').fill('1,2,3,4,5');
+      await expect(page.getByTestId('generator-pattern-card-column-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-card-column-2-4-5-3-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-card-column-4-5-3-2-1')).toBeVisible();
+
+      await page.locator('input[type="number"]').first().fill('9');
+      await page.locator('button:has-text("GERAR JOGOS")').click();
+      await expect(page.locator('text=jogos gerados').or(page.locator('text=Nenhum jogo gerado')).first()).toBeVisible();
+
+      await page.locator('button[title="Padrões de Linha"]').click();
+      await expect(page.getByRole('heading', { name: 'Padrões de Linha' })).toBeVisible();
+      await page.getByTestId('pattern-stats-search').fill('1,2,3,4,5');
+      await expect(page.locator('tr', { hasText: '5,4,3,2,1' })).toBeVisible();
+      await expect(page.locator('tr', { hasText: '2,4,5,3,1' })).toBeVisible();
+      await expect(page.locator('tr', { hasText: '4,5,3,2,1' })).toBeVisible();
+      await saveEvidenceScreenshot(page, '15-busca-variacoes-linha.png');
+
+      await page.locator('button[title="Padrões de Coluna"]').click();
+      await expect(page.getByRole('heading', { name: 'Padrões de Coluna' })).toBeVisible();
+      await page.getByTestId('pattern-stats-search').fill('1,2,3,4,5');
+      await expect(page.locator('tr', { hasText: '5,4,3,2,1' })).toBeVisible();
+      await expect(page.locator('tr', { hasText: '2,4,5,3,1' })).toBeVisible();
+      await expect(page.locator('tr', { hasText: '4,5,3,2,1' })).toBeVisible();
+      await saveEvidenceScreenshot(page, '16-busca-variacoes-coluna.png');
     } finally {
       await app.close();
     }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import { applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
+import { filterPatternsBySearch } from '../../shared/patternStats';
 import {
     EXACT_GROUP_CATEGORIES,
     EXACT_GROUP_INPUT_ERROR,
@@ -94,6 +95,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [integratedPatternKind, setIntegratedPatternKind] = useState<PatternStatsKind>('row');
     const [integratedPatternSort, setIntegratedPatternSort] = useState<IntegratedPatternSort>('most');
     const [integratedUntilContest, setIntegratedUntilContest] = useState('');
+    const [integratedPatternSearch, setIntegratedPatternSearch] = useState('');
     const [integratedPatternRows, setIntegratedPatternRows] = useState<PatternStatsRow[]>([]);
     const [integratedPatternLoading, setIntegratedPatternLoading] = useState(false);
     const [integratedPatternError, setIntegratedPatternError] = useState('');
@@ -678,7 +680,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const integratedPatternPreviewRows = React.useMemo(() => {
-        const sorted = [...integratedPatternRows].sort((a, b) => {
+        const sorted = [...filterPatternsBySearch(integratedPatternRows, integratedPatternSearch, { variationSearch: true })].sort((a, b) => {
             if (integratedPatternSort === 'least') {
                 return a.occurrences - b.occurrences || b.lag - a.lag || a.patternKey.localeCompare(b.patternKey);
             }
@@ -688,7 +690,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             return b.occurrences - a.occurrences || b.lag - a.lag || a.patternKey.localeCompare(b.patternKey);
         });
         return sorted.slice(0, 10);
-    }, [integratedPatternRows, integratedPatternSort]);
+    }, [integratedPatternRows, integratedPatternSearch, integratedPatternSort]);
 
     // Calculate combined excluded dozens for visualization
     const allExcludedDozens = React.useMemo(() => 
@@ -1312,6 +1314,18 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         <option value="least">Menos frequentes</option>
                                         <option value="lag">Mais atrasados</option>
                                     </select>
+
+                                    <label className="min-w-[170px]">
+                                        <span className="desktop-label">Busca</span>
+                                        <input
+                                            type="text"
+                                            value={integratedPatternSearch}
+                                            onChange={event => setIntegratedPatternSearch(event.target.value)}
+                                            data-testid="generator-pattern-search"
+                                            className="desktop-control h-10 w-full font-mono"
+                                            placeholder="4,3,3,3,2"
+                                        />
+                                    </label>
 
                                     <label className="min-w-[150px]">
                                         <span className="desktop-label">Analisar até</span>
