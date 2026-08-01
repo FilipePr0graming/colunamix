@@ -1,0 +1,14 @@
+{
+  "tag": "v1.8.37",
+  "reason": "release_not_found_or_not_accessible",
+  "releaseTitle": "ColunaMix v1.8.37",
+  "version": "v1.8.37",
+  "localAsset": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.37.exe",
+  "httpStatus": 404,
+  "status": "blocked",
+  "ghToken": "missing",
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.37",
+  "gh": "missing",
+  "githubToken": "missing",
+  "directAssetUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.37/ColunaMix-v1.8.37.exe"
+}

@@ -15,6 +15,9 @@
 - Build aprovado, unitários `79 passed`, E2E `21 passed`, `7 skipped`, Playwright dedicado aprovado.
 - Executável: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.37.exe`.
 - SHA256: `BB23A9B84A89CDD6B7E85AE059FD23F5493438AC1A970CA7AD8D7B1B7A8C2BB0`.
+- Commit/push concluídos: `0335e6c`.
+- Tag enviada: `v1.8.37`.
+- Release bloqueada sem `gh`, sem `GITHUB_TOKEN/GH_TOKEN` e com retorno `404` da API pública.
 
 ## v1.8.36 - Restauração dos acessos Padrões de Linha e Padrões de Coluna
 
