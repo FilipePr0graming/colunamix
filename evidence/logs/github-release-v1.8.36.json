@@ -1,0 +1,18 @@
+{
+  "version": "v1.8.36",
+  "status": "blocked",
+  "reason": "GitHub CLI gh nao esta instalado, GITHUB_TOKEN/GH_TOKEN nao estao disponiveis e a API publica retornou 404 para a release da tag.",
+  "repository": "https://github.com/FilipePr0graming/colunamix",
+  "commit": "bcba371",
+  "tag": "v1.8.36",
+  "releaseTitle": "ColunaMix v1.8.36",
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.36",
+  "directAssetUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.36/ColunaMix-v1.8.36.exe",
+  "localAsset": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.36.exe",
+  "sha256": "984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA",
+  "notes": [
+    "Commit e tag enviados.",
+    "Release nao confirmada pela API publica.",
+    "Asset local gerado e validado."
+  ]
+}

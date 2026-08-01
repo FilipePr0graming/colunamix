@@ -21,6 +21,9 @@ A implementação foi validada com build, testes unitários, testes E2E, prints,
 - Prints: `145` a `150` em `evidence/screenshots/`.
 - Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
 - SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+- Commit/push: `bcba371` enviado para `origin/main`.
+- Tag: `v1.8.36` enviada para `origin`.
+- Release GitHub: bloqueada neste ambiente sem `gh` e sem `GITHUB_TOKEN/GH_TOKEN`; API pública ainda retornou `404`.
 
 ## Validação v1.8.35 - Borda/Miolo Geral + Performance
 

@@ -59,6 +59,13 @@
 - SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`
 - Metadados: `evidence/logs/exe-build-info-v1.8.36.json`
 
+### Publicação
+
+- Commit: `bcba371`
+- Push: `origin/main` atualizado.
+- Tag: `v1.8.36` enviada para `origin`.
+- Release: bloqueada neste ambiente. `gh` não está instalado, `GITHUB_TOKEN/GH_TOKEN` não estão disponíveis e a API pública retornou `404` para `releases/tags/v1.8.36`.
+
 ### Risco técnico
 
 Baixo. A alteração restaura navegação/layout e reaproveita `PatternStatsPage.tsx` existente. Não houve alteração na regra do Gerador, em U/X, em `Puxar e Excluir Padrões`, em Borda/Miolo Geral, em Ímpares/Pares, em Primos/Fibonacci ou na ordem dos quadros de exclusão.

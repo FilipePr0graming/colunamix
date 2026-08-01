@@ -21,6 +21,9 @@ Também foi gerado o executável final Windows `.exe` para distribuição ao cli
 - Prints `145` a `150` gerados em `evidence/screenshots/`.
 - Executável: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
 - SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+- Commit/push concluídos: `bcba371`.
+- Tag enviada: `v1.8.36`.
+- Release GitHub não publicada por falta de `gh` e `GITHUB_TOKEN/GH_TOKEN`; API pública retornou `404` para a release da tag.
 
 ## v1.8.35 - Exclusão por Borda/Miolo Geral e otimização de performance
 

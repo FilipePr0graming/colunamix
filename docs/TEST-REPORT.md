@@ -17,6 +17,9 @@
 - Prints `145` a `150` gerados.
 - Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
 - SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+- Commit/push concluídos: `bcba371`.
+- Tag enviada: `v1.8.36`.
+- Release bloqueada sem `gh` e sem token GitHub no ambiente.
 
 ## Validação v1.8.35 - Borda/Miolo Geral + Performance
 
