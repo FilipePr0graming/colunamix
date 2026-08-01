@@ -16,6 +16,7 @@
 - Unitários aprovados, `79 passed`.
 - E2E aprovado, `21 passed`, `7 skipped` históricos/obsoletos.
 - Playwright dedicado aprovado, `1 passed`.
+- Abertura do executável final desempacotado via Playwright aprovada, `1 passed`.
 - Prints `151` a `160` gerados.
 - Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.37.exe`.
 - SHA256: `BB23A9B84A89CDD6B7E85AE059FD23F5493438AC1A970CA7AD8D7B1B7A8C2BB0`.
