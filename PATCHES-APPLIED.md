@@ -6,6 +6,22 @@ Foi implementado o módulo profissional de análise estatística por padrões de
 
 Também foi gerado o executável final Windows `.exe` para distribuição ao cliente. A publicação automática no GitHub Releases não foi realizada porque o GitHub CLI (`gh`) não está instalado neste ambiente; as instruções manuais foram criadas em `evidence/GITHUB-RELEASE-INSTRUCTIONS.md`.
 
+## v1.8.36 - Restauração dos acessos Padrões de Linha e Padrões de Coluna
+
+- Restaurados os acessos laterais para Padrões de Linha e Padrões de Coluna.
+- Telas de análise de padrões voltaram a ficar acessíveis pela navegação.
+- Botões individuais U/X preservados.
+- Gerador preservado.
+- Ordem dos quadros de exclusão não foi alterada.
+- Não foi implementado botão em massa.
+- Build aprovado: `evidence/logs/npm-run-build-v1836.txt`.
+- Unitários aprovados: `79 passed` em `evidence/logs/npm-run-test-unit-v1836.txt`.
+- E2E aprovado: `20 passed`, `7 skipped` em `evidence/logs/npm-run-test-e2e-v1836.txt`.
+- Playwright dedicado aprovado: `1 passed` em `evidence/logs/playwright-restore-pattern-sidebar-tabs-v1836.txt`.
+- Prints `145` a `150` gerados em `evidence/screenshots/`.
+- Executável: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
+- SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+
 ## v1.8.35 - Exclusão por Borda/Miolo Geral e otimização de performance
 
 - Criado bloco `Borda - Grupos Gerais`.

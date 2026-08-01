@@ -1,5 +1,17 @@
 # PATCHES APPLIED
 
+## v1.8.36 - Restauração dos acessos Padrões de Linha e Padrões de Coluna
+
+- Restaurados os acessos laterais para Padrões de Linha e Padrões de Coluna.
+- Telas de análise de padrões voltaram a ficar acessíveis pela navegação.
+- Botões individuais U/X preservados.
+- Gerador preservado.
+- Ordem dos quadros de exclusão não foi alterada.
+- Não foi implementado botão em massa.
+- Build aprovado, unitários `79 passed`, E2E `20 passed`, Playwright dedicado aprovado.
+- Executável: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
+- SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+
 ## v1.8.35 - Exclusão por Borda/Miolo Geral e otimização de performance
 
 - Criado bloco `Borda - Grupos Gerais`.

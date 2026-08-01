@@ -4,6 +4,24 @@
 
 A implementação foi validada com build, testes unitários, testes E2E, prints, logs, exportações, validação de licença, validação do gerador e geração do executável Windows `.exe`.
 
+## Validação v1.8.36 - Acessos Padrões de Linha/Coluna
+
+- Sidebar validada.
+- Padrões de Linha validado.
+- Padrões de Coluna validado.
+- U/X validados.
+- Gerador validado.
+- Ordem dos quadros de exclusão validada sem alteração.
+- Nenhum botão em massa foi implementado.
+- Build/testes/Playwright executados.
+- Build: aprovado (`evidence/logs/npm-run-build-v1836.txt`).
+- Unitários: aprovado, `79 passed` (`evidence/logs/npm-run-test-unit-v1836.txt`).
+- E2E: aprovado, `20 passed`, `7 skipped` (`evidence/logs/npm-run-test-e2e-v1836.txt`).
+- Playwright dedicado: aprovado, `1 passed` (`evidence/logs/playwright-restore-pattern-sidebar-tabs-v1836.txt`).
+- Prints: `145` a `150` em `evidence/screenshots/`.
+- Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
+- SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+
 ## Validação v1.8.35 - Borda/Miolo Geral + Performance
 
 - Testes de validação cobrem listas oficiais de Borda e Miolo.

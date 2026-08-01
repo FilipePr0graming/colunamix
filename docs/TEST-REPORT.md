@@ -1,5 +1,23 @@
 # TEST REPORT
 
+## Validação v1.8.36 - Acessos Padrões de Linha/Coluna
+
+- Sidebar validada.
+- Padrões de Linha validado.
+- Padrões de Coluna validado.
+- U/X validados.
+- Gerador validado.
+- Ordem dos quadros de exclusão não foi alterada.
+- Não foi implementado botão em massa.
+- Build/testes/Playwright executados.
+- Build aprovado.
+- Unitários aprovados, `79 passed`.
+- E2E aprovado, `20 passed`, `7 skipped` históricos/obsoletos.
+- Playwright dedicado aprovado, `1 passed`.
+- Prints `145` a `150` gerados.
+- Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.36.exe`.
+- SHA256: `984858294F84CDB4B6A032CF31ABD65714DA28923BA1444EDA90F8A3C88991BA`.
+
 ## Validação v1.8.35 - Borda/Miolo Geral + Performance
 
 - Borda Geral e Miolo Geral visíveis no Gerador.
