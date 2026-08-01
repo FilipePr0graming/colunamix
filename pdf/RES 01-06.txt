@@ -1,0 +1,144 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <OTA_VehResRS Target="Production" xmlns="http://www.opentravel.org/OTA/2003/05" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opentravel.org/OTA/2003/05 https://xml.movida.com.br/movida/ws3/wsdl/OTA_VehResRS.xsd" SequenceNmbr="1" CorrelationID="0-1.94" PrimaryLangID="br" Version="5.000">
+            <Success/>
+            <Warnings>
+                <Warning Type="3" Code="645" ShortText="RESPONSABILIDADE NAO INFORMADA ASSUMINDO PAGAMENTO DIRETO" />
+            </Warnings>
+            <VehResRSCore ReservationStatus="Booked">
+                <VehReservation>
+                    <Customer>
+                        <Primary>
+                            <PersonName>
+                                <NamePrefix>Sr.</NamePrefix>
+                                <GivenName>TESTE</GivenName>
+                                <Surname>MOVIDA</Surname>
+                            </PersonName>
+                            <PaymentForm>
+                                <Voucher ValueType="FPF"></Voucher>
+                            </PaymentForm>
+                        </Primary>
+                    </Customer>
+                    <VehSegmentCore>
+                        <ConfID Type="8"  ID="MV1JO4XLPIBR"/>
+                        <ConfID Type="14" ID="MV1JO4XLPIBR"/>
+                        <Vendor CompanyShortName="MOVIDA" Code="MO"/>
+                        <VehRentalCore PickUpDateTime="2026-06-03T10:00:00" ReturnDateTime="2026-06-05T10:00:00">
+                            <PickUpLocation LocationCode="GRU" CodeContext="IATA" />
+                            <ReturnLocation LocationCode="GRU" CodeContext="IATA" />
+                        </VehRentalCore>
+                        <Vehicle Description="GRUPO AX  COMPACTO COM AR CONDICIONADO" AirConditionInd="true" Code="ECMM" PassengerQuantity="5" BaggageQuantity="2" TransmissionType="Manual" CodeContext="ACRISS">
+                            <VehType VehicleCategory="1" DoorCount="4"/>
+                            <VehClass Size="0"/>
+                            <VehMakeModel Code="AX" Name="FIAT MOBI RENAULT KWID"/>
+                            <PictureURL>https://prdmovida.blob.core.windows.net/public/imagens/cars/t3_grupo_AX.jpg</PictureURL>
+                        </Vehicle>
+                        <RentalRate>
+                            <RateDistance Unlimited="true" Quantity="0" DistUnitName="Km" VehiclePeriodUnitName="Day"/>
+                            <VehicleCharges>
+                                <VehicleCharge Description="DIARIA" Amount="207.80" CurrencyCode="BRL" TaxInclusive="false" IncludedInEstTotalInd="true" IncludedInRate="true" GuaranteedInd="true" Purpose="1">
+                                    <Calculation UnitCharge="103.90" UnitName="Day" Percentage="0" Quantity="2"/>
+                                </VehicleCharge>
+                                <VehicleCharge Description="TAXA ADMINISTRATIVA" Amount="0.00" CurrencyCode="BRL" TaxInclusive="false" IncludedInEstTotalInd="false" IncludedInRate="false" GuaranteedInd="true" Purpose="83">
+                                    <Calculation UnitCharge="0.00" UnitName="Day" Percentage="15.00" Quantity="1"/>
+                                </VehicleCharge>
+                                <VehicleCharge Description="CONDUTOR ADICIONAL" Amount="49.80" CurrencyCode="BRL" TaxInclusive="false" IncludedInEstTotalInd="false" IncludedInRate="false" GuaranteedInd="true" Purpose="12">
+                                    <Calculation UnitCharge="24.90" UnitName="Day" Percentage="0" Quantity="1"/>
+                                </VehicleCharge>
+                            </VehicleCharges>
+                            <RateQualifier RateCategory="2" RateQualifier="EVRAD"  />
+                            <NoShowFeeInfo>
+                                <FeeAmount Amount="0.00" CurrencyCode="BRL" RateConvertedInd="false" />
+                            </NoShowFeeInfo>
+                        </RentalRate>
+                        <TotalCharge RateTotalAmount="217.80" EstimatedTotalAmount="217.80"  CurrencyCode="BRL"></TotalCharge>
+                    </VehSegmentCore>
+                    <VehSegmentInfo>
+                        <PricedCoverages>
+                            <PricedCoverage Required="true" >
+                                <Coverage CoverageType="24" Code="LDWS">
+                                    <Details CoverageTextType="Supplement"></Details>
+                                    <Details CoverageTextType="Description">LDW SEGURADORA</Details>
+                                </Coverage>
+                                <Charge Amount="6.00" TaxInclusive="false"  IncludedInEstTotalInd="true" IncludedInRate="true" Percentage="0.00" CurrencyCode="BRL">
+                                    <Calculation UnitCharge="3.00" UnitName="Day" Quantity="2"/>
+                                </Charge>
+                            </PricedCoverage>
+                            <PricedCoverage Required="true" >
+                                <Coverage CoverageType="1" Code="ALIS">
+                                    <Details CoverageTextType="Supplement"></Details>
+                                    <Details CoverageTextType="Description">ALI SEGURADORA</Details>
+                                </Coverage>
+                                <Charge Amount="4.00" TaxInclusive="false"  IncludedInEstTotalInd="true" IncludedInRate="true" Percentage="0.00" CurrencyCode="BRL">
+                                    <Calculation UnitCharge="2.00" UnitName="Day" Quantity="2"/>
+                                </Charge>
+                            </PricedCoverage>
+                        </PricedCoverages>
+                        <VendorMessages>
+                            <VendorMessage Title="Vendor Messages">
+                                <SubSection>
+                                    <Paragraph>
+                                        <Text>SUJEITO A ANALISE DE CREDITO NO ATO DA RETIRADA DO VEICULO</Text>
+                                    </Paragraph>
+                                </SubSection>
+                            </VendorMessage>
+                        </VendorMessages>
+                        <LocationDetails AtAirport="true" Code="GRU" Name="SAO PAULO  GUARULHOS AEROPORTO" CodeContext="Pickup Location">
+                            <Address>
+                                <AddressLine>RODOVIA HELIO SMIDT 0  AEROPORTO  GUARULHOSSP</AddressLine>
+                                <CityName>GUARULHOS</CityName>
+                                <PostalCode>07190-100</PostalCode>
+                                <StateProv StateCode="SP">SAO PAULO</StateProv>
+                                <CountryName Code="BR">BRASIL</CountryName>
+                                <TPA_Extensions>
+                                    <Longitude>-46.490524</Longitude>
+                                    <Latitude>-23.446738</Latitude>
+                                </TPA_Extensions>
+                            </Address>
+                            <Telephone PhoneTechType="1" PhoneNumber="08006068686"/>
+                            <AdditionalInfo>
+                                <OperationSchedules>
+                                    <OperationSchedule>
+                                        <OperationTimes>
+                                            <OperationTime Start="00:00" End="23:59" Sun="true" Mon="true" Tue="true" Weds="true" Thur="true" Fri="true" Sat="true"  />
+                                        </OperationTimes>
+                                    </OperationSchedule>
+                                </OperationSchedules>
+                            </AdditionalInfo>
+                        </LocationDetails>
+                        <LocationDetails AtAirport="true" Code="GRU" Name="SAO PAULO  GUARULHOS AEROPORTO" CodeContext="Return Location">
+                            <Address>
+                                <AddressLine>RODOVIA HELIO SMIDT 0  AEROPORTO  GUARULHOSSP</AddressLine>
+                                <CityName>GUARULHOS</CityName>
+                                <PostalCode>07190-100</PostalCode>
+                                <StateProv StateCode="SP">SAO PAULO</StateProv>
+                                <CountryName Code="BR">BRASIL</CountryName>
+                                <TPA_Extensions>
+                                    <Longitude>-46.490524</Longitude>
+                                    <Latitude>-23.446738</Latitude>
+                                </TPA_Extensions>
+                            </Address>
+                            <Telephone PhoneTechType="1" PhoneNumber="08006068686"/>
+                            <AdditionalInfo>
+                                <OperationSchedules>
+                                    <OperationSchedule>
+                                        <OperationTimes>
+                                            <OperationTime Start="00:00" End="23:59" Sun="true" Mon="true" Tue="true" Weds="true" Thur="true" Fri="true" Sat="true"  />
+                                        </OperationTimes>
+                                    </OperationSchedule>
+                                </OperationSchedules>
+                            </AdditionalInfo>
+                        </LocationDetails>
+                    </VehSegmentInfo>
+                </VehReservation>
+            </VehResRSCore>
+            <VehResRSInfo>
+                <TPA_Extensions>
+                    <Reference ID=""></Reference>
+                    <ConfirmationUrl>https://www.movida.com.br/reserva/consultar</ConfirmationUrl>
+                    <RentalRequirements>https://www.movida.com.br/requisitos-condicoes</RentalRequirements>
+                </TPA_Extensions>
+            </VehResRSInfo>
+        </OTA_VehResRS>
+    </soap:Body>
+</soap:Envelope>

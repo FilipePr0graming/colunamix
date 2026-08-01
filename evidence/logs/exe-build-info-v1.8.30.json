@@ -1,0 +1,12 @@
+{
+  "version": "v1.8.30",
+  "executable": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.30.exe",
+  "fileName": "ColunaMix-v1.8.30.exe",
+  "sizeBytes": 74272328,
+  "sha256": "57FBCF6F38594F3C2D72B721070B4D7E8D0289DC432704DEDB496A53C5DACA19",
+  "builtAt": "2026-06-15T11:50:22.5586446-03:00",
+  "buildLog": "evidence/logs/npm-run-dist-v1.8.30.txt",
+  "buildPassed": true,
+  "unitLog": "evidence/logs/npm-run-test-unit-v1830.txt",
+  "e2eLog": "evidence/logs/npm-run-test-e2e-v1830.txt"
+}

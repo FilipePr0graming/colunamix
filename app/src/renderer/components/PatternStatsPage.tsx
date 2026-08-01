@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DbStatus, PatternExportFormat, PatternStatsKind, PatternStatsRow } from '../../shared/types';
 import { filterPatternsBySearch } from '../../shared/patternStats';
+import { clampContestToDatabase } from '../../shared/contestLimits';
+import PatternLagTooltip from './PatternLagTooltip';
 
 interface Props {
     dbStatus: DbStatus | null;
@@ -43,6 +45,19 @@ export default function PatternStatsPage({ dbStatus, kind }: Props) {
     const noData = drawCount === 0;
     const label = kind === 'row' ? 'Linha' : 'Coluna';
     const title = `Padrões de ${label}`;
+    const maxContest = dbStatus?.maxContest || 0;
+
+    const updateUntilContest = (value: string) => {
+        if (!value) {
+            setUntilContest('');
+            return;
+        }
+        const result = clampContestToDatabase(Number(value), maxContest);
+        setUntilContest(String(result.value));
+        if (result.adjusted) {
+            setNotice(`O banco possui concursos até o número ${maxContest}. O valor foi ajustado para o último concurso disponível.`);
+        }
+    };
 
     useEffect(() => {
         if (noData) {
@@ -157,8 +172,9 @@ export default function PatternStatsPage({ dbStatus, kind }: Props) {
                             <span className="desktop-label">Analisar até concurso</span>
                             <input
                                 type="number"
+                                max={maxContest || undefined}
                                 value={untilContest}
-                                onChange={event => setUntilContest(event.target.value)}
+                                onChange={event => updateUntilContest(event.target.value)}
                                 className="desktop-control w-full"
                                 placeholder={dbStatus?.maxContest ? String(dbStatus.maxContest) : '3450'}
                             />
@@ -296,7 +312,13 @@ export default function PatternStatsPage({ dbStatus, kind }: Props) {
                                 <td className="px-4 py-3 font-mono text-sm font-black text-brand-300">{row.patternKey}</td>
                                 <td className="px-4 py-3 text-right text-sm font-bold tabular-nums text-white">{row.occurrences.toLocaleString('pt-BR')}</td>
                                 <td className="px-4 py-3 text-right text-sm font-bold tabular-nums text-gray-300">Concurso {row.lastContest}</td>
-                                <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-amber-300">{row.lag.toLocaleString('pt-BR')}</td>
+                                <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-amber-300">
+                                    <PatternLagTooltip
+                                        lag={row.lag}
+                                        recentLags={row.recentLags}
+                                        testId={`standalone-pattern-lag-${kind}-${row.patternKey.replace(/,/g, '-')}`}
+                                    />
+                                </td>
                                 <td className="px-4 py-3 text-right text-sm font-bold tabular-nums text-gray-300">{formatPercentage(row.percentage)}</td>
                             </tr>
                         ))}

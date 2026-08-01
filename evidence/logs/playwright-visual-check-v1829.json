@@ -1,0 +1,22 @@
+{
+  "version": "v1.8.29",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "openedRecentContests": true,
+  "cardsVisible": 10,
+  "layout": "5x2",
+  "ascendingOrder": true,
+  "generalRecurrenceVisible": true,
+  "generalRecurrenceNotAllOne": true,
+  "recalculateButtonVisible": true,
+  "recalculateSuccessMessageVisible": true,
+  "ultDistVisible": true,
+  "generatorOpened": true,
+  "screenshotsGenerated": [
+    "86-v1829-playwright-abertura-estatisticas.png",
+    "87-v1829-playwright-ultimos-10-cards.png",
+    "88-v1829-playwright-recorrencia-geral-visivel.png",
+    "89-v1829-playwright-recalcular-estatisticas.png",
+    "90-v1829-playwright-apos-recalcular.png",
+    "91-v1829-playwright-gerador-preservado.png"
+  ]
+}

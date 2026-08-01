@@ -3,10 +3,11 @@ import { LicenseInfo, DbStatus, GeneratedGame, GeneratorConfig } from '../shared
 import BlockedScreen from './components/BlockedScreen';
 import ImportCSV from './components/ImportCSV';
 import Generator from './components/Generator';
-import PatternStatsPage from './components/PatternStatsPage';
+import ColumnStats from './components/ColumnStats';
 import StatusPage from './components/StatusPage';
+import TechnicalHistoryPage from './components/TechnicalHistoryPage';
 
-type Tab = 'gerador' | 'importar' | 'status' | 'padroesLinha' | 'padroesColuna';
+type Tab = 'gerador' | 'importar' | 'status' | 'estatisticasColuna' | 'historicoTecnico';
 
 export default function App() {
     const [license, setLicense] = useState<LicenseInfo | null>(null);
@@ -38,8 +39,8 @@ export default function App() {
 
     const tabs: { key: Tab; label: string; icon: string }[] = [
         { key: 'gerador', label: 'Gerador', icon: 'M12 2L2 7l10 5l10-5l-10-5zM2 17l10 5l10-5M2 12l10 5l10-5' }, // Layers Icon
-        { key: 'padroesLinha', label: 'Padrões de Linha', icon: 'M4 6h16M4 12h16M4 18h16' },
-        { key: 'padroesColuna', label: 'Padrões de Coluna', icon: 'M6 4v16M12 4v16M18 4v16' },
+        { key: 'estatisticasColuna', label: 'Estatísticas por Padrão de Coluna', icon: 'M6 4v16M12 4v16M18 4v16' },
+        { key: 'historicoTecnico', label: 'Histórico Técnico', icon: 'M12 8v5l3 3M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6' },
         { key: 'importar', label: 'Dados', icon: 'M3 15v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5' }, // Upload/Import Icon
         { key: 'status', label: 'Dashboard', icon: 'M18 20V10M12 20V4M6 20v-6' }, // Bars Icon
     ];
@@ -83,7 +84,7 @@ export default function App() {
                     ))}
                     
                     <div className="mt-auto mb-2 text-[8px] font-black text-gray-600 uppercase tracking-tighter">
-                        v1.8.23
+                        v1.8.35
                     </div>
                 </nav>
 
@@ -91,8 +92,8 @@ export default function App() {
                 <main className="flex-1 p-3 overflow-auto">
                     <div className="animate-fade-in h-full">
                         {tab === 'gerador' && <Generator dbStatus={dbStatus} licenseStatus={license.status} />}
-                        {tab === 'padroesLinha' && <PatternStatsPage dbStatus={dbStatus} kind="row" />}
-                        {tab === 'padroesColuna' && <PatternStatsPage dbStatus={dbStatus} kind="column" />}
+                        {tab === 'estatisticasColuna' && <ColumnStats dbStatus={dbStatus} />}
+                        {tab === 'historicoTecnico' && <TechnicalHistoryPage />}
                         {tab === 'importar' && <ImportCSV onImported={refresh} />}
                         {tab === 'status' && <StatusPage dbStatus={dbStatus} license={license} />}
                     </div>

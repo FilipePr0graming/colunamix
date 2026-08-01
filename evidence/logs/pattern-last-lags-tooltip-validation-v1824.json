@@ -1,0 +1,9 @@
+{
+  "version": "v1.8.24",
+  "rowPatternTooltipValidated": true,
+  "columnPatternTooltipValidated": true,
+  "showsLastLags": true,
+  "maxItems": 5,
+  "handlesInsufficientHistory": true,
+  "doesNotRecalculateOnEveryHover": true
+}

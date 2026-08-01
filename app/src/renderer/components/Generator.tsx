@@ -3,6 +3,8 @@ import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPre
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import { applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
 import { filterPatternStatsRows, type PatternStatsSort } from '../../shared/patternStats';
+import { clampContestToDatabase } from '../../shared/contestLimits';
+import { GENERATOR_SETTINGS_STORAGE_KEY, parsePersistedGeneratorSettings, shouldPersistGeneratorSettings } from '../../shared/generatorSettings';
 import {
     EXACT_GROUP_CATEGORIES,
     EXACT_GROUP_INPUT_ERROR,
@@ -10,40 +12,65 @@ import {
     formatExactGroup,
     formatExactGroupInputText,
     normalizeExactGroupExclusions,
-    parseExactGroupInput,
+    parseExactGroupCategoryInput,
     toExactGroupKey,
 } from '../../shared/exactGroupExclusions';
 import GridPicker from './GridPicker';
 import LotofacilGrid from './LotofacilGrid';
+import PatternLagTooltip from './PatternLagTooltip';
 
 interface Props { dbStatus: DbStatus | null; licenseStatus: LicenseStatus; }
 
 const EXACT_GROUP_LABELS: Record<ExactGroupCategory, string> = {
-    coreOdd: 'Miolo - Ímpares',
-    coreEven: 'Miolo - Pares',
     borderOdd: 'Borda - Ímpares',
     borderEven: 'Borda - Pares',
+    coreOdd: 'Miolo - Ímpares',
+    coreEven: 'Miolo - Pares',
+    borderGeneral: 'Borda - Grupos Gerais',
+    middleGeneral: 'Miolo - Grupos Gerais',
+    prime: 'Números Primos',
+    fibonacci: 'Números Fibonacci',
+    oddNumbers: 'Números Ímpares',
+    evenNumbers: 'Números Pares',
 };
 
 const EXACT_GROUP_PLACEHOLDERS: Record<ExactGroupCategory, string> = {
-    coreOdd: '07,13,19',
-    coreEven: '08,12,14',
     borderOdd: '01,03,05,11,21,23',
     borderEven: '02,04,06,10,22,24',
+    coreOdd: '07,13,19',
+    coreEven: '08,12,14',
+    borderGeneral: '01,02,03,11,21,22,23,24,25',
+    middleGeneral: '07,08,12,13,17,18',
+    prime: '03,11,13,19,23',
+    fibonacci: '01,03,05,13,21',
+    oddNumbers: '01,03,05,11,21,23',
+    evenNumbers: '02,04,06,10,22,24',
 };
 
 const createExactGroupTextState = (): Record<ExactGroupCategory, string> => ({
-    coreOdd: '',
-    coreEven: '',
     borderOdd: '',
     borderEven: '',
+    coreOdd: '',
+    coreEven: '',
+    borderGeneral: '',
+    middleGeneral: '',
+    prime: '',
+    fibonacci: '',
+    oddNumbers: '',
+    evenNumbers: '',
 });
 
 const createExactGroupHistoryCountState = (): Record<ExactGroupCategory, number> => ({
-    coreOdd: 10,
-    coreEven: 10,
     borderOdd: 10,
     borderEven: 10,
+    coreOdd: 10,
+    coreEven: 10,
+    borderGeneral: 10,
+    middleGeneral: 10,
+    prime: 10,
+    fibonacci: 10,
+    oddNumbers: 10,
+    evenNumbers: 10,
 });
 
 const RADAR_HISTORICO_FEATURES = [
@@ -83,6 +110,7 @@ interface GeneratorPatternTableProps {
     minOccurrences: string;
     search: string;
     sort: PatternStatsSort;
+    maxContest: number;
     onUntilContestChange: (value: string) => void;
     onMinOccurrencesChange: (value: string) => void;
     onSearchChange: (value: string) => void;
@@ -116,6 +144,7 @@ function GeneratorPatternTable({
     minOccurrences,
     search,
     sort,
+    maxContest,
     onUntilContestChange,
     onMinOccurrencesChange,
     onSearchChange,
@@ -186,6 +215,7 @@ function GeneratorPatternTable({
                         <span className="desktop-label !mb-1 !text-[9px]">Analisar até concurso</span>
                         <input
                             type="number"
+                            max={maxContest || undefined}
                             value={untilContest}
                             onChange={event => onUntilContestChange(event.target.value)}
                             data-testid={`generator-pattern-until-${kind}`}
@@ -268,7 +298,13 @@ function GeneratorPatternTable({
                                 <td className="whitespace-nowrap px-3 py-2 font-mono text-[12px] font-black text-brand-200">{row.patternKey}</td>
                                 <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-200">{row.occurrences.toLocaleString('pt-BR')}</td>
                                 <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-300">{row.lastContest}</td>
-                                <td className="px-2 py-2 text-right font-black tabular-nums text-amber-200">{row.lag.toLocaleString('pt-BR')}</td>
+                                <td className="px-2 py-2 text-right font-black tabular-nums text-amber-200">
+                                    <PatternLagTooltip
+                                        lag={row.lag}
+                                        recentLags={row.recentLags}
+                                        testId={`pattern-lag-${kind}-${patternTestId(row.patternKey)}`}
+                                    />
+                                </td>
                                 <td className="px-2 py-2 text-right font-bold tabular-nums text-gray-300">{formatPatternPercent(row.percentage)}</td>
                                 <td className="px-3 py-1.5">
                                     <div className="flex items-center justify-center gap-1.5">
@@ -358,12 +394,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [radarContactNotice, setRadarContactNotice] = useState(false);
     const [showGroupEngineModal, setShowGroupEngineModal] = useState(false);
     const [groupEngineContactNotice, setGroupEngineContactNotice] = useState(false);
+    const [settingsHydrated, setSettingsHydrated] = useState(false);
     const resultsViewportRef = useRef<HTMLDivElement | null>(null);
     const previewRequestRef = useRef(0);
     const [resultsScrollTop, setResultsScrollTop] = useState(0);
     const [resultsViewportHeight, setResultsViewportHeight] = useState(480);
 
     const noData = !dbStatus || dbStatus.drawCount === 0;
+    const maxContest = dbStatus?.maxContest || 0;
     const effectiveMax = maxJogos;
     const rowHeight = 36;
     const overscan = 12;
@@ -395,6 +433,12 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const timer = window.setTimeout(() => setNotice(null), 5000);
         return () => window.clearTimeout(timer);
     }, [notice]);
+
+    useEffect(() => {
+        if (!maxContest) return;
+        if (rangeEnd > maxContest) setRangeEnd(maxContest);
+        if (rangeStart > maxContest) setRangeStart(dbStatus?.minContest || 1);
+    }, [maxContest, rangeEnd, rangeStart, dbStatus?.minContest]);
 
     useEffect(() => {
         if (!patternPanelEnabled || noData) {
@@ -462,10 +506,9 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
 
     // LocalStorage Persistence
     useEffect(() => {
-        const saved = localStorage.getItem('colunamix_generator_settings');
-        if (saved) {
+        const config = parsePersistedGeneratorSettings(localStorage.getItem(GENERATOR_SETTINGS_STORAGE_KEY));
+        if (config) {
             try {
-                const config = JSON.parse(saved);
                 if (config.mode) setMode(config.mode);
                 if (config.lastN) setLastN(config.lastN);
                 if (config.rangeStart) setRangeStart(config.rangeStart);
@@ -489,16 +532,19 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 console.error('Erro ao carregar configurações salvas:', e);
             }
         }
+        setSettingsHydrated(true);
     }, []);
 
     useEffect(() => {
+        if (!shouldPersistGeneratorSettings(settingsHydrated)) return;
+
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
             colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
         };
-        localStorage.setItem('colunamix_generator_settings', JSON.stringify(settings));
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled]);
+        localStorage.setItem(GENERATOR_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    }, [settingsHydrated, mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -733,7 +779,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const addExactGroup = (category: ExactGroupCategory) => {
-        const parsed = parseExactGroupInput(exactGroupInputs[category]);
+        const parsed = parseExactGroupCategoryInput(exactGroupInputs[category], category);
         if (!parsed.valid) {
             setExactGroupErrors(prev => ({ ...prev, [category]: parsed.error || EXACT_GROUP_INPUT_ERROR }));
             return;
@@ -804,18 +850,52 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
             setExactGroupErrors(prev => ({ ...prev, [category]: '' }));
 
             const drawsLabel = `${pulled.drawsUsed.toLocaleString('pt-BR')} concurso${pulled.drawsUsed !== 1 ? 's' : ''}`;
+            const limitMessage = pulled.drawsUsed < pulled.requested
+                ? ` A solicitação foi limitada aos ${pulled.drawsUsed.toLocaleString('pt-BR')} concursos disponíveis.`
+                : '';
             setNotice({
                 tone: groupsToAdd.length > 0 ? 'success' : 'info',
                 title: 'Grupos históricos aplicados',
                 message: groupsToAdd.length > 0
-                    ? `${groupsToAdd.length} grupo(s) de ${EXACT_GROUP_LABELS[category]} adicionados a partir de ${drawsLabel}.`
-                    : `Nenhum grupo novo de ${EXACT_GROUP_LABELS[category]} foi encontrado em ${drawsLabel}.`,
+                    ? `${groupsToAdd.length} grupo(s) de ${EXACT_GROUP_LABELS[category]} adicionados a partir de ${drawsLabel}.${limitMessage}`
+                    : `Nenhum grupo novo de ${EXACT_GROUP_LABELS[category]} foi encontrado em ${drawsLabel}.${limitMessage}`,
             });
         } catch (e: any) {
             setError(e?.message || 'Erro ao puxar grupos históricos.');
         } finally {
             setHistoryLoading(false);
         }
+    };
+
+    const showContestLimitNotice = () => {
+        if (!maxContest) return;
+        setNotice({
+            tone: 'info',
+            title: 'Concurso ajustado',
+            message: `O banco possui concursos até o número ${maxContest}. O valor foi ajustado para o último concurso disponível.`,
+        });
+    };
+
+    const updateRangeEnd = (value: string) => {
+        if (value === '') {
+            setRangeEnd(0);
+            return;
+        }
+        const result = clampContestToDatabase(Number(value), maxContest);
+        setRangeEnd(result.value);
+        if (result.adjusted) showContestLimitNotice();
+    };
+
+    const updatePatternUntil = (kind: PatternStatsKind, value: string) => {
+        if (value === '') {
+            if (kind === 'row') setRowPatternUntil('');
+            else setColumnPatternUntil('');
+            return;
+        }
+        const result = clampContestToDatabase(Number(value), maxContest);
+        if (kind === 'row') setRowPatternUntil(String(result.value));
+        else setColumnPatternUntil(String(result.value));
+        if (result.adjusted) showContestLimitNotice();
     };
 
     const addPatternExclusion = () => {
@@ -1077,7 +1157,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     <div className="grid grid-cols-12 gap-6 items-end">
                         <div className="col-span-3">
                             <label className="desktop-label">Modo de Seleção</label>
-                            <select value={mode} onChange={e => setMode(e.target.value as 'lastN' | 'range')} className="desktop-control desktop-select w-full">
+                            <select data-testid="generator-history-mode" value={mode} onChange={e => setMode(e.target.value as 'lastN' | 'range')} className="desktop-control desktop-select w-full">
                                 <option value="lastN">Últimos N concursos</option>
                                 <option value="range">Faixa Manual (Concurso ID)</option>
                             </select>
@@ -1104,13 +1184,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 <div className="col-span-3">
                                     <label className="desktop-label">Concurso Inicial</label>
                                     <input type="number" value={rangeStart}
+                                        data-testid="generator-contest-start"
                                         onChange={e => setRangeStart(e.target.value === '' ? 0 : Number(e.target.value))}
                                         className="desktop-control w-full tabular-nums" />
                                 </div>
                                 <div className="col-span-3">
                                     <label className="desktop-label">Concurso Final</label>
                                     <input type="number" value={rangeEnd}
-                                        onChange={e => setRangeEnd(e.target.value === '' ? 0 : Number(e.target.value))}
+                                        max={maxContest || undefined}
+                                        data-testid="generator-contest-final"
+                                        onChange={e => updateRangeEnd(e.target.value)}
                                         className="desktop-control w-full tabular-nums" />
                                 </div>
                             </>
@@ -1136,6 +1219,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             <label className="desktop-label">Volume de Apostas</label>
                             <div className="relative">
                                 <input type="number" value={maxJogos}
+                                    data-testid="generator-max-games-input"
                                     onChange={e => setMaxJogos(e.target.value === '' ? 0 : Number(e.target.value))}
                                     className="desktop-control w-full tabular-nums font-bold" />
                                 {preview && !preview.isPartial && preview.totalCombinations > 0 && (
@@ -1255,7 +1339,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 <div
                                     key={category}
                                     data-testid={`exact-group-card-${category}`}
-                                    className="col-span-12 md:col-span-6 xl:col-span-3 rounded-lg border border-white/5 bg-white/[0.02] p-3 space-y-3"
+                                    className="col-span-12 md:col-span-6 xl:col-span-4 rounded-lg border border-white/5 bg-white/[0.02] p-3 space-y-3"
                                 >
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
@@ -1600,7 +1684,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         minOccurrences={rowPatternMinOccurrences}
                                         search={rowPatternSearch}
                                         sort={rowPatternSort}
-                                        onUntilContestChange={setRowPatternUntil}
+                                        maxContest={maxContest}
+                                        onUntilContestChange={value => updatePatternUntil('row', value)}
                                         onMinOccurrencesChange={setRowPatternMinOccurrences}
                                         onSearchChange={setRowPatternSearch}
                                         onSortChange={setRowPatternSort}
@@ -1618,7 +1703,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         minOccurrences={columnPatternMinOccurrences}
                                         search={columnPatternSearch}
                                         sort={columnPatternSort}
-                                        onUntilContestChange={setColumnPatternUntil}
+                                        maxContest={maxContest}
+                                        onUntilContestChange={value => updatePatternUntil('column', value)}
                                         onMinOccurrencesChange={setColumnPatternMinOccurrences}
                                         onSearchChange={setColumnPatternSearch}
                                         onSortChange={setColumnPatternSort}
@@ -1682,7 +1768,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                         Resultados
                         {generatedTotalCount > 0 && (
                             <span className="text-brand-400 ml-2 font-bold">
-                                {generatedTotalCount.toLocaleString('pt-BR')} jogo{generatedTotalCount !== 1 ? 's' : ''} gerados
+                                {generatedTotalCount.toLocaleString('pt-BR')} jogo{generatedTotalCount !== 1 ? 's' : ''} gerado{generatedTotalCount !== 1 ? 's' : ''}
                             </span>
                         )}
                     </h3>

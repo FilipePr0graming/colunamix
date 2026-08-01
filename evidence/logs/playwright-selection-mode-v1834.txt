@@ -1,0 +1,9 @@
+V1.8.34 selection mode Playwright passed
+Faixa Manual selected in Generator
+Concurso Inicial 3688 preserved
+Concurso Final 3737 preserved
+Column Stats opened without overwriting generator settings
+Returning to Generator kept Faixa Manual
+Últimos N concursos was not auto-selected
+Números Ímpares and Números Pares blocks preserved
+Generator executed after navigation

@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:1163:7 › ColunaMix Desktop - E2E › V1.8.26: layout compacto 5x2 e acesso direto aos últimos concursos (27.0s)
+
+  1 passed (28.6s)

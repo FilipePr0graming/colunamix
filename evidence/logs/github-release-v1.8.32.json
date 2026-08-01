@@ -1,0 +1,14 @@
+{
+  "version": "v1.8.32",
+  "releasePublished": true,
+  "releaseId": 354524127,
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.32",
+  "assetName": "ColunaMix-v1.8.32.exe",
+  "assetUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.32/ColunaMix-v1.8.32.exe",
+  "assetSize": 74273316,
+  "localExePath": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.32.exe",
+  "sha256": "B89DD2705DFF972DF9538C2BB8B0C1A49157EA2D398E152B7AACC86F58A42ECF",
+  "defaultBranchTarget": "main",
+  "gitPushPerformed": false,
+  "publishedAt": "2026-07-15T12:09:31.8250503-03:00"
+}

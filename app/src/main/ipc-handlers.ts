@@ -1,13 +1,17 @@
 import { app, ipcMain, dialog, FileFilter } from 'electron';
 import path from 'path';
 import { once } from 'events';
-import { getDbStatus, importDraws, getDraws, clearDraws } from './database';
+import { getDbStatus, importDraws, getDraws, clearDraws, getState, removeState, setState } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { ChunkedGenerator } from '../shared/generator';
 import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory, PatternExportFormat, PatternStatsKind, PatternStatsRow } from '../shared/types';
 import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
-import { getExactGroupNumbersForCategory, toExactGroupKey } from '../shared/exactGroupExclusions';
+import { collectExactGroupsFromDraws } from '../shared/exactGroupExclusions';
 import { calculatePatternStats, clearPatternStatsCache, serializePatternStatsCsv, serializePatternStatsExcel, serializePatternStatsTxt } from '../shared/patternStats';
+import { calculateColumnPatternEntries } from '../shared/columnPatternStats';
+import { COLUMN_STATS_LEGACY_STATE_KEYS, COLUMN_STATS_SCHEMA_STATE_KEY, COLUMN_STATS_SCHEMA_VERSION } from '../shared/columnStatsCache';
+import type { ColumnStatsCacheInvalidationResult } from '../shared/columnStatsCache';
+import { clampContestToDatabase } from '../shared/contestLimits';
 
 const IS_DEV = !!process.env.VITE_DEV_SERVER_URL || process.env.APP_DEV_TOOLS === 'true';
 type HistoryDraw = { contest: number; numbers: number[] };
@@ -28,6 +32,27 @@ function getAllDrawsSorted(): HistoryDraw[] {
         .sort((a, b) => a.contest - b.contest);
 }
 
+function ensureColumnStatsOfficialSchema(force = false): ColumnStatsCacheInvalidationResult {
+    const currentSchema = getState(COLUMN_STATS_SCHEMA_STATE_KEY);
+    const legacyKeysFound = COLUMN_STATS_LEGACY_STATE_KEYS.filter(key => getState(key) !== null);
+    const oldCacheDetected = force || currentSchema !== COLUMN_STATS_SCHEMA_VERSION || legacyKeysFound.length > 0;
+
+    if (oldCacheDetected) {
+        clearPatternStatsCache();
+        for (const key of legacyKeysFound) removeState(key);
+        setState(COLUMN_STATS_SCHEMA_STATE_KEY, COLUMN_STATS_SCHEMA_VERSION);
+    }
+
+    return {
+        version: 'v1.8.32',
+        oldCacheDetected,
+        oldCacheInvalidated: oldCacheDetected,
+        schemaVersion: COLUMN_STATS_SCHEMA_VERSION,
+        recalculatedFromHistoricalBase: true,
+        manualRecalculateButtonWorks: force,
+    };
+}
+
 function normalizeContestRange(rangeStart: number, rangeEnd: number): { rangeStart: number; rangeEnd: number } {
     if (!Number.isFinite(rangeStart) || !Number.isFinite(rangeEnd)) {
         throw new Error('Intervalo de concursos inválido.');
@@ -43,7 +68,12 @@ function normalizeContestRange(rangeStart: number, rangeEnd: number): { rangeSta
 
 function resolveBaseDraws(config: GeneratorConfig): HistoryDraw[] {
     if (config.mode === 'range') {
-        const { rangeStart, rangeEnd } = normalizeContestRange(config.rangeStart, config.rangeEnd);
+        const requestedRange = normalizeContestRange(config.rangeStart, config.rangeEnd);
+        const rangeEnd = clampContestToDatabase(requestedRange.rangeEnd, getDbStatus().maxContest).value;
+        const rangeStart = requestedRange.rangeStart;
+        if (rangeStart > rangeEnd) {
+            throw new Error(`Nenhum concurso disponível no intervalo ${rangeStart} a ${requestedRange.rangeEnd}.`);
+        }
         const draws = getDraws('range', 0, rangeStart, rangeEnd);
         if (draws.length === 0) {
             throw new Error(`Nenhum concurso encontrado no intervalo ${rangeStart} a ${rangeEnd}.`);
@@ -260,47 +290,16 @@ export function registerIpcHandlers(): void {
     );
 
     ipcMain.handle('db:get-stats', async (_e, startContest: number) => {
-        const allDraws = getDraws('range', 0, 1, 99999)
-            .filter(d => d.contest >= startContest)
-            .sort((a, b) => a.contest - b.contest);
-        const results = [];
+        ensureColumnStatsOfficialSchema(false);
+        const allDraws = getAllDrawsSorted();
+        return calculateColumnPatternEntries(allDraws as any, Math.max(1, Math.trunc(startContest || 1)));
+    });
 
-        for (const draw of allDraws) {
-            // For each column pattern in this draw, find when it last appeared
-            const colPatterns = [];
-            for (let col = 1; col <= 5; col++) {
-                const columnRange = [1, 6, 11, 16, 21].map(n => n + (col - 1));
-                const numbersInCol = draw.numbers.filter(n => columnRange.includes(n)).sort((a,b) => a-b);
-                const patternKey = JSON.stringify(numbersInCol);
-
-                // Find previous occurrence
-                let lastSeen = -1;
-                let distance = -1;
-                const previousDraws = allDraws.filter(d => d.contest < draw.contest).sort((a,b) => b.contest - a.contest);
-                
-                for (const prev of previousDraws) {
-                    const prevNumbersInCol = prev.numbers.filter(n => columnRange.includes(n)).sort((a,b) => a-b);
-                    if (JSON.stringify(prevNumbersInCol) === patternKey) {
-                        lastSeen = prev.contest;
-                        distance = draw.contest - prev.contest;
-                        break;
-                    }
-                }
-
-                colPatterns.push({
-                    col: `C${col}`,
-                    numbers: numbersInCol.map(n => n.toString().padStart(2, '0')).join(', '),
-                    colLastSeen: lastSeen,
-                    colDistance: distance
-                });
-            }
-
-            results.push({
-                contest: draw.contest,
-                patterns: colPatterns
-            });
-        }
-        return results;
+    ipcMain.handle('column-stats:recalculate', async (_e, startContest: number) => {
+        const cache = ensureColumnStatsOfficialSchema(true);
+        const allDraws = getAllDrawsSorted();
+        const stats = calculateColumnPatternEntries(allDraws as any, Math.max(1, Math.trunc(startContest || 1)));
+        return { cache, stats };
     });
 
     ipcMain.handle('patterns:get-stats', async (_e, kind: PatternStatsKind, untilContest?: number | null): Promise<PatternStatsRow[]> => {
@@ -555,17 +554,7 @@ export function registerIpcHandlers(): void {
             : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
 
         const history = resolveHistoryDraws(count, safeRange);
-        const groups: number[][] = [];
-        const seen = new Set<string>();
-
-        for (const draw of history.draws) {
-            const group = getExactGroupNumbersForCategory(draw.numbers, category);
-            if (group.length === 0) continue;
-            const key = toExactGroupKey(group);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            groups.push(group);
-        }
+        const groups = collectExactGroupsFromDraws(history.draws, category);
 
         return {
             groups,

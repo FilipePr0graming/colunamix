@@ -1,0 +1,10 @@
+{
+  "version": "v1.8.24",
+  "screenRestored": true,
+  "startsFromContest": 2000,
+  "ascendingOrder": true,
+  "infiniteScroll": true,
+  "batchSize": 10,
+  "cardsValidated": true,
+  "fieldsValidated": ["contest", "generalRecurrence", "C1", "C2", "C3", "C4", "C5", "lastContest", "distance"]
+}

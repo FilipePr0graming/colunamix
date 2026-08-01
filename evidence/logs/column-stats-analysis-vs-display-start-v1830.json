@@ -1,0 +1,8 @@
+{
+  "version": "v1.8.30",
+  "displayStartContest": 3699,
+  "analysisStartContest": 3000,
+  "visibleCardCount": 10,
+  "displayStartLimitsOnlyCards": true,
+  "recurrenceUsesMaxColumnDistanceFromAnalysisBase": true
+}

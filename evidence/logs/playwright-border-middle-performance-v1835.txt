@@ -1,0 +1,15 @@
+V1.8.35 border/middle general groups Playwright passed
+{
+  "version": "v1.8.35",
+  "appStartupMs": 2794,
+  "openGeneratorMs": 208,
+  "renderGroupExclusionsMs": 620,
+  "pullBorderGroupsMs": 347,
+  "pullMiddleGroupsMs": 357,
+  "generateGamesMs": 375,
+  "generatedCount": 35,
+  "withoutBorderCount": 35,
+  "withoutMiddleCount": 38
+}
+Old exact group blocks visible
+Manual add, validation, pull, clear, persistence and generator checks passed

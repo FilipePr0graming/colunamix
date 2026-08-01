@@ -1,0 +1,9 @@
+V1.8.33 odd/even group exclusion Playwright passed
+Existing exact group blocks visible
+Números Ímpares and Números Pares blocks visible
+Manual add validated
+Odd/even validation messages validated
+Pull from history validated
+Local clear validated
+Persistence after reload validated
+Generator preview and generation executed with new rules

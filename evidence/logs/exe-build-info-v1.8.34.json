@@ -1,0 +1,16 @@
+{
+  "version": "v1.8.34",
+  "exePath": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.34.exe",
+  "fileName": "ColunaMix-v1.8.34.exe",
+  "sizeBytes": 74272151,
+  "sha256": "E6B84725F53F0B82C598191490D21C2063555BAD76AB6B3B051B535DC2CC8944",
+  "builtAt": "2026-07-18T20:07:04.1524799-03:00",
+  "distLog": "evidence/logs/npm-run-dist-v1.8.34.txt",
+  "gitPushPerformed": false,
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.34",
+  "assetUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.34/ColunaMix-v1.8.34.exe",
+  "notes": [
+    "electron-builder used default Electron icon because no app icon file is configured",
+    "signing skipped because no signing info is configured"
+  ]
+}

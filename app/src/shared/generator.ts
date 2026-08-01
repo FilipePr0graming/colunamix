@@ -108,7 +108,8 @@ export class ChunkedGenerator {
                             const rowPattern = getRowPattern(gameResult);
                             const colPattern = getColPattern(gameResult);
 
-                            let allowed = !shouldExcludeByExactGroupWithKeySets(gameResult, this.exactGroupExclusionKeys);
+                            const exactGroupCategoryKeyCache = {};
+                            let allowed = !shouldExcludeByExactGroupWithKeySets(gameResult, this.exactGroupExclusionKeys, exactGroupCategoryKeyCache);
                             // Column Pattern Mode
                             if (this.colPatternMode === 'include') {
                                 if (!this.includedColPatterns.has(colPattern)) allowed = false;

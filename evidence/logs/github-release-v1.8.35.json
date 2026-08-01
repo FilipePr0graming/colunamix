@@ -1,0 +1,26 @@
+{
+  "version": "v1.8.35",
+  "status": "blocked",
+  "reason": "GitHub CLI gh nao esta instalado e GITHUB_TOKEN/GH_TOKEN nao estao disponiveis no ambiente.",
+  "repository": "https://github.com/FilipePr0graming/colunamix",
+  "releaseTitle": "ColunaMix v1.8.35",
+  "asset": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.35.exe",
+  "sha256": "66948B8A7350AD52C7D50EDE0BEF22907CE5E35AB2D4E0E548B3CAB6FA03BB97",
+  "notes": [
+    "Adicionados blocos de exclusao por Borda Geral e Miolo Geral.",
+    "Adicao manual de grupos.",
+    "Busca de grupos por concursos anteriores.",
+    "Validacao das dezenas da Borda e do Miolo.",
+    "Limpeza individual por bloco.",
+    "Remocao individual de grupos.",
+    "Persistencia dos grupos.",
+    "Integracao com o Gerador.",
+    "Comparacao exata por subconjunto da Borda/Miolo.",
+    "Otimizacao de carregamento e processamento.",
+    "Reducao de recalculos desnecessarios.",
+    "Melhoria no tempo de resposta do Gerador.",
+    "Blocos antigos preservados.",
+    "Gerador, licenca e dados preservados.",
+    "Validado com build, testes, Playwright e benchmark de performance."
+  ]
+}

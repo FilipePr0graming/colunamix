@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OTA_VehResRQ xmlns="http://www.opentravel.org/OTA/2003/05" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opentravel.org/OTA/2003/05     OTA_VehResRQ.xsd" Version="1.002">
+   <POS>
+      <Source>
+         <RequestorID Type="5" ID="10722540" MessagePassword="22f2b152936b5a4301h4nfdra379d1zfd7532286c878ccp5eb51b0b56e63o4df3bc126bc3aa1c650d37d3ab55b9ew78a3ccab34685u427ebm9641ec782ba19e84247d3468802e48a130b3" />
+              </Source>
+   </POS>
+   <VehResRQCore Status="All">
+      <VehRentalCore PickUpDateTime="2026-06-03T10:00:00" ReturnDateTime="2026-06-05T10:00:00">
+         <PickUpLocation LocationCode="GRU" CodeContext="IATA" />
+         <ReturnLocation LocationCode="GRU" CodeContext="IATA" />
+      </VehRentalCore>
+      <Customer>
+         <Primary>
+           <PersonName>
+               <NamePrefix>Sr.</NamePrefix>
+               <GivenName>TESTE</GivenName>
+               <Surname>MOVIDA</Surname>
+            </PersonName>
+                <PaymentForm>
+               <Voucher ValueType="" />
+            </PaymentForm>
+         </Primary>
+          </Customer>
+      <VehPrefs>
+         <VehPref Code="" CodeContext="ACRISS" />
+      </VehPrefs>
+          <RateQualifier RateCategory="3" RateQualifier="" />
+   </VehResRQCore>
+   <VehResRQInfo>
+           <CoveragePrefs>
+         <CoveragePref CoverageType="" />
+               </CoveragePrefs>
+   </VehResRQInfo>
+</OTA_VehResRQ>

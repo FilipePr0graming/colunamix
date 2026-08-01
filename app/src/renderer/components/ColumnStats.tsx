@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DbStatus, PatternStatsEntry } from '../../shared/types';
+import { COLUMN_STATS_START_CONTEST, COLUMN_STATS_BATCH_SIZE } from '../../shared/columnPatternStats';
 
 interface Props {
     dbStatus: DbStatus | null;
@@ -9,26 +10,26 @@ export default function ColumnStats({ dbStatus }: Props) {
     const [stats, setStats] = useState<PatternStatsEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
-    const pageSize = 10;
+    const pageSize = COLUMN_STATS_BATCH_SIZE;
 
     const drawCount = dbStatus?.drawCount ?? 0;
     const noData = drawCount === 0;
 
     useEffect(() => {
-        if (!noData) {
-            setLoading(true);
-            window.electronAPI.dbGetStats(3000).then(res => {
-                setStats(res);
-                setPage(Math.max(0, Math.ceil(res.length / pageSize) - 1));
-            }).catch(err => {
-                console.error('Erro ao carregar estatísticas:', err);
-                setStats([]);
-                setPage(0);
-            }).finally(() => {
-                setLoading(false);
-            });
-        }
-    }, [drawCount, noData]);
+        if (noData) return;
+
+        setLoading(true);
+        window.electronAPI.dbGetStats(COLUMN_STATS_START_CONTEST).then(res => {
+            setStats(res);
+            setPage(Math.max(0, Math.ceil(res.length / pageSize) - 1));
+        }).catch(err => {
+            console.error('Erro ao carregar estatísticas:', err);
+            setStats([]);
+            setPage(0);
+        }).finally(() => {
+            setLoading(false);
+        });
+    }, [drawCount, noData, pageSize]);
 
     if (noData) {
         return (
@@ -51,25 +52,29 @@ export default function ColumnStats({ dbStatus }: Props) {
     const currentStats = stats.slice(page * pageSize, (page + 1) * pageSize);
 
     return (
-        <div className="h-full flex flex-col gap-4 overflow-hidden">
+        <div className="h-full flex flex-col gap-4 overflow-hidden" data-testid="column-pattern-stats-page">
             <div className="flex items-center justify-between shrink-0">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     Estatísticas por Padrão de Coluna
                 </h2>
                 <div className="flex items-center gap-4">
-                    <span className="text-xs text-gray-500 font-medium">Concurso Inicial: <span className="text-brand-400 font-bold">3000</span></span>
+                    <span className="text-xs text-gray-500 font-medium" data-testid="column-stats-start-label">
+                        Concurso Inicial: <span className="text-brand-400 font-bold">{COLUMN_STATS_START_CONTEST}</span>
+                    </span>
                     <div className="flex gap-2">
-                        <button 
+                        <button
+                            data-testid="column-stats-prev"
                             disabled={page === 0}
                             onClick={() => setPage(page - 1)}
                             className="btn-premium-secondary !py-1 !px-3 disabled:opacity-30"
                         >
                             Anterior
                         </button>
-                        <span className="text-[10px] text-gray-400 font-black uppercase self-center px-2">
+                        <span data-testid="column-stats-page-indicator" className="text-[10px] text-gray-400 font-black uppercase self-center px-2">
                             Página {page + 1} de {totalPages || 1}
                         </span>
-                        <button 
+                        <button
+                            data-testid="column-stats-next"
                             disabled={page >= totalPages - 1}
                             onClick={() => setPage(page + 1)}
                             className="btn-premium-secondary !py-1 !px-3 disabled:opacity-30"
@@ -80,22 +85,22 @@ export default function ColumnStats({ dbStatus }: Props) {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar" data-testid="column-stats-scroll">
+                <div data-testid="column-stats-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {currentStats.map((entry) => (
-                        <div key={entry.contest} className="glass-card p-4 animate-premium-glow flex flex-col gap-3 border-white/5 hover:border-brand-500/30 transition-all group">
+                        <div key={entry.contest} data-contest={entry.contest} data-pattern-key={entry.generalPatternKey} data-testid="column-stats-card" className="glass-card p-4 animate-premium-glow flex flex-col gap-3 border-white/5 hover:border-brand-500/30 transition-all group">
                             <div className="flex items-center justify-between border-b border-white/5 pb-2">
                                 <span className="text-lg font-black text-white italic tracking-tighter">#{entry.contest}</span>
                                 <div className="flex flex-col items-end">
                                     <span className="text-[8px] text-gray-500 font-black uppercase">Recorrência Geral</span>
-                                    <span className="text-xs text-brand-400 font-bold tabular-nums">
+                                    <span data-testid="column-stats-general-recurrence" className="text-xs text-brand-400 font-bold tabular-nums">
                                         {entry.patterns.reduce((max, p) => Math.max(max, p.colDistance), 0)} concursos
                                     </span>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                {entry.patterns.map((p, idx) => (
+                                {entry.patterns.map((p) => (
                                     <div key={p.col} className="space-y-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] text-gray-400 font-black">{p.col}</span>
@@ -107,7 +112,7 @@ export default function ColumnStats({ dbStatus }: Props) {
                                             </div>
                                         </div>
                                         <div className="bg-black/30 rounded px-2 py-1 border border-white/5 group-hover:bg-brand-500/5 transition-colors">
-                                            <span className="text-[10px] font-mono text-gray-300 tracking-tight leading-none block truncate">
+                                            <span className="text-[10px] font-mono text-gray-300 tracking-tight leading-none block truncate" title={p.numbers || 'Nenhum'}>
                                                 {p.numbers || 'Nenhum'}
                                             </span>
                                         </div>

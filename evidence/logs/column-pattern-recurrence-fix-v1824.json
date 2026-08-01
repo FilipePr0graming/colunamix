@@ -1,0 +1,20 @@
+{
+  "version": "v1.8.25",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "generalRecurrenceFixed": true,
+  "validContestMinimumRecurrence": 1,
+  "noNAForValidGeneralRecurrence": true,
+  "columnLastAndDistancePreserved": true,
+  "sampleCards": [
+    {
+      "contest": 2000,
+      "generalRecurrence": 15,
+      "hasNA": false
+    },
+    {
+      "contest": 2001,
+      "generalRecurrence": 16,
+      "hasNA": false
+    }
+  ]
+}

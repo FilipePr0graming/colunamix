@@ -1,0 +1,13 @@
+{
+  "version": "v1.8.32",
+  "feature": "Histórico Técnico",
+  "date": "15/07/2026",
+  "sidebarButtonAdded": true,
+  "readOnlyHistory": true,
+  "maintenanceRecordAdded": true,
+  "tags": ["PREVENÇÃO", "CACHE", "ESTABILIDADE", "GERADOR", "ESTATÍSTICAS", "CORREÇÃO"],
+  "mentionsCodex": false,
+  "mentionsAI": false,
+  "generatorPreserved": true,
+  "patternPagesPreserved": true
+}

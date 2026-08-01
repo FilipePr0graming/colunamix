@@ -1,0 +1,19 @@
+{
+  "version": "v1.8.34",
+  "bug": "Modo de seleção resetava para Últimos N concursos ao abrir Estatísticas por Padrão de Coluna",
+  "fixed": true,
+  "manualRangePreserved": true,
+  "initialContestPreserved": true,
+  "finalContestPreserved": true,
+  "columnStatsDoesNotOverrideSelectionMode": true,
+  "generatorDoesNotResetOnReturn": true,
+  "oddEvenBlocksPreserved": true,
+  "generatorPreserved": true,
+  "testedFlow": {
+    "selectedMode": "Faixa Manual (Concurso ID)",
+    "initialContest": "3688",
+    "finalContest": "3737",
+    "afterOpeningColumnStats": "Faixa Manual (Concurso ID)",
+    "afterReturningToGenerator": "Faixa Manual (Concurso ID)"
+  }
+}

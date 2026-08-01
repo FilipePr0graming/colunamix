@@ -1,0 +1,5 @@
+V1.8.30 column stats reference passed
+10 cards visible, compact 5x2 layout confirmed
+3700=52, 3701=194, 3702=51, 3703=93, 3704=56, 3705=29, 3706=61, 3707=50, 3708=110
+Recalculate preserved values
+Generator preserved

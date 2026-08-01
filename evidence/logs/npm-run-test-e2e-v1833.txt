@@ -1,0 +1,62 @@
+
+> colunamix@1.8.33 test:e2e
+> npm run build && playwright test tests/e2e
+
+
+> colunamix@1.8.33 build
+> vite build
+
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 46 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                 [39m[1m[2m  0.85 kB[22m[1m[22m[2m │ gzip:  0.45 kB[22m
+[2mdist/[22m[35massets/index-CiQJkJud.css  [39m[1m[2m 38.84 kB[22m[1m[22m[2m │ gzip:  7.86 kB[22m
+[2mdist/[22m[36massets/index-BG7cupSt.js   [39m[1m[2m237.19 kB[22m[1m[22m[2m │ gzip: 69.73 kB[22m
+[32m✓ built in 4.29s[39m
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 11 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist-electron/main/[22m[36mindex.js  [39m[1m[2m25.71 kB[22m[1m[22m[2m │ gzip: 8.91 kB[22m
+[32m✓ built in 256ms[39m
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 1 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist-electron/preload/[22m[36mindex.js  [39m[1m[2m1.76 kB[22m[1m[22m[2m │ gzip: 0.58 kB[22m
+[32m✓ built in 17ms[39m
+
+Running 24 tests using 1 worker
+
+  ok  1 tests\e2e\desktop.e2e.spec.ts:124:7 › ColunaMix Desktop - E2E › ABERTURA DO APP: carrega UI e navegação principal funciona (11.2s)
+  ok  2 tests\e2e\desktop.e2e.spec.ts:148:7 › ColunaMix Desktop - E2E › SELETOR DE DEZENAS: marca com mouse e libera digitação sem travar (7.5s)
+  ok  3 tests\e2e\desktop.e2e.spec.ts:175:7 › ColunaMix Desktop - E2E › PAINEL DE PADRÕES NO GERADOR: tabelas lado a lado, filtros, toggle e geração com regras (22.5s)
+  ok  4 tests\e2e\desktop.e2e.spec.ts:306:7 › ColunaMix Desktop - E2E › BUSCA POR VARIAÇÕES: permanece disponível nos painéis integrados do Gerador (12.9s)
+  ok  5 tests\e2e\desktop.e2e.spec.ts:349:7 › ColunaMix Desktop - E2E › MOTOR AVANÇADO DE GRUPOS: mostra extensão bloqueada abaixo dos grupos sem links externos (28.2s)
+  ok  6 tests\e2e\desktop.e2e.spec.ts:410:7 › ColunaMix Desktop - E2E › GERADOR + DADOS: importa CSV real e executa geração normal com UI responsiva (6.8s)
+  ok  7 tests\e2e\desktop.e2e.spec.ts:432:7 › ColunaMix Desktop - E2E › GERADOR: capacidade da prévia bate com total gerado (13.9s)
+  ok  8 tests\e2e\desktop.e2e.spec.ts:484:7 › ColunaMix Desktop - E2E › PADRÕES: linha e coluna recalculam até concurso X, ordenam e exportam CSV/TXT/Excel (9.1s)
+  ok  9 tests\e2e\desktop.e2e.spec.ts:552:7 › ColunaMix Desktop - E2E › INCLUDE ONLY + HISTÓRICO + LIMPAR: aplica recorte histórico com variações, alterna modo include e limpa resultados (8.3s)
+  ok 10 tests\e2e\desktop.e2e.spec.ts:590:7 › ColunaMix Desktop - E2E › RANGE + HISTÓRICO: recorte por faixa respeita endContest e não puxa padrões do concurso fora do range (11.0s)
+  ok 11 tests\e2e\desktop.e2e.spec.ts:624:7 › ColunaMix Desktop - E2E › RANGE + HISTÓRICO LONGO: aceita puxar mais concursos do que a faixa visível usando concursos anteriores ao início (6.8s)
+  ok 12 tests\e2e\desktop.e2e.spec.ts:662:7 › ColunaMix Desktop - E2E › INCLUDE ONLY - EXCLUDE HISTÓRICO: interseção é removida (final = include - excluded) e pode zerar geração (8.5s)
+  ok 13 tests\e2e\desktop.e2e.spec.ts:715:7 › ColunaMix Desktop - E2E › EXCLUSÃO POR GRUPO EXATO: UI, preview, geração e lote removem só a categoria exata (8.7s)
+  -  14 tests\e2e\desktop.e2e.spec.ts:901:8 › ColunaMix Desktop - E2E › V1.8.24: Primos, Fibonacci, limites, estatísticas por coluna e tooltips
+  -  15 tests\e2e\desktop.e2e.spec.ts:1054:8 › ColunaMix Desktop - E2E › V1.8.25: recorrência geral e blocos de 10 nas estatísticas por coluna
+  -  16 tests\e2e\desktop.e2e.spec.ts:1168:8 › ColunaMix Desktop - E2E › V1.8.26: layout compacto 5x2 e acesso direto aos últimos concursos
+  -  17 tests\e2e\desktop.e2e.spec.ts:1270:8 › ColunaMix Desktop - E2E › V1.8.27: últimos 10 concursos e recorrência por distribuição de colunas
+  -  18 tests\e2e\desktop.e2e.spec.ts:1362:8 › ColunaMix Desktop - E2E › V1.8.28: recorrência dos cards bate com o mapa oficial de Padrões de Coluna
+  -  19 tests\e2e\desktop.e2e.spec.ts:1472:8 › ColunaMix Desktop - E2E › V1.8.29: invalida cache antigo, recalcula e mantém recorrência oficial após reabrir
+  -  20 tests\e2e\desktop.e2e.spec.ts:1628:8 › ColunaMix Desktop - E2E › V1.8.30: Recorrência Geral segue referência do cliente pelo maior DIST
+  ok 21 tests\e2e\desktop.e2e.spec.ts:1770:7 › ColunaMix Desktop - E2E › V1.8.31: restaura Estatísticas por Padrão de Coluna da v1.8.19 (15.1s)
+  ok 22 tests\e2e\desktop.e2e.spec.ts:1908:7 › ColunaMix Desktop - E2E › V1.8.32: Historico Tecnico registra manutencao preventiva e preserva navegacao (9.4s)
+  ok 23 tests\e2e\desktop.e2e.spec.ts:1957:7 › ColunaMix Desktop - E2E › V1.8.33: blocos Numeros Impares e Numeros Pares funcionam no Gerador (18.1s)
+  ok 24 tests\e2e\desktop.e2e.spec.ts:2102:7 › ColunaMix Desktop - E2E › LOTE GRANDE: salva TXT sem deixar overlay travado em 100% (8.7s)
+
+  7 skipped
+  17 passed (3.5m)

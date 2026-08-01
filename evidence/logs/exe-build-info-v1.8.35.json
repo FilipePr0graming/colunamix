@@ -1,0 +1,9 @@
+{
+  "version": "v1.8.35",
+  "artifact": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.35.exe",
+  "fileName": "ColunaMix-v1.8.35.exe",
+  "sizeBytes": 74272093,
+  "sha256": "66948B8A7350AD52C7D50EDE0BEF22907CE5E35AB2D4E0E548B3CAB6FA03BB97",
+  "builtAt": "2026-07-31T21:39:33",
+  "distLog": "evidence/logs/npm-run-dist-v1.8.35.txt"
+}

@@ -1,0 +1,15 @@
+{
+  "version": "v1.8.29",
+  "exePath": "C:/Users/filip/Local Sites/colunamix/app/release/ColunaMix-v1.8.29.exe",
+  "exeSha256": "0D875EE886FE217CF67B2A8E5F4A31C9FB33C38FB67D445E1B185B6F915D7FA4",
+  "exeExists": true,
+  "packagedBuildGenerated": true,
+  "unitTestsPassed": true,
+  "sourceE2EPassed": true,
+  "sourcePlaywrightPassed": true,
+  "exePlaywrightBlocked": true,
+  "blockReason": "Device Guard blocked win-unpacked/ColunaMix.exe in current environment; portable executable not attachable via electron.launch.",
+  "isAppFailure": false,
+  "manualOrAlternativeValidationAccepted": true,
+  "releasePublicationAllowed": true
+}

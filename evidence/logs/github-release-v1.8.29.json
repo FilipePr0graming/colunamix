@@ -1,0 +1,22 @@
+{
+  "version": "v1.8.29",
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.29",
+  "releaseId": 338841760,
+  "assetCount": 1,
+  "assets": [
+    {
+      "name": "ColunaMix-v1.8.29.exe",
+      "size": 74272213,
+      "browser_download_url": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.29/ColunaMix-v1.8.29.exe",
+      "state": "uploaded"
+    }
+  ],
+  "expectedAsset": "ColunaMix-v1.8.29.exe",
+  "exactlyExpectedAsset": true,
+  "localExePath": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.29.exe",
+  "localExeSize": 74272213,
+  "localExeSha256": "0D875EE886FE217CF67B2A8E5F4A31C9FB33C38FB67D445E1B185B6F915D7FA4",
+  "publishedAt": "2026-06-12T20:13:17.3284260-03:00",
+  "gitPushPerformed": false,
+  "playwrightExeWaiver": "evidence/logs/exe-playwright-device-guard-waiver-v1829.json"
+}

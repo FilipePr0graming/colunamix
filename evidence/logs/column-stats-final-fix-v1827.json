@@ -1,0 +1,31 @@
+{
+  "version": "v1.8.27",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "opensAtRecentContestBlock": true,
+  "lastContest": 3708,
+  "defaultStartContest": 3699,
+  "cardsInFirstBlock": 10,
+  "ascendingOrder": true,
+  "generalRecurrenceMode": "column_count_distribution",
+  "doesNotUseExactColumnNumbersForGeneralRecurrence": true,
+  "recentCardsNotAllOne": true,
+  "compactGrid": "5x2",
+  "measuredMaxCardHeight": 147,
+  "sampleCards": [
+    {
+      "contest": 3699,
+      "columnCountPattern": "2,2,3,4,4",
+      "generalRecurrence": 59
+    },
+    {
+      "contest": 3700,
+      "columnCountPattern": "2,2,3,4,4",
+      "generalRecurrence": 59
+    },
+    {
+      "contest": 3708,
+      "columnCountPattern": "2,2,3,4,4",
+      "generalRecurrence": 59
+    }
+  ]
+}

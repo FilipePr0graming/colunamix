@@ -4,6 +4,7 @@ node_modules
 # playwright
 app/test-results/
 app/playwright-report/
+.playwright-mcp/
 
 # electron-builder release artifacts
 app/release/
@@ -20,3 +21,4 @@ data/output/
 scripts/private_key.pem
 *.db
 state.json
+.codex/

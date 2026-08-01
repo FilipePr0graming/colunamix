@@ -1,0 +1,10 @@
+{
+  "version": "v1.8.25",
+  "blocksOfTenEnabled": true,
+  "scrollMode": "infinite",
+  "paginationRemovedOrNotPrimary": true,
+  "ascendingOrder": true,
+  "firstBlockCount": 10,
+  "lastBlockCount": 6,
+  "lastBlockCanHaveLessThanTen": true
+}

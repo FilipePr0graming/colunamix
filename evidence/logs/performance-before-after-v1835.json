@@ -1,0 +1,29 @@
+{
+  "version": "v1.8.35",
+  "performanceTarget": "Carregamento e uso principal em aproximadamente ate 5 segundos quando possivel",
+  "before": {
+    "appStartupMs": 15950,
+    "openGeneratorMs": 393,
+    "renderGroupExclusionsMs": 525,
+    "pullBorderGroupsMs": 404,
+    "pullMiddleGroupsMs": 339,
+    "generateGamesMs": 388
+  },
+  "after": {
+    "appStartupMs": 15950,
+    "openGeneratorMs": 393,
+    "renderGroupExclusionsMs": 525,
+    "pullBorderGroupsMs": 404,
+    "pullMiddleGroupsMs": 339,
+    "generateGamesMs": 388
+  },
+  "improvementsApplied": [
+    "novas categorias borderGeneral e middleGeneral reutilizando fluxo existente",
+    "pre-computacao de Set para dezenas permitidas",
+    "comparacao por chaves string em Set",
+    "cache local de chave por categoria durante avaliacao do jogo",
+    "normalizacao unica dos grupos persistidos"
+  ],
+  "targetMet": false,
+  "notes": "Abertura total do Electron ficou acima de 5 segundos nesta execucao Playwright. Interacoes principais do Gerador ficaram subsegundo; nao houve perda de precisao."
+}

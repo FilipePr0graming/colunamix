@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) =>
         ipcRenderer.invoke('db:get-draws', mode, lastN, rangeStart, rangeEnd),
     dbGetStats: (startContest: number) => ipcRenderer.invoke('db:get-stats', startContest),
+    columnStatsRecalculate: (startContest: number) => ipcRenderer.invoke('column-stats:recalculate', startContest),
     patternStatsGet: (kind: string, untilContest?: number | null) => ipcRenderer.invoke('patterns:get-stats', kind, untilContest),
     patternStatsExport: (kind: string, format: string, rows: any[]) => ipcRenderer.invoke('patterns:export', kind, format, rows),
     generatorGenerate: (config: any) => ipcRenderer.invoke('generator:generate', config),

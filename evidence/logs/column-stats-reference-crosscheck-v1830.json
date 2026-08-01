@@ -1,0 +1,64 @@
+{
+  "version": "v1.8.30",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "displayStartContest": 3699,
+  "analysisStartContest": 3000,
+  "lastContest": 3708,
+  "referenceValuesMatched": true,
+  "cards": [
+    {
+      "contest": 3700,
+      "expectedRecurrence": 52,
+      "actualRecurrence": 52,
+      "match": true
+    },
+    {
+      "contest": 3701,
+      "expectedRecurrence": 194,
+      "actualRecurrence": 194,
+      "match": true
+    },
+    {
+      "contest": 3702,
+      "expectedRecurrence": 51,
+      "actualRecurrence": 51,
+      "match": true
+    },
+    {
+      "contest": 3703,
+      "expectedRecurrence": 93,
+      "actualRecurrence": 93,
+      "match": true
+    },
+    {
+      "contest": 3704,
+      "expectedRecurrence": 56,
+      "actualRecurrence": 56,
+      "match": true
+    },
+    {
+      "contest": 3705,
+      "expectedRecurrence": 29,
+      "actualRecurrence": 29,
+      "match": true
+    },
+    {
+      "contest": 3706,
+      "expectedRecurrence": 61,
+      "actualRecurrence": 61,
+      "match": true
+    },
+    {
+      "contest": 3707,
+      "expectedRecurrence": 50,
+      "actualRecurrence": 50,
+      "match": true
+    },
+    {
+      "contest": 3708,
+      "expectedRecurrence": 110,
+      "actualRecurrence": 110,
+      "match": true
+    }
+  ]
+}

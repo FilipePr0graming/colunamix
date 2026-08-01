@@ -1,0 +1,17 @@
+{
+  "version": "v1.8.26",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "compactCards": true,
+  "measuredMaxCardHeight": 147,
+  "measuredMinCardWidth": 203,
+  "cardsPerBlock": 10,
+  "preferredDesktopGrid": "5x2",
+  "ascendingOrder": true,
+  "infiniteScroll": true,
+  "paginationNotPrimary": true,
+  "generalRecurrenceVisible": true,
+  "generalRecurrenceNoNAForValidCards": true,
+  "lastContestShortcutOrDefaultRecentBlock": true,
+  "recentBlockStart": 3699,
+  "latestContest": 3708
+}

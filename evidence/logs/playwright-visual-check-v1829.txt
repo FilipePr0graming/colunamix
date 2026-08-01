@@ -1,0 +1,54 @@
+screenshot 86-v1829-playwright-abertura-estatisticas.png
+screenshot 87-v1829-playwright-ultimos-10-cards.png
+screenshot 88-v1829-playwright-recorrencia-geral-visivel.png
+screenshot 89-v1829-playwright-recalcular-estatisticas.png
+screenshot 90-v1829-playwright-apos-recalcular.png
+screenshot 91-v1829-playwright-gerador-preservado.png
+{
+  "version": "v1.8.29",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "openedRecentContests": true,
+  "cardsVisible": 10,
+  "layout": "5x2",
+  "ascendingOrder": true,
+  "generalRecurrenceVisible": false,
+  "generalRecurrenceNotAllOne": true,
+  "recalculateButtonVisible": false,
+  "recalculateSuccessMessageVisible": true,
+  "ultDistVisible": false,
+  "generatorOpened": true,
+  "screenshotsGenerated": [
+    "86-v1829-playwright-abertura-estatisticas.png",
+    "87-v1829-playwright-ultimos-10-cards.png",
+    "88-v1829-playwright-recorrencia-geral-visivel.png",
+    "89-v1829-playwright-recalcular-estatisticas.png",
+    "90-v1829-playwright-apos-recalcular.png",
+    "91-v1829-playwright-gerador-preservado.png"
+  ],
+  "contests": [
+    3699,
+    3700,
+    3701,
+    3702,
+    3703,
+    3704,
+    3705,
+    3706,
+    3707,
+    3708
+  ],
+  "recurrences": [
+    56,
+    56,
+    56,
+    56,
+    56,
+    56,
+    4,
+    4,
+    4,
+    4
+  ]
+}
+
+Manual visual validation: screenshots opened and confirmed recent contests, 10 cards, compact 5x2 layout, general recurrence values 56/4 not all 1, Recalcular estatísticas button, success message, ULT/DIST labels, and Generator screen.

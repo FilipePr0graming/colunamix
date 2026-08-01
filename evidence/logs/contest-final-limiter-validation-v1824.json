@@ -1,0 +1,9 @@
+{
+  "version": "v1.8.24",
+  "lastContestInDatabase": 2025,
+  "attemptedContestAboveDatabase": 9999,
+  "wasBlockedOrAdjusted": true,
+  "generatorContestFinalProtected": true,
+  "rowPatternContestLimitProtected": true,
+  "columnPatternContestLimitProtected": true
+}

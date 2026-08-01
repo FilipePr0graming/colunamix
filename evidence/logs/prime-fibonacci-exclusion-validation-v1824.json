@@ -1,0 +1,13 @@
+{
+  "version": "v1.8.24",
+  "primeNumbers": ["02", "03", "05", "07", "11", "13", "17", "19", "23"],
+  "fibonacciNumbers": ["01", "02", "03", "05", "08", "13", "21"],
+  "primeExcludedGroupExample": ["03", "11", "13", "19", "23"],
+  "primeExactMatchExcluded": true,
+  "primeSubsetAllowed": true,
+  "primeSupersetAllowed": true,
+  "fibonacciExactMatchExcluded": true,
+  "fibonacciSubsetAllowed": true,
+  "fibonacciSupersetAllowed": true,
+  "generatorStillWorks": true
+}

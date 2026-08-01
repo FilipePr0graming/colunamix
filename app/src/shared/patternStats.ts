@@ -170,35 +170,43 @@ export function calculatePatternStats(
 
     const cacheKey = buildCacheKey(eligible as Draw[], kind, safeUntil);
     const cached = statsCache.get(cacheKey);
-    if (cached) return cached.map(row => ({ ...row, pattern: [...row.pattern] }));
+    if (cached) return cached.map(row => ({ ...row, pattern: [...row.pattern], recentLags: [...row.recentLags] }));
 
     const maxContest = eligible[eligible.length - 1].contest;
-    const grouped = new Map<string, { pattern: number[]; occurrences: number; lastContest: number }>();
+    const grouped = new Map<string, { pattern: number[]; contests: number[] }>();
 
     for (const draw of eligible) {
         const pattern = getPatternArray(draw.numbers, kind);
         const key = pattern.join(',');
         const current = grouped.get(key);
         if (current) {
-            current.occurrences += 1;
-            current.lastContest = draw.contest;
+            current.contests.push(draw.contest);
         } else {
-            grouped.set(key, { pattern, occurrences: 1, lastContest: draw.contest });
+            grouped.set(key, { pattern, contests: [draw.contest] });
         }
     }
 
     const totalDraws = eligible.length;
-    const rows = Array.from(grouped.values()).map(item => ({
-        pattern: item.pattern,
-        patternKey: item.pattern.join(','),
-        occurrences: item.occurrences,
-        lastContest: item.lastContest,
-        lag: Math.max(0, maxContest - item.lastContest),
-        percentage: totalDraws > 0 ? (item.occurrences / totalDraws) * 100 : 0,
-    }));
+    const rows = Array.from(grouped.values()).map(item => {
+        const lastContest = item.contests[item.contests.length - 1];
+        const recentLags = item.contests
+            .slice(1)
+            .map((contest, index) => contest - item.contests[index])
+            .slice(-5);
+
+        return {
+            pattern: item.pattern,
+            patternKey: item.pattern.join(','),
+            occurrences: item.contests.length,
+            lastContest,
+            lag: Math.max(0, maxContest - lastContest),
+            recentLags,
+            percentage: totalDraws > 0 ? (item.contests.length / totalDraws) * 100 : 0,
+        };
+    });
 
     rows.sort((a, b) => b.lag - a.lag || b.occurrences - a.occurrences || a.patternKey.localeCompare(b.patternKey));
-    statsCache.set(cacheKey, rows.map(row => ({ ...row, pattern: [...row.pattern] })));
+    statsCache.set(cacheKey, rows.map(row => ({ ...row, pattern: [...row.pattern], recentLags: [...row.recentLags] })));
     return rows;
 }
 

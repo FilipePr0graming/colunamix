@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:1957:7 › ColunaMix Desktop - E2E › V1.8.33: blocos Numeros Impares e Numeros Pares funcionam no Gerador (11.4s)
+
+  1 passed (14.3s)

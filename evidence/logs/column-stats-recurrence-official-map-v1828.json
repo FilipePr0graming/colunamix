@@ -1,0 +1,9 @@
+{
+  "version": "v1.8.28",
+  "source": "calculatePatternStats(draws, column)",
+  "historicalDrawCount": 60,
+  "officialPatternOccurrences": {
+    "2,2,3,4,4": 56,
+    "3,3,2,3,4": 4
+  }
+}

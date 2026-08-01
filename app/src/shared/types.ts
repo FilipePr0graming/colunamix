@@ -33,13 +33,19 @@ export interface PatternExclusion {
     pattern: number[];
 }
 
-export type ExactGroupCategory = 'coreOdd' | 'coreEven' | 'borderOdd' | 'borderEven';
+export type ExactGroupCategory = 'borderOdd' | 'borderEven' | 'coreOdd' | 'coreEven' | 'borderGeneral' | 'middleGeneral' | 'prime' | 'fibonacci' | 'oddNumbers' | 'evenNumbers';
 
 export interface ExactGroupExclusions {
-    coreOdd: number[][];
-    coreEven: number[][];
     borderOdd: number[][];
     borderEven: number[][];
+    coreOdd: number[][];
+    coreEven: number[][];
+    borderGeneral: number[][];
+    middleGeneral: number[][];
+    prime: number[][];
+    fibonacci: number[][];
+    oddNumbers: number[][];
+    evenNumbers: number[][];
 }
 
 export interface GeneratorConfig {
@@ -111,6 +117,8 @@ export interface DbStatus {
 
 export interface PatternStatsEntry {
     contest: number;
+    generalRecurrence: number;
+    generalPatternKey: string;
     patterns: {
         col: string;
         colLastSeen: number;
@@ -129,6 +137,7 @@ export interface PatternStatsRow {
     occurrences: number;
     lastContest: number;
     lag: number;
+    recentLags: number[];
     percentage: number;
 }
 
@@ -157,6 +166,7 @@ export interface ElectronAPI {
     dbClear: () => Promise<{ success: boolean }>;
     dbGetDraws: (mode: string, lastN: number, rangeStart: number, rangeEnd: number) => Promise<Draw[]>;
     dbGetStats: (startContest: number) => Promise<PatternStatsEntry[]>;
+    columnStatsRecalculate: (startContest: number) => Promise<{ cache: import('./columnStatsCache').ColumnStatsCacheInvalidationResult; stats: PatternStatsEntry[] }>;
     patternStatsGet: (kind: PatternStatsKind, untilContest?: number | null) => Promise<PatternStatsRow[]>;
     patternStatsExport: (kind: PatternStatsKind, format: PatternExportFormat, rows: PatternStatsRow[]) => Promise<{ success: boolean; filePath?: string; error?: string }>;
     generatorPreview: (config: GeneratorConfig, options?: { requestId?: number; maxDurationMs?: number }) => Promise<CombinationPreview>;

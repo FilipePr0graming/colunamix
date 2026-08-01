@@ -1,0 +1,176 @@
+{
+  "version": "v1.8.28",
+  "screen": "Estatísticas por Padrão de Coluna",
+  "recurrenceSource": "official_column_pattern_stats_occurrences",
+  "usesFullHistoricalBase": true,
+  "visibleCardCount": 10,
+  "doesNotUseOnlyVisibleCards": true,
+  "doesNotUseExactColumnNumbers": true,
+  "crosscheckedCards": [
+    {
+      "contest": 3699,
+      "patternKey": "2,2,3,4,4",
+      "cardGeneralRecurrence": 56,
+      "columns": [
+        {
+          "column": "C1",
+          "numbers": [
+            "01",
+            "06"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C2",
+          "numbers": [
+            "02",
+            "07"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C3",
+          "numbers": [
+            "03",
+            "08",
+            "13"
+          ],
+          "quantity": 3
+        },
+        {
+          "column": "C4",
+          "numbers": [
+            "04",
+            "09",
+            "14",
+            "19"
+          ],
+          "quantity": 4
+        },
+        {
+          "column": "C5",
+          "numbers": [
+            "05",
+            "10",
+            "15",
+            "20"
+          ],
+          "quantity": 4
+        }
+      ],
+      "calculatedPatternKey": "2,2,3,4,4",
+      "officialPatternOccurrences": 56,
+      "match": true
+    },
+    {
+      "contest": 3700,
+      "patternKey": "2,2,3,4,4",
+      "cardGeneralRecurrence": 56,
+      "columns": [
+        {
+          "column": "C1",
+          "numbers": [
+            "11",
+            "16"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C2",
+          "numbers": [
+            "12",
+            "17"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C3",
+          "numbers": [
+            "08",
+            "13",
+            "18"
+          ],
+          "quantity": 3
+        },
+        {
+          "column": "C4",
+          "numbers": [
+            "09",
+            "14",
+            "19",
+            "24"
+          ],
+          "quantity": 4
+        },
+        {
+          "column": "C5",
+          "numbers": [
+            "10",
+            "15",
+            "20",
+            "25"
+          ],
+          "quantity": 4
+        }
+      ],
+      "calculatedPatternKey": "2,2,3,4,4",
+      "officialPatternOccurrences": 56,
+      "match": true
+    },
+    {
+      "contest": 3701,
+      "patternKey": "2,2,3,4,4",
+      "cardGeneralRecurrence": 56,
+      "columns": [
+        {
+          "column": "C1",
+          "numbers": [
+            "01",
+            "06"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C2",
+          "numbers": [
+            "02",
+            "07"
+          ],
+          "quantity": 2
+        },
+        {
+          "column": "C3",
+          "numbers": [
+            "03",
+            "08",
+            "13"
+          ],
+          "quantity": 3
+        },
+        {
+          "column": "C4",
+          "numbers": [
+            "04",
+            "09",
+            "14",
+            "19"
+          ],
+          "quantity": 4
+        },
+        {
+          "column": "C5",
+          "numbers": [
+            "05",
+            "10",
+            "15",
+            "20"
+          ],
+          "quantity": 4
+        }
+      ],
+      "calculatedPatternKey": "2,2,3,4,4",
+      "officialPatternOccurrences": 56,
+      "match": true
+    }
+  ]
+}

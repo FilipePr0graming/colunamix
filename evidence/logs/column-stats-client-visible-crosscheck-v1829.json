@@ -1,0 +1,172 @@
+[
+  {
+    "contest": 3699,
+    "columnGroups": {
+      "C1": [
+        "01",
+        "06"
+      ],
+      "C2": [
+        "02",
+        "07"
+      ],
+      "C3": [
+        "03",
+        "08",
+        "13"
+      ],
+      "C4": [
+        "04",
+        "09",
+        "14",
+        "19"
+      ],
+      "C5": [
+        "05",
+        "10",
+        "15",
+        "20"
+      ]
+    },
+    "patternKey": "2,2,3,4,4",
+    "officialOccurrencesFromPatternStats": 56,
+    "cardDisplayedRecurrence": 56,
+    "match": true
+  },
+  {
+    "contest": 3700,
+    "columnGroups": {
+      "C1": [
+        "11",
+        "16"
+      ],
+      "C2": [
+        "12",
+        "17"
+      ],
+      "C3": [
+        "08",
+        "13",
+        "18"
+      ],
+      "C4": [
+        "09",
+        "14",
+        "19",
+        "24"
+      ],
+      "C5": [
+        "10",
+        "15",
+        "20",
+        "25"
+      ]
+    },
+    "patternKey": "2,2,3,4,4",
+    "officialOccurrencesFromPatternStats": 56,
+    "cardDisplayedRecurrence": 56,
+    "match": true
+  },
+  {
+    "contest": 3701,
+    "columnGroups": {
+      "C1": [
+        "01",
+        "06"
+      ],
+      "C2": [
+        "02",
+        "07"
+      ],
+      "C3": [
+        "03",
+        "08",
+        "13"
+      ],
+      "C4": [
+        "04",
+        "09",
+        "14",
+        "19"
+      ],
+      "C5": [
+        "05",
+        "10",
+        "15",
+        "20"
+      ]
+    },
+    "patternKey": "2,2,3,4,4",
+    "officialOccurrencesFromPatternStats": 56,
+    "cardDisplayedRecurrence": 56,
+    "match": true
+  },
+  {
+    "contest": 3702,
+    "columnGroups": {
+      "C1": [
+        "11",
+        "16"
+      ],
+      "C2": [
+        "12",
+        "17"
+      ],
+      "C3": [
+        "08",
+        "13",
+        "18"
+      ],
+      "C4": [
+        "09",
+        "14",
+        "19",
+        "24"
+      ],
+      "C5": [
+        "10",
+        "15",
+        "20",
+        "25"
+      ]
+    },
+    "patternKey": "2,2,3,4,4",
+    "officialOccurrencesFromPatternStats": 56,
+    "cardDisplayedRecurrence": 56,
+    "match": true
+  },
+  {
+    "contest": 3703,
+    "columnGroups": {
+      "C1": [
+        "01",
+        "06"
+      ],
+      "C2": [
+        "02",
+        "07"
+      ],
+      "C3": [
+        "03",
+        "08",
+        "13"
+      ],
+      "C4": [
+        "04",
+        "09",
+        "14",
+        "19"
+      ],
+      "C5": [
+        "05",
+        "10",
+        "15",
+        "20"
+      ]
+    },
+    "patternKey": "2,2,3,4,4",
+    "officialOccurrencesFromPatternStats": 56,
+    "cardDisplayedRecurrence": 56,
+    "match": true
+  }
+]

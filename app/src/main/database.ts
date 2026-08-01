@@ -81,6 +81,12 @@ export function setState(key: string, value: string): void {
     saveStore();
 }
 
+export function removeState(key: string): void {
+    if (!(key in store.appState)) return;
+    delete store.appState[key];
+    saveStore();
+}
+
 export function importDraws(csvContent: string): { imported: number; errors: string[] } {
     const lines = csvContent.split(/\r?\n/).filter(l => l.trim());
     const errors: string[] = [];

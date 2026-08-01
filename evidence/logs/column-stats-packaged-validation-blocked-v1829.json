@@ -1,0 +1,11 @@
+{
+  "version": "v1.8.29",
+  "executable": "app\\release\\ColunaMix-v1.8.29.exe",
+  "sourcePlaywrightPassed": true,
+  "packagedPlaywrightPassed": false,
+  "winUnpackedBlockedByDeviceGuard": true,
+  "portableExeLaunchAttempted": true,
+  "portableExeNotAttachableByElectronLaunch": true,
+  "releasePublished": false,
+  "note": "Release not published because final executable validation could not be completed in this Windows environment."
+}

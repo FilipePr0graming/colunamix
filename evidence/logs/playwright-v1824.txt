@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:896:7 › ColunaMix Desktop - E2E › V1.8.24: Primos, Fibonacci, limites, estatísticas por coluna e tooltips (14.1s)
+
+  1 passed (17.2s)

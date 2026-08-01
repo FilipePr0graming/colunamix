@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:1770:7 › ColunaMix Desktop - E2E › V1.8.31: restaura Estatísticas por Padrão de Coluna da v1.8.19 (7.1s)
+
+  1 passed (8.8s)

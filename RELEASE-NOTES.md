@@ -1,18 +1,19 @@
-ColunaMix v1.8.23
+ColunaMix v1.8.35
 
-- Corrigido painel de padrões conforme PDF e feedback do cliente Anderson.
-- Painel agora fica dentro do Gerador no local do antigo Modo Inteligente.
-- Padrões de Linha e Padrões de Coluna exibidos lado a lado.
-- Substituído layout em cards por tabelas compactas com scroll interno.
-- Removida limitação visual de poucos padrões.
-- Adicionados filtros por painel: analisar até concurso, mínimo de ocorrências e busca.
-- Implementada busca por variações de padrão.
-- Adicionadas ordenações: decrescente, crescente, maiores ocorrências e menores ocorrências.
-- Botão azul adiciona padrão em usar somente.
-- Botão vermelho adiciona padrão em excluir padrões.
-- Adicionado toggle liga/desliga para preservar performance.
-- Gerador validado com padrões aplicados.
-- Preservados licença/trial, importação, exportação, exclusões e dezenas fixas.
-- Build aprovado.
-- Testes unitários aprovados.
-- Testes E2E aprovados.
+- Adicionados blocos de exclusão por Borda Geral e Miolo Geral.
+- Adição manual de grupos.
+- Busca de grupos por concursos anteriores.
+- Validação das dezenas da Borda e do Miolo.
+- Limpeza individual por bloco.
+- Remoção individual de grupos.
+- Persistência dos grupos.
+- Integração com o Gerador.
+- Comparação exata por subconjunto da Borda/Miolo.
+- Otimização de carregamento e processamento.
+- Redução de recálculos desnecessários.
+- Melhoria no tempo de resposta do Gerador.
+- Blocos antigos preservados.
+- Gerador, licença e dados preservados.
+- Validado com build, testes, Playwright e benchmark de performance.
+
+Observação: o executável foi gerado localmente em `app/release/ColunaMix-v1.8.35.exe`. A publicação automática da release foi bloqueada neste ambiente porque `gh` não está instalado e `GITHUB_TOKEN/GH_TOKEN` não estão disponíveis.

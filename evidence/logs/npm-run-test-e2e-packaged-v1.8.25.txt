@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:1048:7 › ColunaMix Desktop - E2E › V1.8.25: recorrência geral e blocos de 10 nas estatísticas por coluna (40.8s)
+
+  1 passed (42.5s)
