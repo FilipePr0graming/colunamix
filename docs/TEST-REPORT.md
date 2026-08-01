@@ -1,5 +1,22 @@
 # TEST REPORT
 
+## Validação v1.8.38 - Somente Painel de Padrões no Gerador
+
+- Painel de Padrões validado dentro do Gerador.
+- Padrões de Linha e Padrões de Coluna validados lado a lado.
+- U/X de Linha e Coluna validados e visíveis.
+- Atalhos laterais independentes confirmados como ausentes.
+- Botão e modal Limpar Configurações confirmados como ausentes.
+- Sidebar original e ordem dos quadros de exclusão preservadas.
+- Build aprovado.
+- Unitários aprovados, `79 passed`.
+- Playwright focado aprovado, `1 passed`.
+- E2E completo aprovado, `20 passed`, `7 skipped` históricos.
+- Primeira execução completa encontrou vazamento de `localStorage` entre dois testes antigos; o reset único do ambiente E2E foi estabilizado e a reexecução passou integralmente.
+- Prints `161` e `162` gerados.
+- Executável v1.8.38 gerado com `74.273.141` bytes.
+- SHA256: `BA5729D99D100927CF3B5B4BCDED19AF4367B3C421B8EE25FEF2509D5848E02E`.
+
 ## Validação v1.8.37 - Painel de Padrões e Limpeza Segura
 
 - Painel de Padrões validado no Gerador.

@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:2272:7 › ColunaMix Desktop - E2E › V1.8.35: Borda Geral e Miolo Geral funcionam com performance preservada (10.9s)
+
+  1 passed (12.8s)

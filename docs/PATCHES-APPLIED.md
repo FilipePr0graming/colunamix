@@ -1,5 +1,17 @@
 # PATCHES APPLIED
 
+## v1.8.38 - Somente Painel de Padrões dentro do Gerador
+
+- Mantido o Painel de Padrões dentro do Gerador, conforme a referência visual da v1.8.35.
+- Padrões de Linha e Padrões de Coluna permanecem lado a lado no painel integrado.
+- Botões individuais U/X preservados para Linha e Coluna.
+- Removidos os atalhos laterais independentes de Padrões de Linha e Padrões de Coluna.
+- Removidos o botão, o modal e a lógica de Limpar Configurações adicionados na v1.8.37.
+- Sidebar, Gerador e ordem dos quadros de exclusão mantidos como antes.
+- Nenhuma alteração em backend, banco, regras do gerador, licença ou importação.
+- Executável local: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.38.exe`.
+- SHA256: `BA5729D99D100927CF3B5B4BCDED19AF4367B3C421B8EE25FEF2509D5848E02E`.
+
 ## v1.8.37 - Painel de Padrões no Gerador e Limpar Configurações
 
 - Restaurado/validado Painel de Padrões dentro do Gerador.

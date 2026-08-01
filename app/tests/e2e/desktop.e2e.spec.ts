@@ -93,16 +93,24 @@ async function launchApp(
 
   await page.waitForLoadState('domcontentloaded');
 
-  if (options.resetOnLaunch !== false) await page.evaluate(async () => {
-    try {
-      const api = (window as any).electronAPI;
-      if (api?.devResetTrial) await api.devResetTrial();
-      if (api?.dbClear) await api.dbClear();
-      try { localStorage.clear(); } catch {
+  if (options.resetOnLaunch !== false) {
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('colunamix_e2e_clear_storage_once') === 'true') {
+        localStorage.clear();
+        sessionStorage.removeItem('colunamix_e2e_clear_storage_once');
       }
-    } catch {
-    }
-  });
+    });
+    await page.evaluate(async () => {
+      try {
+        const api = (window as any).electronAPI;
+        if (api?.devResetTrial) await api.devResetTrial();
+        if (api?.dbClear) await api.dbClear();
+      } catch {
+      }
+      localStorage.clear();
+      sessionStorage.setItem('colunamix_e2e_clear_storage_once', 'true');
+    });
+  }
 
   await page.reload();
   await page.waitForTimeout(500);
@@ -136,12 +144,8 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('button[title="Dashboard"]').click();
       await expect(page.locator('text=Status do Sistema')).toBeVisible();
 
-      await expect(page.locator('button[title="Padrões de Linha"]')).toBeVisible();
-      await expect(page.locator('button[title="Padrões de Coluna"]')).toBeVisible();
-      await page.locator('button[title="Padrões de Linha"]').click();
-      await expect(page.getByText('Importe concursos para visualizar os padrões.', { exact: true })).toBeVisible();
-      await page.locator('button[title="Padrões de Coluna"]').click();
-      await expect(page.getByText('Importe concursos para visualizar os padrões.', { exact: true })).toBeVisible();
+      await expect(page.locator('button[title="Padrões de Linha"]')).toHaveCount(0);
+      await expect(page.locator('button[title="Padrões de Coluna"]')).toHaveCount(0);
       await page.locator('button[title="Estatísticas por Padrão de Coluna"]').click();
       await expect(page.getByText('Importe concursos para visualizar as estatísticas.', { exact: true })).toBeVisible();
     } finally {
@@ -307,10 +311,10 @@ test.describe('ColunaMix Desktop - E2E', () => {
     }
   });
 
-  test('V1.8.36: restaura acessos laterais de Padrões de Linha e Padrões de Coluna', async () => {
+  test('V1.8.38: mantém somente o Painel de Padrões dentro do Gerador', async () => {
     const { app, page } = await launchApp();
     try {
-      const tmpCsv = path.join(os.tmpdir(), `cmx_v1836_pattern_sidebar_${Date.now()}.csv`);
+      const tmpCsv = path.join(os.tmpdir(), `cmx_v1838_pattern_panel_only_${Date.now()}.csv`);
       const header = 'concurso,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15\n';
       const rowPatterns = [
         [5, 4, 3, 2, 1],
@@ -335,32 +339,23 @@ test.describe('ColunaMix Desktop - E2E', () => {
 
       const rowSidebarButton = page.locator('button[title="Padrões de Linha"]');
       const columnSidebarButton = page.locator('button[title="Padrões de Coluna"]');
-      await expect(rowSidebarButton).toBeVisible();
-      await expect(columnSidebarButton).toBeVisible();
-
-      await rowSidebarButton.hover();
-      await saveEvidenceViewportScreenshot(page, '145-v1836-sidebar-padroes-linha-restaurado.png');
-      await columnSidebarButton.hover();
-      await saveEvidenceViewportScreenshot(page, '146-v1836-sidebar-padroes-coluna-restaurado.png');
-
-      await rowSidebarButton.click();
-      await expect(page.getByRole('heading', { name: 'Padrões de Linha' })).toBeVisible();
-      await expect(page.locator('tr', { hasText: '5,4,3,2,1' })).toBeVisible();
-      await saveEvidenceViewportScreenshot(page, '147-v1836-tela-padroes-linha-aberta.png');
-
-      await columnSidebarButton.click();
-      await expect(page.getByRole('heading', { name: 'Padrões de Coluna' })).toBeVisible();
-      await expect(page.locator('tr', { hasText: '5,4,3,2,1' })).toBeVisible();
-      await saveEvidenceViewportScreenshot(page, '148-v1836-tela-padroes-coluna-aberta.png');
+      await expect(rowSidebarButton).toHaveCount(0);
+      await expect(columnSidebarButton).toHaveCount(0);
+      await expect(page.getByTestId('generator-safe-clear-config')).toHaveCount(0);
 
       await page.locator('button[title="Gerador"]').click();
       await page.getByTestId('generator-last-n-input').fill('7');
-      await page.getByTestId('generator-pattern-panel').scrollIntoViewIfNeeded();
+      const patternPanel = page.getByTestId('generator-pattern-panel');
+      await patternPanel.scrollIntoViewIfNeeded();
+      await expect(patternPanel).toContainText('Padrões de Linha');
+      await expect(patternPanel).toContainText('Padrões de Coluna');
       await expect(page.getByTestId('generator-pattern-use-row-5-4-3-2-1')).toBeVisible();
       await expect(page.getByTestId('generator-pattern-exclude-row-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-use-column-5-4-3-2-1')).toBeVisible();
+      await expect(page.getByTestId('generator-pattern-exclude-column-5-4-3-2-1')).toBeVisible();
       await expect(page.getByText('Puxar e Excluir Padrões')).toBeVisible();
       await expect(page.getByText(/adicionar todos|usar todos|excluir todos|filtrados/i)).toHaveCount(0);
-      await saveEvidenceViewportScreenshot(page, '149-v1836-botoes-u-x-preservados.png');
+      await saveEvidenceViewportScreenshot(page, '161-v1838-painel-padroes-como-antes.png');
 
       const exactGroupOrder = await page.locator('[data-testid^="exact-group-card-"]').evaluateAll(nodes =>
         nodes.map(node => node.getAttribute('data-testid')?.replace('exact-group-card-', ''))
@@ -379,7 +374,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       ]);
 
       await page.getByTestId('exact-group-exclusions').scrollIntoViewIfNeeded();
-      await saveEvidenceViewportScreenshot(page, '150-v1836-gerador-preservado.png');
+      await saveEvidenceViewportScreenshot(page, '162-v1838-sidebar-original-e-gerador-preservados.png');
       await page.locator('button:has-text("GERAR JOGOS")').click();
       await expect(page.getByText(/jogos? gerados?/).first()).toBeVisible();
     } finally {
@@ -1898,7 +1893,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('input[type="file"]').setInputFiles(tmpCsv);
       await expect(page.locator('text=importado')).toBeVisible();
 
-      await expect(page.getByText('v1.8.37')).toBeVisible();
+      await expect(page.getByText('v1.8.38')).toBeVisible();
       await page.locator('button[title="Estatísticas por Padrão de Coluna"]').click();
       await expect(page.getByRole('heading', { name: 'Estatísticas por Padrão de Coluna' })).toBeVisible();
       await expect(page.getByTestId('column-stats-start-label')).toContainText('Concurso Inicial: 3000');
@@ -1992,7 +1987,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
   test('V1.8.32: Historico Tecnico registra manutencao preventiva e preserva navegacao', async () => {
     const { app, page } = await launchApp();
     try {
-      await expect(page.getByText('v1.8.37')).toBeVisible();
+      await expect(page.getByText('v1.8.38')).toBeVisible();
       await expect(page.locator('button[title="Histórico Técnico"]')).toBeVisible();
       await saveEvidenceViewportScreenshot(page, '109-v1832-sidebar-historico-tecnico.png');
 
@@ -2054,7 +2049,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.37')).toBeVisible();
+      await expect(page.getByText('v1.8.38')).toBeVisible();
       const section = page.getByTestId('exact-group-exclusions');
       await expect(section).toBeVisible();
 
@@ -2201,7 +2196,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.37')).toBeVisible();
+      await expect(page.getByText('v1.8.38')).toBeVisible();
       await page.getByTestId('generator-history-mode').selectOption('range');
       await page.getByTestId('generator-contest-start').fill('3688');
       await page.getByTestId('generator-contest-final').fill('3737');
@@ -2302,7 +2297,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
 
       const openGeneratorStart = Date.now();
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.37')).toBeVisible();
+      await expect(page.getByText('v1.8.38')).toBeVisible();
       const openGeneratorMs = Date.now() - openGeneratorStart;
 
       const renderGroupStart = Date.now();
@@ -2436,13 +2431,13 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await saveEvidenceViewportScreenshot(page, '144-v1835-performance-sem-travamento.png');
 
       await page.locator('button[title="Dashboard"]').click();
-      await expect(page.getByText('ColunaMix v1.8.37')).toBeVisible();
+      await expect(page.getByText('ColunaMix v1.8.38')).toBeVisible();
       await saveEvidenceViewportScreenshot(page, '141-v1835-licenca-preservada.png');
 
       const logsDir = path.join(process.cwd(), '..', 'evidence', 'logs');
       fs.mkdirSync(logsDir, { recursive: true });
       const metrics = {
-        version: 'v1.8.37',
+        version: 'v1.8.38',
         appStartupMs,
         openGeneratorMs,
         renderGroupExclusionsMs,

@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\desktop.e2e.spec.ts:314:7 › ColunaMix Desktop - E2E › V1.8.38: mantém somente o Painel de Padrões dentro do Gerador (21.5s)
+
+  1 passed (22.8s)
