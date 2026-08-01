@@ -1,5 +1,25 @@
 # TEST REPORT
 
+## Validação v1.8.37 - Painel de Padrões e Limpeza Segura
+
+- Painel de Padrões validado no Gerador.
+- Padrões de Linha validado.
+- Padrões de Coluna validado.
+- U/X validado para linha e coluna.
+- Linha/coluna validadas sem inversão de destino.
+- Limpar Configurações validado com modal de confirmação.
+- Números preservados após limpar.
+- Concurso Inicial, Concurso Final, quantidade de dezenas e Volume de Apostas preservados.
+- Regras temporárias limpas.
+- Ordem dos quadros preservada.
+- Build aprovado.
+- Unitários aprovados, `79 passed`.
+- E2E aprovado, `21 passed`, `7 skipped` históricos/obsoletos.
+- Playwright dedicado aprovado, `1 passed`.
+- Prints `151` a `160` gerados.
+- Executável gerado: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.37.exe`.
+- SHA256: `BB23A9B84A89CDD6B7E85AE059FD23F5493438AC1A970CA7AD8D7B1B7A8C2BB0`.
+
 ## Validação v1.8.36 - Acessos Padrões de Linha/Coluna
 
 - Sidebar validada.

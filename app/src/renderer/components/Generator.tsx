@@ -384,6 +384,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [historyLoading, setHistoryLoading] = useState(false);
     const [error, setError] = useState('');
     const [showHelp, setShowHelp] = useState(false);
+    const [showSafeClearConfirm, setShowSafeClearConfirm] = useState(false);
     const [preview, setPreview] = useState<CombinationPreview | null>(null);
     const [massProgress, setMassProgress] = useState<{ current: number, total: number } | null>(null);
     const [pickingFor, setPickingFor] = useState<{ type: 'fixas' } | { type: 'exclusions', id: string } | null>(null);
@@ -660,6 +661,44 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setMassProgress(null);
         setError('');
         setResultsScrollTop(0);
+    };
+
+    const handleSafeClearConfig = () => {
+        setExclusions([]);
+        setPatternExclusions([]);
+        setPatternIncludes([]);
+        setExactGroupExclusions(createDefaultExactGroupExclusions());
+        setExactGroupErrors(createExactGroupTextState());
+        setPatternTab('row');
+        setPatternInput('');
+        setPatternError('');
+        setRowPatternMode('exclude');
+        setColPatternMode('exclude');
+        setRowPatternUntil('');
+        setRowPatternMinOccurrences('');
+        setRowPatternSearch('');
+        setRowPatternSort('occurrences-desc');
+        setColumnPatternUntil('');
+        setColumnPatternMinOccurrences('');
+        setColumnPatternSearch('');
+        setColumnPatternSort('occurrences-desc');
+        setNoRepeat(false);
+        setGames([]);
+        setGeneratedTotalCount(0);
+        setGeneratedDisplayLimit(500000);
+        setSelectedGame(null);
+        setMassProgress(null);
+        setLoading(false);
+        setHistoryLoading(false);
+        setError('');
+        setShowFilterGrids(false);
+        setResultsScrollTop(0);
+        setShowSafeClearConfirm(false);
+        setNotice({
+            tone: 'success',
+            title: 'Configurações limpas',
+            message: 'Configurações limpas. Os números digitados foram preservados.',
+        });
     };
 
     const openRadarModal = () => {
@@ -1085,6 +1124,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                         className="text-[10px] text-gray-400 hover:text-brand-300 transition-colors px-3 py-1 rounded border border-white/10 hover:border-brand-500/30 flex items-center gap-1.5">
                         💾 Salvar Config
                     </button>
+                    <button onClick={() => setShowSafeClearConfirm(true)}
+                        data-testid="generator-safe-clear-config"
+                        className="text-[10px] text-gray-400 hover:text-amber-300 transition-colors px-3 py-1 rounded border border-white/10 hover:border-amber-500/30 flex items-center gap-1.5">
+                        Limpar Config.
+                    </button>
                     <button onClick={() => setShowHelp(!showHelp)}
                         className="text-[10px] text-gray-400 hover:text-brand-300 transition-colors px-3 py-1 rounded border border-white/10 hover:border-brand-500/30">
                         {showHelp ? '✕' : '❓ Ajuda'}
@@ -1209,7 +1253,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                     <div className="grid grid-cols-12 gap-6 items-end">
                         <div className="col-span-2">
                             <label className="desktop-label">Dezenas (K)</label>
-                            <select value={K} onChange={e => setK(Number(e.target.value))} className="desktop-control desktop-select w-full font-bold">
+                            <select value={K} onChange={e => setK(Number(e.target.value))} data-testid="generator-k-select" className="desktop-control desktop-select w-full font-bold">
                                 {[15, 16, 17, 18, 19, 20, 21].map(v => (
                                     <option key={v} value={v}>{v}</option>
                                 ))}
@@ -1910,6 +1954,49 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                         </div>
                     );
                 })()
+            )}
+
+            {showSafeClearConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a14]/90 p-6 backdrop-blur-md" data-testid="safe-clear-confirm-modal">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="safe-clear-confirm-title"
+                        className="premium-block w-full max-w-md border-amber-400/25 !p-0 shadow-2xl"
+                    >
+                        <div className="border-b border-white/5 p-5">
+                            <h3 id="safe-clear-confirm-title" className="text-sm font-black uppercase tracking-widest text-white">
+                                Limpar Configurações
+                            </h3>
+                        </div>
+                        <div className="space-y-3 p-5">
+                            <p className="text-sm font-semibold leading-relaxed text-gray-300">
+                                Limpar configurações atuais sem apagar os números digitados?
+                            </p>
+                            <p className="text-[11px] font-medium leading-relaxed text-gray-500">
+                                Dezenas fixas, modo das fixas, concursos, quantidade de dezenas e volume de apostas serão preservados.
+                            </p>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-white/5 p-5">
+                            <button
+                                type="button"
+                                onClick={() => setShowSafeClearConfirm(false)}
+                                data-testid="safe-clear-cancel"
+                                className="btn-premium-secondary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSafeClearConfig}
+                                data-testid="safe-clear-confirm"
+                                className="rounded-lg border border-amber-400/30 bg-amber-500/15 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-amber-100 transition-colors hover:bg-amber-500/25"
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Notice Message */}

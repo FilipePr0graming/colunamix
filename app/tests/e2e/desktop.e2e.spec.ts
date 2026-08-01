@@ -1898,7 +1898,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await page.locator('input[type="file"]').setInputFiles(tmpCsv);
       await expect(page.locator('text=importado')).toBeVisible();
 
-      await expect(page.getByText('v1.8.36')).toBeVisible();
+      await expect(page.getByText('v1.8.37')).toBeVisible();
       await page.locator('button[title="Estatísticas por Padrão de Coluna"]').click();
       await expect(page.getByRole('heading', { name: 'Estatísticas por Padrão de Coluna' })).toBeVisible();
       await expect(page.getByTestId('column-stats-start-label')).toContainText('Concurso Inicial: 3000');
@@ -1992,7 +1992,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
   test('V1.8.32: Historico Tecnico registra manutencao preventiva e preserva navegacao', async () => {
     const { app, page } = await launchApp();
     try {
-      await expect(page.getByText('v1.8.36')).toBeVisible();
+      await expect(page.getByText('v1.8.37')).toBeVisible();
       await expect(page.locator('button[title="Histórico Técnico"]')).toBeVisible();
       await saveEvidenceViewportScreenshot(page, '109-v1832-sidebar-historico-tecnico.png');
 
@@ -2054,7 +2054,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.36')).toBeVisible();
+      await expect(page.getByText('v1.8.37')).toBeVisible();
       const section = page.getByTestId('exact-group-exclusions');
       await expect(section).toBeVisible();
 
@@ -2201,7 +2201,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await expect(page.locator('text=importado')).toBeVisible();
 
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.36')).toBeVisible();
+      await expect(page.getByText('v1.8.37')).toBeVisible();
       await page.getByTestId('generator-history-mode').selectOption('range');
       await page.getByTestId('generator-contest-start').fill('3688');
       await page.getByTestId('generator-contest-final').fill('3737');
@@ -2302,7 +2302,7 @@ test.describe('ColunaMix Desktop - E2E', () => {
 
       const openGeneratorStart = Date.now();
       await page.locator('button[title="Gerador"]').click();
-      await expect(page.getByText('v1.8.36')).toBeVisible();
+      await expect(page.getByText('v1.8.37')).toBeVisible();
       const openGeneratorMs = Date.now() - openGeneratorStart;
 
       const renderGroupStart = Date.now();
@@ -2436,13 +2436,13 @@ test.describe('ColunaMix Desktop - E2E', () => {
       await saveEvidenceViewportScreenshot(page, '144-v1835-performance-sem-travamento.png');
 
       await page.locator('button[title="Dashboard"]').click();
-      await expect(page.getByText('ColunaMix v1.8.36')).toBeVisible();
+      await expect(page.getByText('ColunaMix v1.8.37')).toBeVisible();
       await saveEvidenceViewportScreenshot(page, '141-v1835-licenca-preservada.png');
 
       const logsDir = path.join(process.cwd(), '..', 'evidence', 'logs');
       fs.mkdirSync(logsDir, { recursive: true });
       const metrics = {
-        version: 'v1.8.36',
+        version: 'v1.8.37',
         appStartupMs,
         openGeneratorMs,
         renderGroupExclusionsMs,

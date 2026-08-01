@@ -1,0 +1,21 @@
+{
+  "version": "v1.8.37",
+  "feature": "Painel de Padroes no Gerador e Limpar Configuracoes sem apagar numeros",
+  "patternPanelInsideGeneratorRestored": true,
+  "linePatternsVisibleInsideGenerator": true,
+  "columnPatternsVisibleInsideGenerator": true,
+  "lineUseButtonWorks": true,
+  "lineExcludeButtonWorks": true,
+  "columnUseButtonWorks": true,
+  "columnExcludeButtonWorks": true,
+  "lineColumnNotInverted": true,
+  "safeClearButtonCreated": true,
+  "safeClearConfirmationModal": true,
+  "fixedNumbersPreserved": true,
+  "initialContestPreserved": true,
+  "finalContestPreserved": true,
+  "betVolumePreserved": true,
+  "temporaryRulesCleared": true,
+  "exclusionBlocksOrderNotChanged": true,
+  "generatorWorks": true
+}

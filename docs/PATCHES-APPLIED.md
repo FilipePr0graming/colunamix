@@ -1,5 +1,21 @@
 # PATCHES APPLIED
 
+## v1.8.37 - Painel de Padrões no Gerador e Limpar Configurações
+
+- Restaurado/validado Painel de Padrões dentro do Gerador.
+- Padrões de Linha e Padrões de Coluna voltaram a aparecer lado a lado no Gerador.
+- Botões U/X preservados e funcionando.
+- Linha continua aplicando em Linha.
+- Coluna continua aplicando em Coluna.
+- Criado botão Limpar Configurações.
+- Limpar Configurações preserva números/dezenas digitadas.
+- Concurso Inicial, Concurso Final, quantidade de dezenas e Volume de Apostas preservados.
+- Regras temporárias são limpas com confirmação.
+- Ordem dos quadros de exclusão não foi alterada.
+- Build aprovado, unitários `79 passed`, E2E `21 passed`, `7 skipped`, Playwright dedicado aprovado.
+- Executável: `C:\Users\filip\Local Sites\colunamix\app\release\ColunaMix-v1.8.37.exe`.
+- SHA256: `BB23A9B84A89CDD6B7E85AE059FD23F5493438AC1A970CA7AD8D7B1B7A8C2BB0`.
+
 ## v1.8.36 - Restauração dos acessos Padrões de Linha e Padrões de Coluna
 
 - Restaurados os acessos laterais para Padrões de Linha e Padrões de Coluna.
