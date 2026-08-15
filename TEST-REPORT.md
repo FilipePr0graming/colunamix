@@ -16,6 +16,8 @@
 - Playwright no build empacotado: aprovado, `1 passed` (`evidence/logs/playwright-final-exe-v1839.txt`).
 - Executável: `app/release/ColunaMix-v1.8.39.exe`.
 - SHA256: `863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352`.
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.39
+- Download direto validado com HTTP 200: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.39/ColunaMix-v1.8.39.exe
 
 ## Resumo
 

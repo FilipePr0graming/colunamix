@@ -1,15 +1,14 @@
-ColunaMix v1.8.38
+ColunaMix v1.8.39
 
-- Mantido somente o Painel de Padrões dentro do Gerador, conforme a referência visual antiga.
-- Padrões de Linha e Padrões de Coluna permanecem lado a lado no painel integrado.
-- Botões individuais U/X mantidos para Linha e Coluna.
-- Removidos os atalhos laterais independentes de Padrões de Linha e Padrões de Coluna.
-- Removido o botão Limpar Config. e seu modal.
-- Sidebar, Gerador e ordem dos quadros de exclusão preservados.
-- Nenhum botão em massa foi adicionado.
+- Adicionada busca por sequência exata nos Padrões de Linha.
+- Adicionada busca por sequência exata nos Padrões de Coluna.
+- Mantida a pesquisa anterior de padrões.
+- Adicionados comandos Usar Todos e Excluir Todos para Linha.
+- Adicionados comandos Usar Todos e Excluir Todos para Coluna.
+- As ações em massa respeitam todos os filtros ativos e evitam duplicidades.
+- Reorganizados os quadros de Exclusão por Grupo de Dezenas.
+- Ajustada a limpeza de configurações das caixas para manter os números preenchidos.
+- Validado com testes automatizados e Playwright.
 
-Validação:
-- Build aprovado.
-- Testes unitários aprovados: 79 passed.
-- E2E aprovado: 20 passed e 7 skipped históricos.
-- Playwright focado e executável final aprovados.
+SHA256:
+863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352

@@ -1,0 +1,18 @@
+{
+  "statusCode": 200,
+  "url": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.39/ColunaMix-v1.8.39.exe",
+  "cacheBustUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.39/ColunaMix-v1.8.39.exe?check=1786835629",
+  "contentLength": [
+    "74273777"
+  ],
+  "contentType": [
+    "application/octet-stream"
+  ],
+  "release": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.39",
+  "asset": "ColunaMix-v1.8.39.exe",
+  "assetSize": 74273777,
+  "assetDigest": "sha256:863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352",
+  "draft": false,
+  "prerelease": false,
+  "bodyStartsWith": "ColunaMix v1.8.39\n\n- Adicionada busca por sequência exata nos Padrões de Linha.\n"
+}

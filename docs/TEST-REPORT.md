@@ -11,6 +11,8 @@
 - Playwright no build empacotado: `1 passed`.
 - Executável: `app/release/ColunaMix-v1.8.39.exe`.
 - SHA256: `863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352`.
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.39
+- Download direto validado com HTTP 200: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.39/ColunaMix-v1.8.39.exe
 
 ## Validação v1.8.38 - Somente Painel de Padrões no Gerador
 
