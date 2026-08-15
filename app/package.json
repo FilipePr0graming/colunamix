@@ -1,6 +1,6 @@
 {
   "name": "colunamix",
-  "version": "1.8.38",
+  "version": "1.8.39",
   "description": "ColunaMix - Gerador Lotofácil por Grupos de Coluna",
   "main": "dist-electron/main/index.js",
   "scripts": {

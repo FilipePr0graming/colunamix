@@ -1,0 +1,16 @@
+{
+  "version": "v1.8.39",
+  "order": [
+    "Borda - Grupos Gerais",
+    "Miolo - Grupos Gerais",
+    "Números Ímpares",
+    "Números Pares",
+    "Borda - Ímpares",
+    "Borda - Pares",
+    "Miolo - Ímpares",
+    "Miolo - Pares",
+    "Números Primos",
+    "Números Fibonacci"
+  ],
+  "handlersCrosschecked": true
+}

@@ -1,0 +1,28 @@
+{
+  "version": "v1.8.39",
+  "feature": "Limpar configurações das caixas sem apagar números",
+  "numbersPreserved": true,
+  "initialContestPreserved": true,
+  "finalContestPreserved": true,
+  "betVolumePreserved": true,
+  "temporaryConfigCleared": true,
+  "before": {
+    "maxJogos": 3268760,
+    "exactGroups": [
+      "01,02,03",
+      "07,08,09"
+    ],
+    "rangeEnd": 3749,
+    "rangeStart": 3650
+  },
+  "after": {
+    "maxJogos": 3268760,
+    "exactGroups": [
+      "01,02,03",
+      "07,08,09"
+    ],
+    "rangeEnd": 3749,
+    "rangeStart": 3650
+  },
+  "match": true
+}

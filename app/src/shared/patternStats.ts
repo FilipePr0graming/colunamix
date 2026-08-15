@@ -16,6 +16,7 @@ export type PatternStatsSort =
 
 export interface PatternStatsFilterOptions extends PatternSearchOptions {
     searchText?: string;
+    sequenceSearchText?: string;
     minOccurrences?: string | number | null;
     sort?: PatternStatsSort;
 }
@@ -101,6 +102,37 @@ export function filterPatternsBySearch(
     });
 }
 
+export function parsePatternSequenceInput(input: string): number[] | null {
+    const value = input.trim();
+    if (!value) return null;
+    if (!/^[\d,\s]+$/.test(value)) return null;
+
+    const parts = value
+        .split(',')
+        .map(part => part.trim())
+        .filter(part => part.length > 0);
+
+    if (parts.length === 0) return null;
+
+    const numbers = parts.map(part => {
+        if (!/^\d+$/.test(part)) return NaN;
+        return Number(part);
+    });
+
+    if (numbers.some(number => !Number.isSafeInteger(number) || number < 0)) return null;
+    return numbers;
+}
+
+export function filterPatternsBySequence(rows: PatternStatsRow[], sequenceSearchText: string): PatternStatsRow[] {
+    const sequence = parsePatternSequenceInput(sequenceSearchText);
+    if (!sequence || sequence.length === 0) return rows;
+
+    return rows.filter(row =>
+        sequence.length <= row.pattern.length
+        && sequence.every((value, index) => row.pattern[index] === value)
+    );
+}
+
 export function comparePatternValues(a: number[], b: number[]): number {
     for (let i = 0; i < Math.max(a.length, b.length); i++) {
         const av = a[i] ?? 0;
@@ -146,9 +178,9 @@ export function filterPatternStatsRows(
     options: PatternStatsFilterOptions = {}
 ): PatternStatsRow[] {
     const minOccurrences = normalizeMinOccurrences(options.minOccurrences);
-    const searched = filterPatternsBySearch(rows, options.searchText || '', {
+    const searched = filterPatternsBySequence(filterPatternsBySearch(rows, options.searchText || '', {
         variationSearch: options.variationSearch,
-    });
+    }), options.sequenceSearchText || '');
     const filtered = minOccurrences > 0
         ? searched.filter(row => row.occurrences >= minOccurrences)
         : searched;

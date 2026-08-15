@@ -1,16 +1,16 @@
 import { ExactGroupCategory, ExactGroupExclusions } from './types';
 
 export const EXACT_GROUP_CATEGORIES: ExactGroupCategory[] = [
+    'borderGeneral',
+    'middleGeneral',
+    'oddNumbers',
+    'evenNumbers',
     'borderOdd',
     'borderEven',
     'coreOdd',
     'coreEven',
-    'borderGeneral',
-    'middleGeneral',
     'prime',
     'fibonacci',
-    'oddNumbers',
-    'evenNumbers',
 ];
 
 // Lotofacil board center: the inner 3x3 area of the 5x5 grid.

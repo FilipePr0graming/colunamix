@@ -1,0 +1,16 @@
+{
+  "busca33": 3,
+  "busca334": 1,
+  "bulkLinhaUsarEncontrados": 3,
+  "bulkLinhaUsarAdicionados": 3,
+  "bulkColunaExcluirEncontrados": 2,
+  "bulkColunaExcluirAdicionados": 2,
+  "numerosAntes": [
+    "01,02,03",
+    "07,08,09"
+  ],
+  "numerosDepois": [
+    "01,02,03",
+    "07,08,09"
+  ]
+}

@@ -16,6 +16,15 @@ interface ApplyPatternRuleActionResult {
     status: 'added' | 'already-exists' | 'moved';
 }
 
+export interface ApplyBulkPatternRuleActionResult {
+    includes: PatternExclusion[];
+    exclusions: PatternExclusion[];
+    found: number;
+    added: number;
+    alreadyExisting: number;
+    moved: number;
+}
+
 function sameRule(a: PatternExclusion, b: Omit<PatternExclusion, 'id'>): boolean {
     return a.type === b.type && a.pattern.join(',') === b.pattern.join(',');
 }
@@ -58,5 +67,42 @@ export function applyPatternRuleAction(input: ApplyPatternRuleActionInput): Appl
         includes: cleanedOpposite,
         exclusions: nextTarget,
         status: existedInOpposite ? 'moved' : 'added',
+    };
+}
+
+export function applyBulkPatternRuleAction(
+    input: Omit<ApplyPatternRuleActionInput, 'rule'> & {
+        rules: Array<Omit<PatternExclusion, 'id'> & { id?: string }>;
+    }
+): ApplyBulkPatternRuleActionResult {
+    let includes = input.includes;
+    let exclusions = input.exclusions;
+    let added = 0;
+    let alreadyExisting = 0;
+    let moved = 0;
+
+    for (const rule of input.rules) {
+        const result = applyPatternRuleAction({
+            includes,
+            exclusions,
+            rule,
+            action: input.action,
+            createId: input.createId,
+        });
+
+        includes = result.includes;
+        exclusions = result.exclusions;
+        if (result.status === 'added') added += 1;
+        if (result.status === 'already-exists') alreadyExisting += 1;
+        if (result.status === 'moved') moved += 1;
+    }
+
+    return {
+        includes,
+        exclusions,
+        found: input.rules.length,
+        added,
+        alreadyExisting,
+        moved,
     };
 }

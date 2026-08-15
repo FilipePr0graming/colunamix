@@ -1,5 +1,15 @@
 # PATCHES APPLIED
 
+## v1.8.39 - Busca por sequência, ações em massa, ordem dos quadros e limpeza segura
+
+- Adicionada busca por sequência exata nos Padrões de Linha e Coluna.
+- Busca anterior preservada e acumulada com a nova busca.
+- Adicionados `Usar Todos` e `Excluir Todos` para Linha e Coluna.
+- Ações em massa respeitam todos os filtros ativos e evitam duplicidades.
+- Reorganizados os 10 quadros de Exclusão por Grupo de Dezenas.
+- Limpeza das configurações das caixas preserva os números preenchidos.
+- Build, unitários, E2E, Playwright e executável final validados.
+
 ## v1.8.38 - Somente Painel de Padrões dentro do Gerador
 
 - Mantido o Painel de Padrões dentro do Gerador, conforme a referência visual da v1.8.35.

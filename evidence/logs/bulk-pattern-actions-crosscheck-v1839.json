@@ -1,0 +1,13 @@
+{
+  "lineUseAll": true,
+  "doesNotUseOnlyViewport": true,
+  "columnUseAll": true,
+  "usesEntireFilteredDataset": true,
+  "lineColumnSeparation": true,
+  "version": "v1.8.39",
+  "deduplication": true,
+  "lineExcludeAll": true,
+  "doesNotUseOnlyFirstPage": true,
+  "individualUxPreserved": true,
+  "columnExcludeAll": true
+}

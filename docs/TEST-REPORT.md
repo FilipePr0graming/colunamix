@@ -1,5 +1,17 @@
 # TEST REPORT
 
+## Validação v1.8.39 - Escopo final Anderson
+
+- Versão anterior: `v1.8.38`.
+- Nova versão: `v1.8.39`.
+- Build: aprovado.
+- Unitários: `83 passed`.
+- E2E: `21 passed`, `7 skipped` históricos.
+- Playwright focado: `1 passed`.
+- Playwright no build empacotado: `1 passed`.
+- Executável: `app/release/ColunaMix-v1.8.39.exe`.
+- SHA256: `863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352`.
+
 ## Validação v1.8.38 - Somente Painel de Padrões no Gerador
 
 - Painel de Padrões validado dentro do Gerador.

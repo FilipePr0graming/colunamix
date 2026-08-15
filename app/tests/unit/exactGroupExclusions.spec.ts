@@ -211,16 +211,16 @@ test.describe('exact group exclusions', () => {
     expect(collectExactGroupsFromDraws(draws, 'prime')).toHaveLength(2);
     expect(collectExactGroupsFromDraws(draws, 'fibonacci')).toHaveLength(2);
     expect(EXACT_GROUP_CATEGORIES).toEqual([
+      'borderGeneral',
+      'middleGeneral',
+      'oddNumbers',
+      'evenNumbers',
       'borderOdd',
       'borderEven',
       'coreOdd',
       'coreEven',
-      'borderGeneral',
-      'middleGeneral',
       'prime',
       'fibonacci',
-      'oddNumbers',
-      'evenNumbers',
     ]);
   });
 

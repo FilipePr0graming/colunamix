@@ -1,5 +1,22 @@
 # TEST REPORT - ColunaMix
 
+## Validação v1.8.39 - Escopo final Anderson
+
+- Versão anterior: `v1.8.38`.
+- Nova versão: `v1.8.39`.
+- Busca antiga preservada.
+- Busca por sequência em Linha e Coluna validada.
+- `Usar Todos` e `Excluir Todos` em Linha e Coluna validados com deduplicação e separação de eixo.
+- Ordem dos 10 quadros validada.
+- Limpeza segura validada com números, Concurso Inicial, Concurso Final e Volume preservados.
+- Build: aprovado (`evidence/logs/npm-run-build-v1839.txt`).
+- Unitários: aprovado, `83 passed` (`evidence/logs/npm-run-test-unit-v1839.txt`).
+- E2E: aprovado, `21 passed`, `7 skipped` históricos (`evidence/logs/npm-run-test-e2e-v1839.txt`).
+- Playwright focado: aprovado, `1 passed` (`evidence/logs/playwright-final-client-scope-v1839.txt`).
+- Playwright no build empacotado: aprovado, `1 passed` (`evidence/logs/playwright-final-exe-v1839.txt`).
+- Executável: `app/release/ColunaMix-v1.8.39.exe`.
+- SHA256: `863c718a565d9b373757c77626e94060a0580e818f910bd576f8fee9a288b352`.
+
 ## Resumo
 
 A implementação foi validada com build, testes unitários, testes E2E, prints, logs, exportações, validação de licença, validação do gerador e geração do executável Windows `.exe`.

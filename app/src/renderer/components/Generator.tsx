@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
-import { applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
+import { applyBulkPatternRuleAction, applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
 import { filterPatternStatsRows, type PatternStatsSort } from '../../shared/patternStats';
 import { clampContestToDatabase } from '../../shared/contestLimits';
 import { GENERATOR_SETTINGS_STORAGE_KEY, parsePersistedGeneratorSettings, shouldPersistGeneratorSettings } from '../../shared/generatorSettings';
@@ -109,13 +109,16 @@ interface GeneratorPatternTableProps {
     untilContest: string;
     minOccurrences: string;
     search: string;
+    sequenceSearch: string;
     sort: PatternStatsSort;
     maxContest: number;
     onUntilContestChange: (value: string) => void;
     onMinOccurrencesChange: (value: string) => void;
     onSearchChange: (value: string) => void;
+    onSequenceSearchChange: (value: string) => void;
     onSortChange: (value: PatternStatsSort) => void;
     onApplyPattern: (row: PatternStatsRow, action: PatternRuleAction, kind: PatternStatsKind) => void;
+    onApplyAllPatterns: (rows: PatternStatsRow[], action: PatternRuleAction, kind: PatternStatsKind) => void;
 }
 
 function patternTestId(patternKey: string): string {
@@ -143,13 +146,16 @@ function GeneratorPatternTable({
     untilContest,
     minOccurrences,
     search,
+    sequenceSearch,
     sort,
     maxContest,
     onUntilContestChange,
     onMinOccurrencesChange,
     onSearchChange,
+    onSequenceSearchChange,
     onSortChange,
     onApplyPattern,
+    onApplyAllPatterns,
 }: GeneratorPatternTableProps) {
     const kindLabel = kind === 'row' ? 'linha' : 'coluna';
 
@@ -210,7 +216,7 @@ function GeneratorPatternTable({
                     </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
                     <label>
                         <span className="desktop-label !mb-1 !text-[9px]">Analisar até concurso</span>
                         <input
@@ -246,6 +252,38 @@ function GeneratorPatternTable({
                             placeholder="4,3,3,3,2"
                         />
                     </label>
+                    <label>
+                        <span className="desktop-label !mb-1 !text-[9px]">Busca por sequência</span>
+                        <input
+                            type="text"
+                            value={sequenceSearch}
+                            onChange={event => onSequenceSearchChange(event.target.value)}
+                            data-testid={`generator-pattern-sequence-search-${kind}`}
+                            className="desktop-control h-9 w-full !rounded-md !font-mono !text-[12px]"
+                            placeholder="3,3,4"
+                        />
+                    </label>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onApplyAllPatterns(rows, 'include', kind)}
+                        data-testid={`generator-pattern-use-all-${kind}`}
+                        className="h-8 rounded-md border border-blue-300/35 bg-blue-500/15 px-3 text-[9px] font-black uppercase tracking-widest text-blue-100 transition-colors hover:bg-blue-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled={loading || noData || rows.length === 0}
+                    >
+                        Usar Todos
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onApplyAllPatterns(rows, 'exclude', kind)}
+                        data-testid={`generator-pattern-exclude-all-${kind}`}
+                        className="h-8 rounded-md border border-red-300/35 bg-red-500/15 px-3 text-[9px] font-black uppercase tracking-widest text-red-100 transition-colors hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled={loading || noData || rows.length === 0}
+                    >
+                        Excluir Todos
+                    </button>
                 </div>
             </div>
 
@@ -362,6 +400,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [rowPatternUntil, setRowPatternUntil] = useState('');
     const [rowPatternMinOccurrences, setRowPatternMinOccurrences] = useState('');
     const [rowPatternSearch, setRowPatternSearch] = useState('');
+    const [rowPatternSequenceSearch, setRowPatternSequenceSearch] = useState('');
     const [rowPatternSort, setRowPatternSort] = useState<PatternStatsSort>('occurrences-desc');
     const [rowPatternRows, setRowPatternRows] = useState<PatternStatsRow[]>([]);
     const [rowPatternLoading, setRowPatternLoading] = useState(false);
@@ -369,6 +408,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [columnPatternUntil, setColumnPatternUntil] = useState('');
     const [columnPatternMinOccurrences, setColumnPatternMinOccurrences] = useState('');
     const [columnPatternSearch, setColumnPatternSearch] = useState('');
+    const [columnPatternSequenceSearch, setColumnPatternSequenceSearch] = useState('');
     const [columnPatternSort, setColumnPatternSort] = useState<PatternStatsSort>('occurrences-desc');
     const [columnPatternRows, setColumnPatternRows] = useState<PatternStatsRow[]>([]);
     const [columnPatternLoading, setColumnPatternLoading] = useState(false);
@@ -394,6 +434,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [radarContactNotice, setRadarContactNotice] = useState(false);
     const [showGroupEngineModal, setShowGroupEngineModal] = useState(false);
     const [groupEngineContactNotice, setGroupEngineContactNotice] = useState(false);
+    const [showSafeBoxClearConfirm, setShowSafeBoxClearConfirm] = useState(false);
     const [settingsHydrated, setSettingsHydrated] = useState(false);
     const resultsViewportRef = useRef<HTMLDivElement | null>(null);
     const previewRequestRef = useRef(0);
@@ -1032,19 +1073,71 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         });
     };
 
+    const applyAllPatternsFromPanel = (rows: PatternStatsRow[], action: PatternRuleAction, kind: PatternStatsKind) => {
+        if (rows.length === 0) {
+            setNotice({
+                tone: 'info',
+                title: 'Nenhum padrão encontrado',
+                message: 'Nenhum padrão encontrado para aplicar.',
+            });
+            return;
+        }
+
+        const result = applyBulkPatternRuleAction({
+            includes: patternIncludes,
+            exclusions: patternExclusions,
+            rules: rows.map(row => ({ type: kind, pattern: row.pattern })),
+            action,
+        });
+
+        setPatternIncludes(result.includes);
+        setPatternExclusions(result.exclusions);
+        setPatternTab(kind);
+
+        const hasIncludesForKind = result.includes.some(item => item.type === kind);
+        if (kind === 'column') {
+            setColPatternMode(action === 'include' || hasIncludesForKind ? 'include' : 'exclude');
+        } else {
+            setRowPatternMode(action === 'include' || hasIncludesForKind ? 'include' : 'exclude');
+        }
+
+        const kindLabel = kind === 'row' ? 'Linha' : 'Coluna';
+        const actionLabel = action === 'include' ? 'Usar' : 'Excluir';
+        const changed = result.added + result.moved;
+        setNotice({
+            tone: changed > 0 ? 'success' : 'info',
+            title: `${kindLabel} / ${actionLabel} Todos`,
+            message: `${result.found.toLocaleString('pt-BR')} encontrado(s): ${changed.toLocaleString('pt-BR')} aplicado(s) e ${result.alreadyExisting.toLocaleString('pt-BR')} já existente(s).`,
+        });
+    };
+
+    const clearBoxConfigsPreservingNumbers = () => {
+        setExactGroupInputs(createExactGroupTextState());
+        setExactGroupErrors(createExactGroupTextState());
+        setExactGroupHistoryCounts(createExactGroupHistoryCountState());
+        setShowSafeBoxClearConfirm(false);
+        setNotice({
+            tone: 'success',
+            title: 'Configurações das caixas limpas',
+            message: 'Configurações das caixas limpas. Os números foram mantidos.',
+        });
+    };
+
     const rowPatternPanelRows = React.useMemo(() => filterPatternStatsRows(rowPatternRows, {
         searchText: rowPatternSearch,
+        sequenceSearchText: rowPatternSequenceSearch,
         minOccurrences: rowPatternMinOccurrences,
         sort: rowPatternSort,
         variationSearch: true,
-    }), [rowPatternRows, rowPatternSearch, rowPatternMinOccurrences, rowPatternSort]);
+    }), [rowPatternRows, rowPatternSearch, rowPatternSequenceSearch, rowPatternMinOccurrences, rowPatternSort]);
 
     const columnPatternPanelRows = React.useMemo(() => filterPatternStatsRows(columnPatternRows, {
         searchText: columnPatternSearch,
+        sequenceSearchText: columnPatternSequenceSearch,
         minOccurrences: columnPatternMinOccurrences,
         sort: columnPatternSort,
         variationSearch: true,
-    }), [columnPatternRows, columnPatternSearch, columnPatternMinOccurrences, columnPatternSort]);
+    }), [columnPatternRows, columnPatternSearch, columnPatternSequenceSearch, columnPatternMinOccurrences, columnPatternSort]);
 
     // Calculate combined excluded dozens for visualization
     const allExcludedDozens = React.useMemo(() => 
@@ -1330,6 +1423,14 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 </span>
                             )}
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowSafeBoxClearConfirm(true)}
+                            data-testid="safe-box-config-clear-open"
+                            className="btn-premium-secondary !h-8 !px-3 text-[9px] font-black uppercase tracking-widest"
+                        >
+                            Limpar Config. das Caixas
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-12 gap-4">
@@ -1683,13 +1784,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         untilContest={rowPatternUntil}
                                         minOccurrences={rowPatternMinOccurrences}
                                         search={rowPatternSearch}
+                                        sequenceSearch={rowPatternSequenceSearch}
                                         sort={rowPatternSort}
                                         maxContest={maxContest}
                                         onUntilContestChange={value => updatePatternUntil('row', value)}
                                         onMinOccurrencesChange={setRowPatternMinOccurrences}
                                         onSearchChange={setRowPatternSearch}
+                                        onSequenceSearchChange={setRowPatternSequenceSearch}
                                         onSortChange={setRowPatternSort}
                                         onApplyPattern={applyPatternFromPanel}
+                                        onApplyAllPatterns={applyAllPatternsFromPanel}
                                     />
                                     <GeneratorPatternTable
                                         kind="column"
@@ -1702,13 +1806,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         untilContest={columnPatternUntil}
                                         minOccurrences={columnPatternMinOccurrences}
                                         search={columnPatternSearch}
+                                        sequenceSearch={columnPatternSequenceSearch}
                                         sort={columnPatternSort}
                                         maxContest={maxContest}
                                         onUntilContestChange={value => updatePatternUntil('column', value)}
                                         onMinOccurrencesChange={setColumnPatternMinOccurrences}
                                         onSearchChange={setColumnPatternSearch}
+                                        onSequenceSearchChange={setColumnPatternSequenceSearch}
                                         onSortChange={setColumnPatternSort}
                                         onApplyPattern={applyPatternFromPanel}
+                                        onApplyAllPatterns={applyAllPatternsFromPanel}
                                     />
                                 </div>
                             )}
@@ -2125,6 +2232,46 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                 className="btn-premium-primary !px-5 text-[10px] font-black uppercase tracking-widest"
                             >
                                 Entrar em contato com o desenvolvedor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showSafeBoxClearConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a14]/90 p-6 backdrop-blur-md" data-testid="safe-box-config-clear-modal">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="safe-box-config-clear-title"
+                        className="premium-block w-full max-w-lg border-brand-400/20 !p-0 shadow-2xl"
+                    >
+                        <div className="border-b border-white/5 p-6">
+                            <h3 id="safe-box-config-clear-title" className="text-base font-black uppercase tracking-widest text-white">
+                                Limpar configurações das caixas
+                            </h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sm leading-relaxed text-gray-300">
+                                Limpar as configurações das caixas mantendo todos os números preenchidos?
+                            </p>
+                        </div>
+                        <div className="flex flex-col-reverse gap-3 border-t border-white/5 p-6 sm:flex-row sm:items-center sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setShowSafeBoxClearConfirm(false)}
+                                data-testid="safe-box-config-clear-cancel"
+                                className="btn-premium-secondary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={clearBoxConfigsPreservingNumbers}
+                                data-testid="safe-box-config-clear-confirm"
+                                className="btn-premium-primary !px-5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Limpar configurações
                             </button>
                         </div>
                     </div>

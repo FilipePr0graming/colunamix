@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\final-client-scope-v1839.spec.ts:125:5 › final-client-scope-v1839: sequência, massa, ordem e limpeza segura (11.8s)
+
+  1 passed (16.1s)

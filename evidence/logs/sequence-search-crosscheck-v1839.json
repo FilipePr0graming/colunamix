@@ -1,0 +1,10 @@
+{
+  "prefixMatchingByTokens": true,
+  "realtimeFiltering": true,
+  "query334OnlyStartsWith334": true,
+  "sequenceSearchAddedToColumn": true,
+  "version": "v1.8.39",
+  "query33OnlyStartsWith33": true,
+  "existingSearchPreserved": true,
+  "sequenceSearchAddedToLine": true
+}

@@ -1,5 +1,17 @@
 # PATCHES APPLIED - ColunaMix
 
+## v1.8.39 - Busca por sequência, ações em massa, ordem dos quadros e limpeza segura
+
+- Adicionada busca por sequência exata/prefixo nos Padrões de Linha.
+- Adicionada busca por sequência exata/prefixo nos Padrões de Coluna.
+- Busca anterior preservada e aplicada cumulativamente com a busca por sequência, mínimo de ocorrências e concurso limite.
+- Adicionados comandos `Usar Todos` e `Excluir Todos` para Linha e Coluna.
+- Ações em massa usam o dataset filtrado completo, reutilizam `applyPatternRuleAction`, evitam duplicidade e preservam Linha/Coluna.
+- Reorganizados os 10 quadros de Exclusão por Grupo de Dezenas na ordem final solicitada.
+- Adicionada limpeza segura das configurações das caixas, preservando números cadastrados, Concurso Inicial, Concurso Final e Volume.
+- Versão atualizada para `v1.8.39` em metadados e UI.
+- Executável gerado: `app/release/ColunaMix-v1.8.39.exe`.
+
 ## Resumo
 
 Foi implementado o módulo profissional de análise estatística por padrões de linha e padrões de coluna, substituindo o antigo Modo Inteligente no fluxo principal da aplicação.
