@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { EXACT_GROUP_CATEGORIES } from '../../src/shared/exactGroupExclusions';
+import { EXACT_GROUP_CATEGORIES, createDefaultExactGroupExclusions } from '../../src/shared/exactGroupExclusions';
 import { createSafeBoxConfigClearSnapshot } from '../../src/shared/generatorSettings';
 import { applyBulkPatternRuleAction, applyPatternRuleAction } from '../../src/shared/patternRules';
 import {
@@ -168,7 +168,7 @@ test.describe('escopo final Anderson v1.8.39', () => {
     expect(after.rangeStart).toBe(3650);
     expect(after.rangeEnd).toBe(3749);
     expect(after.maxJogos).toBe(3268760);
-    expect(after.exactGroupExclusions).toEqual(before.exactGroupExclusions);
-    expect(after.exactGroupHistoryCounts).toEqual({});
+    expect(after.exactGroupExclusions).toEqual(createDefaultExactGroupExclusions());
+    expect(after.exactGroupHistoryCounts).toEqual(before.exactGroupHistoryCounts);
   });
 });

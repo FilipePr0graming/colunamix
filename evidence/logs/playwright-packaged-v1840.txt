@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\e2e\final-client-fixes-v1840.spec.ts:131:5 › v1.8.40 corrige busca sem virgula e limpeza global do escopo Anderson (28.5s)
+
+  1 passed (31.1s)

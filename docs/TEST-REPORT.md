@@ -1,5 +1,24 @@
 # TEST REPORT
 
+## Validação v1.8.40 - Correção da busca por sequência e limpeza global
+
+- Versão anterior: `v1.8.39`.
+- Nova versão: `v1.8.40`.
+- Build: aprovado.
+- Unitários: `87 passed`.
+- E2E: `22 passed`, `7 skipped` históricos.
+- Playwright focado: `1 passed`.
+- Playwright no build empacotado descompactado: `1 passed`.
+- Busca por sequência sem vírgula validada para `33`, `334`, `3342` e `33423`.
+- Equivalência com vírgula validada para `3,3`, `3,3,4`, `3,3,4,2` e `3,3,4,2,3`.
+- Limpeza global validada: fixas, regras, padrões e grupos dos 10 quadros limpos.
+- Preservados: Concurso Inicial, Concurso Final, Volume, K, valores `CONC.` e números-base.
+- Screenshots geradas: `167` a `179`.
+- Logs gerados em `evidence/logs/*v1840*`.
+- Executável: `app/release/ColunaMix-v1.8.40.exe`.
+- Tamanho: `74273104` bytes.
+- SHA256: `b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79`.
+
 ## Validação v1.8.39 - Escopo final Anderson
 
 - Versão anterior: `v1.8.38`.

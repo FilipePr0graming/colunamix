@@ -1,0 +1,10 @@
+{
+  "version": "v1.8.40",
+  "path": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.40.exe",
+  "fileName": "ColunaMix-v1.8.40.exe",
+  "size": 74273104,
+  "sha256": "b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79",
+  "lastWriteTime": "2026-08-16T14:55:52.2466812-03:00",
+  "validatedWith": "PW_TEST_USE_PACKAGED=true PW_TEST_FORCE_UNPACKED=true npx playwright test tests/e2e/final-client-fixes-v1840.spec.ts",
+  "packagedValidationLog": "evidence/logs/playwright-packaged-v1840.txt"
+}

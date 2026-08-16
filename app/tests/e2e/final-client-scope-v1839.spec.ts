@@ -130,7 +130,7 @@ test('final-client-scope-v1839: sequência, massa, ordem e limpeza segura', asyn
 
   try {
     await seedPatternData(page);
-    await expect(page.getByText('v1.8.39')).toBeVisible();
+    await expect(page.getByText('v1.8.40')).toBeVisible();
     await saveEvidence(page, '151-v1839-versao-final.png');
 
     await expect(page.getByTestId('generator-pattern-row-panel')).toBeVisible();
@@ -239,10 +239,11 @@ test('final-client-scope-v1839: sequência, massa, ordem e limpeza segura', asyn
     await expect(page.getByTestId('safe-box-config-clear-modal')).toBeVisible();
     await saveEvidence(page, '164-v1839-modal-limpeza.png');
     await page.getByTestId('safe-box-config-clear-confirm').click();
-    await expect(page.getByText('Os números foram mantidos')).toBeVisible();
+    await expect(page.getByText('Configurações limpas com sucesso')).toBeVisible();
     const afterNumbers = await page.locator('[data-testid^="exact-group-item-"]').evaluateAll(nodes => nodes.map(node => (node.textContent || '').replace('×', '').trim()));
     observed.numerosDepois = afterNumbers;
-    expect(afterNumbers).toEqual(beforeNumbers);
+    expect(beforeNumbers.length).toBeGreaterThan(0);
+    expect(afterNumbers).toEqual([]);
     await expect(page.getByTestId('generator-contest-start')).toHaveValue('3650');
     await expect(page.getByTestId('generator-contest-final')).toHaveValue('3749');
     await expect(page.getByTestId('generator-max-games-input')).toHaveValue('3268760');

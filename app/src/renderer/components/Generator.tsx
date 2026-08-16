@@ -1112,14 +1112,18 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     };
 
     const clearBoxConfigsPreservingNumbers = () => {
+        setFixas('');
+        setExclusions([]);
+        setPatternIncludes([]);
+        setPatternExclusions([]);
+        setExactGroupExclusions(createDefaultExactGroupExclusions());
         setExactGroupInputs(createExactGroupTextState());
         setExactGroupErrors(createExactGroupTextState());
-        setExactGroupHistoryCounts(createExactGroupHistoryCountState());
         setShowSafeBoxClearConfirm(false);
         setNotice({
             tone: 'success',
-            title: 'Configurações das caixas limpas',
-            message: 'Configurações das caixas limpas. Os números foram mantidos.',
+            title: 'Configurações limpas com sucesso',
+            message: 'Grupos, padrões, dezenas fixas e regras de exclusão foram removidos. Concurso inicial, concurso final, volume e configurações-base foram mantidos.',
         });
     };
 
@@ -2253,7 +2257,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                         </div>
                         <div className="p-6">
                             <p className="text-sm leading-relaxed text-gray-300">
-                                Limpar as configurações das caixas mantendo todos os números preenchidos?
+                                Limpar todas as configurações selecionadas?
+                            </p>
+                            <p className="mt-3 text-sm leading-relaxed text-gray-400">
+                                Serão removidos grupos, padrões, dezenas fixas e regras de exclusão. Concurso inicial, concurso final, volume e configurações-base serão mantidos.
                             </p>
                         </div>
                         <div className="flex flex-col-reverse gap-3 border-t border-white/5 p-6 sm:flex-row sm:items-center sm:justify-end">

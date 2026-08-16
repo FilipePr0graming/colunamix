@@ -107,6 +107,12 @@ export function parsePatternSequenceInput(input: string): number[] | null {
     if (!value) return null;
     if (!/^[\d,\s]+$/.test(value)) return null;
 
+    if (!value.includes(',')) {
+        const compact = value.replace(/\s/g, '');
+        if (!compact) return null;
+        return compact.split('').map(Number);
+    }
+
     const parts = value
         .split(',')
         .map(part => part.trim())

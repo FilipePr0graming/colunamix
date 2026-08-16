@@ -34,13 +34,22 @@ export function createSafeBoxConfigClearSnapshot<T extends {
     mode?: GeneratorConfig['mode'];
     rangeStart?: number;
     rangeEnd?: number;
+    K?: number;
     maxJogos?: number;
+    fixas?: string;
+    exclusions?: unknown[];
+    patternIncludes?: unknown[];
+    patternExclusions?: unknown[];
     exactGroupExclusions?: ExactGroupExclusions;
     exactGroupHistoryCounts?: Record<string, number>;
 }>(state: T): T {
     return {
         ...state,
-        exactGroupExclusions: state.exactGroupExclusions || createDefaultExactGroupExclusions(),
-        exactGroupHistoryCounts: {},
+        fixas: '',
+        exclusions: [],
+        patternIncludes: [],
+        patternExclusions: [],
+        exactGroupExclusions: createDefaultExactGroupExclusions(),
+        exactGroupHistoryCounts: state.exactGroupHistoryCounts || {},
     };
 }
