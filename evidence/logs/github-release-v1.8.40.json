@@ -1,0 +1,12 @@
+{
+  "version": "v1.8.40",
+  "releaseCreated": false,
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.40",
+  "directDownloadUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.40/ColunaMix-v1.8.40.exe",
+  "asset": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.40.exe",
+  "sha256": "b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79",
+  "blocker": "gh CLI ausente e GITHUB_TOKEN/GH_TOKEN ausentes; ferramenta GitHub disponível é somente leitura/fetch",
+  "publicReleaseCheck": "GitHub API releases/tags/v1.8.40 retornou 404",
+  "tagPushed": true,
+  "remoteTag": "0fa05d893adb50e32d4414f4d9b1350e2bf88a60"
+}

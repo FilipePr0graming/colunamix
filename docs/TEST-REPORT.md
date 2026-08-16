@@ -18,6 +18,10 @@
 - Executável: `app/release/ColunaMix-v1.8.40.exe`.
 - Tamanho: `74273104` bytes.
 - SHA256: `b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79`.
+- Commit/push concluídos.
+- Tag remota `v1.8.40` enviada.
+- Release GitHub bloqueada: `gh` ausente, `GITHUB_TOKEN/GH_TOKEN` ausentes e ferramenta GitHub disponível somente para leitura/fetch.
+- API pública confirmou `404` para `releases/tags/v1.8.40` no momento da validação.
 
 ## Validação v1.8.39 - Escopo final Anderson
 
