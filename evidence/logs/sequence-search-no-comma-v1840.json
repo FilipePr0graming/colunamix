@@ -1,24 +1,137 @@
 {
   "version": "v1.8.40",
-  "line33": [
-    "3,3,4,2,3",
-    "3,3,2,3,4",
-    "3,3,3,2,4"
-  ],
-  "line334": [
-    "3,3,4,2,3"
-  ],
-  "column33": [
-    "3,3,4,2,3",
-    "3,3,2,3,4"
-  ],
-  "lineCommaEquivalence33": [
-    "3,3,4,2,3",
-    "3,3,2,3,4",
-    "3,3,3,2,4"
-  ],
-  "lineCommaEquivalence334": [
-    "3,3,4,2,3"
-  ],
+  "source": "unit function validation using current patternStats.ts; visual Playwright coverage recorded in playwright-v1840.txt",
+  "results": {
+    "3": {
+      "commaEquivalent": "3",
+      "line": {
+        "compact": [
+          "3,2,3,3,4",
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,2,3,3,4",
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "match": true
+      },
+      "column": {
+        "compact": [
+          "3,2,3,3,4",
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,2,3,3,4",
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "match": true
+      }
+    },
+    "33": {
+      "commaEquivalent": "3,3",
+      "line": {
+        "compact": [
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "match": true
+      },
+      "column": {
+        "compact": [
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,2,3,4",
+          "3,3,3,2,4",
+          "3,3,4,2,3"
+        ],
+        "match": true
+      }
+    },
+    "334": {
+      "commaEquivalent": "3,3,4",
+      "line": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      },
+      "column": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      }
+    },
+    "3342": {
+      "commaEquivalent": "3,3,4,2",
+      "line": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      },
+      "column": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      }
+    },
+    "33423": {
+      "commaEquivalent": "3,3,4,2,3",
+      "line": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      },
+      "column": {
+        "compact": [
+          "3,3,4,2,3"
+        ],
+        "comma": [
+          "3,3,4,2,3"
+        ],
+        "match": true
+      }
+    }
+  },
+  "excludes": {
+    "search33DoesNotFindPrefix32": true,
+    "search33DoesNotFindPrefix43": true,
+    "search334DoesNotFind332": true
+  },
   "match": true
 }
