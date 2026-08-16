@@ -6,16 +6,17 @@
   "draft": false,
   "prerelease": false,
   "assetName": "ColunaMix-v1.8.40.exe",
-  "assetSize": 74251893,
-  "assetDigest": "sha256:6832bbb15b4f3cf21c42527d1f478c623d55c5c2c59d119c4f3ba6eb383f91a3",
+  "assetSize": 74251887,
+  "assetDigest": "sha256:054305c227f8b6008050c7f44ae84f043db870cd70023f50fc1460d5b54bb6ba",
   "directDownloadUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.40/ColunaMix-v1.8.40.exe",
   "directDownloadHttp": 200,
   "localAsset": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.40.exe",
   "localSha256": "b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79",
-  "releaseBodyStartsWith": "ColunaMix v1.8.39\r\n\r\n- Adicionada busca por sequência exata nos Padrões de Linha",
+  "releaseBodyStartsWith": "ColunaMix v1.8.39\r\n\r\n- Adicionada busca por sequência exata nos Padrões de Linha.\r\n- Adicionada busca por sequência exat",
   "releaseNotesMatchRequested": false,
   "shaInReleaseNotesMatchesLocal": false,
-  "blocker": "Release foi criada por GitHub Actions, mas notas públicas ainda mencionam v1.8.39 e SHA antigo; sem gh/GITHUB_TOKEN/GH_TOKEN não consigo corrigir corpo/asset manualmente.",
+  "blocker": "Release pública existe e download retorna 200, mas notas públicas ainda mencionam v1.8.39/SHA antigo; sem gh/GITHUB_TOKEN/GH_TOKEN não consigo corrigir o corpo da release manualmente.",
   "tagPushed": true,
-  "remoteTagVerification": "Confirmado com git ls-remote origin refs/heads/main refs/tags/v1.8.40."
+  "remoteTagVerification": "Tag remota v1.8.40 confirmada; não movida após este registro para evitar novo rebuild automático.",
+  "updatedAt": "2026-08-16T18:09:29Z"
 }
