@@ -20,8 +20,8 @@
 - SHA256: `b50ed02fe47626f297aa7f4f4d0d3e686e6450c2ec9a7bce8a1a0fe6dc130c79`.
 - Commit/push concluídos.
 - Tag remota `v1.8.40` enviada.
-- Release GitHub bloqueada: `gh` ausente, `GITHUB_TOKEN/GH_TOKEN` ausentes e ferramenta GitHub disponível somente para leitura/fetch.
-- API pública confirmou `404` para `releases/tags/v1.8.40` no momento da validação.
+- Release GitHub criada por automação externa/GitHub Actions: pública, não draft, asset `.exe` anexado e download HTTP 200.
+- Bloqueio residual: notas públicas da release ainda mencionam `v1.8.39` e SHA antigo; sem `gh`, `GITHUB_TOKEN/GH_TOKEN` ou ferramenta GitHub de escrita, não consegui corrigir corpo/asset manualmente.
 
 ## Validação v1.8.39 - Escopo final Anderson
 
