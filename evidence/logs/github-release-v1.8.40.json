@@ -8,5 +8,5 @@
   "blocker": "gh CLI ausente e GITHUB_TOKEN/GH_TOKEN ausentes; ferramenta GitHub disponível é somente leitura/fetch",
   "publicReleaseCheck": "GitHub API releases/tags/v1.8.40 retornou 404",
   "tagPushed": true,
-  "remoteTag": "0fa05d893adb50e32d4414f4d9b1350e2bf88a60"
+  "remoteTag": "c115668d3b17fc015e27a20f163201c8b131ef73"
 }
