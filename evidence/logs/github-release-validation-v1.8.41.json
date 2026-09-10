@@ -1,0 +1,10 @@
+{
+  "version": "v1.8.41",
+  "releaseUrl": "https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.41",
+  "downloadUrl": "https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.41/ColunaMix-v1.8.41.exe",
+  "httpStatusLines": [
+    "HTTP/1.1 302 Found",
+    "HTTP/1.1 200 OK"
+  ],
+  "finalStatus": "HTTP/1.1 200 OK"
+}

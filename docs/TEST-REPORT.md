@@ -15,6 +15,8 @@
 - Executável: `app/release/ColunaMix-v1.8.41.exe`.
 - Tamanho: `74275717` bytes.
 - SHA256: `61287236AF00DC93C2A7E380051348948835A6D839A8787016B0B9384789EA10`.
+- Release publicada: https://github.com/FilipePr0graming/colunamix/releases/tag/v1.8.41
+- Download direto validado com HTTP 200: https://github.com/FilipePr0graming/colunamix/releases/download/v1.8.41/ColunaMix-v1.8.41.exe
 
 ## Validação v1.8.40 - Correção da busca por sequência e limpeza global
 
