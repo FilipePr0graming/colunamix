@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.invoke('generator:apply-history', count, scope, range),
     generatorApplyExactGroupHistory: (count: number, category: string, range: any) =>
         ipcRenderer.invoke('generator:apply-exact-group-history', count, category, range),
+    generatorApplyCombinedPatternHistory: (count: number, range: any) =>
+        ipcRenderer.invoke('generator:apply-combined-pattern-history', count, range),
     onGeneratorProgress: (callback: any) => {
         const listener = (_e: any, data: any) => callback(data);
         ipcRenderer.on('generator:progress', listener);

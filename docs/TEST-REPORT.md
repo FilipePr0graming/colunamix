@@ -1,5 +1,21 @@
 # TEST REPORT
 
+## Validação v1.8.41 - Filtro combinado Linha + Coluna
+
+- Versão anterior: `v1.8.40`.
+- Nova versão: `v1.8.41`.
+- Build: aprovado (`evidence/logs/npm-run-build-v1841.txt`).
+- Unitários: `106 passed` (`evidence/logs/npm-run-test-unit-v1841.txt`).
+- E2E: `23 passed`, `7 skipped` históricos (`evidence/logs/npm-run-test-e2e-v1841.txt`).
+- Playwright dedicado: `1 passed` (`evidence/logs/npm-run-test-e2e-v1841-dedicated.txt`).
+- Playwright no build empacotado descompactado: `1 passed` (`evidence/logs/playwright-packaged-combined-row-column-v1841.txt`).
+- Smoke do executável portátil: processo iniciou e permaneceu ativo por 12 segundos (`evidence/logs/portable-exe-smoke-v1841.json`).
+- Prova funcional: `3,3,3,3,3|2,2,4,4,3` foi puxado do histórico, persistiu após reload, bloqueou a geração e voltou a gerar após limpar somente o filtro combinado.
+- Screenshots: `nova-versao-combined-filter.png`, `combined-filter-visible.png`, `combined-filter-pull-history.png`, `combined-filter-groups-loaded.png`, `combined-filter-generation.png`, `combined-filter-clear.png`, `generator-final-validation.png`.
+- Executável: `app/release/ColunaMix-v1.8.41.exe`.
+- Tamanho: `74275717` bytes.
+- SHA256: `61287236AF00DC93C2A7E380051348948835A6D839A8787016B0B9384789EA10`.
+
 ## Validação v1.8.40 - Correção da busca por sequência e limpeza global
 
 - Versão anterior: `v1.8.39`.

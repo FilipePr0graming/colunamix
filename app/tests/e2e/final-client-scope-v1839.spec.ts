@@ -130,7 +130,7 @@ test('final-client-scope-v1839: sequência, massa, ordem e limpeza segura', asyn
 
   try {
     await seedPatternData(page);
-    await expect(page.getByText('v1.8.40')).toBeVisible();
+    await expect(page.getByText('v1.8.41')).toBeVisible();
     await saveEvidence(page, '151-v1839-versao-final.png');
 
     await expect(page.getByTestId('generator-pattern-row-panel')).toBeVisible();

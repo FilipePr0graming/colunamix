@@ -1,5 +1,17 @@
 # PATCHES APPLIED
 
+## v1.8.41 - Filtro combinado Linha + Coluna
+
+- Adicionado filtro de exclusão `Padrão Linha + Coluna` no Gerador.
+- A combinação usa uma chave estável no formato `linha|coluna`, exemplo `3,3,3,3,3|2,2,4,4,3`.
+- O botão `Puxar Combinações` usa o mesmo histórico oficial do Gerador e deduplica por combinação completa.
+- Adição manual, remoção individual, limpeza isolada e persistência foram integradas à configuração do Gerador.
+- O Gerador exclui somente quando Linha e Coluna batem juntas com uma combinação cadastrada.
+- O caminho quente usa `Set<string>` para evitar busca linear em listas grandes.
+- Versão atualizada para `v1.8.41` em metadados e UI.
+- Executável gerado: `app/release/ColunaMix-v1.8.41.exe`.
+- SHA256: `61287236AF00DC93C2A7E380051348948835A6D839A8787016B0B9384789EA10`.
+
 ## v1.8.40 - Correção da busca por sequência e limpeza global
 
 - Busca por sequência agora aceita entrada sem vírgulas.

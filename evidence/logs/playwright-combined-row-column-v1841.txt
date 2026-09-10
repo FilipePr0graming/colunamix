@@ -1,0 +1,16 @@
+{
+  "pulledKeys": [
+    "3,3,3,3,3|2,2,4,4,3"
+  ],
+  "persistedKeys": [
+    "3,3,3,3,3|2,2,4,4,3"
+  ],
+  "blockedVisibleWithFilter": 0,
+  "storedAfterClear": {
+    "combinedPatternExclusions": [],
+    "lastN": 2,
+    "maxJogos": 5
+  },
+  "finalGeneratedKey": "01,02,03,06,07,09,13,14,15,18,19,20,23,24,25",
+  "version": "v1.8.41"
+}

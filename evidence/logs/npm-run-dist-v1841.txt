@@ -1,0 +1,59 @@
+
+> colunamix@1.8.41 dist
+> vite build && electron-builder
+
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+vite v5.4.21 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.85 kB │ gzip:  0.45 kB
+dist/assets/index-DQ-MRCLo.css   39.33 kB │ gzip:  7.95 kB
+dist/assets/index-Qb13hWhV.js   250.70 kB │ gzip: 72.19 kB
+✓ built in 3.10s
+vite v5.4.21 building for production...
+transforming...
+✓ 12 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/main/index.js  27.49 kB │ gzip: 9.34 kB
+✓ built in 190ms
+vite v5.4.21 building for production...
+transforming...
+✓ 1 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-electron/preload/index.js  1.88 kB │ gzip: 0.61 kB
+✓ built in 22ms
+  • electron-builder  version=25.1.8 os=10.0.26200
+  • loaded configuration  file=C:\Users\filip\Local Sites\colunamix\app\electron-builder.json
+  • author is missed in the package.json  appPackageFile=C:\Users\filip\Local Sites\colunamix\app\package.json
+  • executing @electron/rebuild  electronVersion=33.4.11 arch=x64 buildFromSource=false appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=33.4.11 appOutDir=release\win-unpacked
+  • map async       taskCount=2
+  • map async       taskCount=1
+  • map async       taskCount=73
+  • updating asar integrity executable resource  executablePath=release\win-unpacked\ColunaMix.exe
+  • building        target=portable file=release\ColunaMix-v1.8.41.exe archs=x64
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\build\assets\icon.ico
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\assets\icon.ico
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\build\icon.ico
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\icon.ico
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\build\icons
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\icons
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\build\icon.png
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\icon.png
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\build\icon.icns
+  • path doesn't exist  path=C:\Users\filip\Local Sites\colunamix\app\icon.icns
+  • no icons found, using provided fallback sources
+  • default Electron icon is used  reason=application icon is not set
+  • found existing  path=C:\Users\filip\AppData\Local\electron-builder\Cache\nsis\nsis-3.0.4.1
+  • found existing  path=C:\Users\filip\AppData\Local\electron-builder\Cache\nsis\nsis-resources-3.4.1
+  • signing with signtool.exe  path=release\ColunaMix-v1.8.41.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null

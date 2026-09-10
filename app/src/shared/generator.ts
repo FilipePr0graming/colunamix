@@ -1,6 +1,7 @@
 import { GeneratorConfig, GeneratedGame } from './types';
 import { collectUniquePatterns, getRowPattern, getColPattern } from './columns';
 import { buildExactGroupExclusionKeySets, shouldExcludeByExactGroupWithKeySets } from './exactGroupExclusions';
+import { buildCombinedPatternExclusionKeySet, toCombinedPatternKey } from './combinedPatternExclusions';
 
 export class ChunkedGenerator {
     private colPatterns: number[][][];
@@ -19,6 +20,7 @@ export class ChunkedGenerator {
     private colPatternMode: 'exclude' | 'include';
     private rowPatternMode: 'exclude' | 'include';
     private exactGroupExclusionKeys: ReturnType<typeof buildExactGroupExclusionKeySets>;
+    private combinedPatternExclusionKeys: Set<string>;
 
     // Search stack: { colIdx, currentSet, currentSum, nextPatternIdx }
     private stack: { colIdx: number, currentSet: number[], currentSum: number, nextPatternIdx: number }[] = [];
@@ -38,6 +40,7 @@ export class ChunkedGenerator {
         this.includedRowPatterns = new Set(includeList.filter(p => p.type === 'row').map(p => p.pattern.join(',')));
         this.includedColPatterns = new Set(includeList.filter(p => p.type === 'column').map(p => p.pattern.join(',')));
         this.exactGroupExclusionKeys = buildExactGroupExclusionKeySets(config.exactGroupExclusions);
+        this.combinedPatternExclusionKeys = buildCombinedPatternExclusionKeySet(config.combinedPatternExclusions);
 
         this.colPatterns = [];
         for (let col = 1; col <= 5; col++) {
@@ -110,6 +113,9 @@ export class ChunkedGenerator {
 
                             const exactGroupCategoryKeyCache = {};
                             let allowed = !shouldExcludeByExactGroupWithKeySets(gameResult, this.exactGroupExclusionKeys, exactGroupCategoryKeyCache);
+                            if (allowed && this.combinedPatternExclusionKeys.size > 0) {
+                                allowed = !this.combinedPatternExclusionKeys.has(toCombinedPatternKey(rowPattern, colPattern));
+                            }
                             // Column Pattern Mode
                             if (this.colPatternMode === 'include') {
                                 if (!this.includedColPatterns.has(colPattern)) allowed = false;

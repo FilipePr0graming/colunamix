@@ -1,5 +1,15 @@
 # PATCHES APPLIED - ColunaMix
 
+## v1.8.41 - Filtro combinado Linha + Coluna
+
+- Adicionado filtro de exclusão por combinação de Padrão de Linha + Padrão de Coluna no Gerador.
+- Histórico, adição manual, remoção individual, limpeza isolada e persistência integrados ao padrão atual do sistema.
+- Gerador passa a excluir somente a combinação completa, sem confundir Linha igual ou Coluna igual isoladamente.
+- Chave combinada validada: `3,3,3,3,3|2,2,4,4,3`.
+- Build, unitários, E2E, Playwright dedicado e build empacotado validados.
+- Executável gerado: `app/release/ColunaMix-v1.8.41.exe`.
+- SHA256: `61287236AF00DC93C2A7E380051348948835A6D839A8787016B0B9384789EA10`.
+
 ## v1.8.39 - Busca por sequência, ações em massa, ordem dos quadros e limpeza segura
 
 - Adicionada busca por sequência exata/prefixo nos Padrões de Linha.

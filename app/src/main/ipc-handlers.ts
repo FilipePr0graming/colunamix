@@ -4,9 +4,10 @@ import { once } from 'events';
 import { getDbStatus, importDraws, getDraws, clearDraws, getState, removeState, setState } from './database';
 import { validateLicense, activateLicense, simulateExpiration, resetTrial } from './license';
 import { ChunkedGenerator } from '../shared/generator';
-import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory, PatternExportFormat, PatternStatsKind, PatternStatsRow } from '../shared/types';
+import { GeneratorConfig, CombinationPreview, HistoryRangeConfig, GeneratedGame, GenerateGamesResult, PatternExclusion, ApplyHistoryResult, SaveMassResult, ApplyExactGroupHistoryResult, ExactGroupCategory, PatternExportFormat, PatternStatsKind, PatternStatsRow, ApplyCombinedPatternHistoryResult } from '../shared/types';
 import { collectUniquePatterns, getColPatternArray, getRowPatternArray } from '../shared/columns';
 import { collectExactGroupsFromDraws } from '../shared/exactGroupExclusions';
+import { collectCombinedPatternExclusionsFromDraws } from '../shared/combinedPatternExclusions';
 import { calculatePatternStats, clearPatternStatsCache, serializePatternStatsCsv, serializePatternStatsExcel, serializePatternStatsTxt } from '../shared/patternStats';
 import { calculateColumnPatternEntries } from '../shared/columnPatternStats';
 import { COLUMN_STATS_LEGACY_STATE_KEYS, COLUMN_STATS_SCHEMA_STATE_KEY, COLUMN_STATS_SCHEMA_VERSION } from '../shared/columnStatsCache';
@@ -558,6 +559,22 @@ export function registerIpcHandlers(): void {
 
         return {
             groups,
+            drawsUsed: history.draws.length,
+            requested: history.requested,
+            available: history.available,
+        };
+    });
+
+    ipcMain.handle('generator:apply-combined-pattern-history', async (_e, count: number, range: HistoryRangeConfig): Promise<ApplyCombinedPatternHistoryResult> => {
+        const safeRange: HistoryRangeConfig = range && (range.mode === 'lastN' || range.mode === 'range')
+            ? range
+            : { mode: 'lastN', lastN: count, rangeStart: 0, rangeEnd: 0 };
+
+        const history = resolveHistoryDraws(count, safeRange);
+        const combinations = collectCombinedPatternExclusionsFromDraws(history.draws);
+
+        return {
+            combinations,
             drawsUsed: history.draws.length,
             requested: history.requested,
             available: history.available,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow } from '../../shared/types';
+import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow, CombinedPatternExclusion } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import { applyBulkPatternRuleAction, applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
 import { filterPatternStatsRows, type PatternStatsSort } from '../../shared/patternStats';
@@ -15,6 +15,13 @@ import {
     parseExactGroupCategoryInput,
     toExactGroupKey,
 } from '../../shared/exactGroupExclusions';
+import {
+    COMBINED_PATTERN_INPUT_ERROR,
+    formatCombinedPatternInputText,
+    normalizeCombinedPatternExclusions,
+    parseCombinedPatternInput,
+    toCombinedPatternKey,
+} from '../../shared/combinedPatternExclusions';
 import GridPicker from './GridPicker';
 import LotofacilGrid from './LotofacilGrid';
 import PatternLagTooltip from './PatternLagTooltip';
@@ -389,6 +396,11 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [exclusions, setExclusions] = useState<Exclusion[]>([]);
     const [patternExclusions, setPatternExclusions] = useState<PatternExclusion[]>([]);
     const [patternIncludes, setPatternIncludes] = useState<PatternExclusion[]>([]);
+    const [combinedPatternExclusions, setCombinedPatternExclusions] = useState<CombinedPatternExclusion[]>([]);
+    const [combinedRowPatternInput, setCombinedRowPatternInput] = useState('');
+    const [combinedColumnPatternInput, setCombinedColumnPatternInput] = useState('');
+    const [combinedPatternError, setCombinedPatternError] = useState('');
+    const [combinedPatternHistoryCount, setCombinedPatternHistoryCount] = useState(10);
     const [exactGroupExclusions, setExactGroupExclusions] = useState<ExactGroupExclusions>(() => createDefaultExactGroupExclusions());
     const [exactGroupInputs, setExactGroupInputs] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
     const [exactGroupErrors, setExactGroupErrors] = useState<Record<ExactGroupCategory, string>>(() => createExactGroupTextState());
@@ -561,6 +573,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
+                if (config.combinedPatternExclusions) setCombinedPatternExclusions(normalizeCombinedPatternExclusions(config.combinedPatternExclusions));
+                if (typeof config.combinedPatternHistoryCount === 'number') setCombinedPatternHistoryCount(Math.max(1, Math.trunc(config.combinedPatternHistoryCount || 1)));
                 if (config.exactGroupExclusions) {
                     setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
                 }
@@ -582,10 +596,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
             fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
+            combinedPatternExclusions, combinedPatternHistoryCount, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
         };
         localStorage.setItem(GENERATOR_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    }, [settingsHydrated, mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled]);
+    }, [settingsHydrated, mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, combinedPatternExclusions, combinedPatternHistoryCount, exactGroupExclusions, noRepeat, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled]);
 
     const buildGeneratorConfig = useCallback((maxJogosOverride?: number): GeneratorConfig => ({
         mode,
@@ -599,11 +613,12 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         exclusions,
         patternExclusions,
         patternIncludes,
+        combinedPatternExclusions,
         exactGroupExclusions,
         colPatternMode,
         rowPatternMode,
         noRepeatDrawn: noRepeat,
-    }), [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
+    }), [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, combinedPatternExclusions, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
 
     useEffect(() => {
         if (noData) {
@@ -634,7 +649,7 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setGeneratedTotalCount(0);
         setSelectedGame(null);
         setResultsScrollTop(0);
-    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
+    }, [mode, lastN, rangeStart, rangeEnd, K, maxJogos, fixas, fixasModo, exclusions, patternExclusions, patternIncludes, combinedPatternExclusions, exactGroupExclusions, colPatternMode, rowPatternMode, noRepeat]);
 
     const handleGenerate = async () => {
         if (noData) { setError('Importe concursos primeiro na aba "Importar CSV".'); return; }
@@ -726,8 +741,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const handleExportConfig = async () => {
         const settings = {
             mode, lastN, rangeStart, rangeEnd, K, maxJogos,
-            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, exactGroupExclusions, noRepeat,
-            colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
+            fixas, fixasModo, exclusions, patternExclusions, patternIncludes, combinedPatternExclusions, exactGroupExclusions, noRepeat,
+            combinedPatternHistoryCount, colPatternMode, rowPatternMode, exactGroupHistoryCounts, patternPanelEnabled
         };
         const success = await window.electronAPI.generatorExportConfig(settings);
         if (success) {
@@ -754,6 +769,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                 if (config.exclusions) setExclusions(config.exclusions);
                 if (config.patternExclusions) setPatternExclusions(config.patternExclusions);
                 if (config.patternIncludes) setPatternIncludes(config.patternIncludes);
+                setCombinedPatternExclusions(normalizeCombinedPatternExclusions(config.combinedPatternExclusions));
+                if (typeof config.combinedPatternHistoryCount === 'number') setCombinedPatternHistoryCount(Math.max(1, Math.trunc(config.combinedPatternHistoryCount || 1)));
                 setExactGroupExclusions(normalizeExactGroupExclusions(config.exactGroupExclusions));
                 if (config.exactGroupHistoryCounts) {
                     setExactGroupHistoryCounts({ ...createExactGroupHistoryCountState(), ...config.exactGroupHistoryCounts });
@@ -984,6 +1001,90 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         }
     };
 
+    const addCombinedPatternExclusion = () => {
+        const parsed = parseCombinedPatternInput(combinedRowPatternInput, combinedColumnPatternInput, K);
+        if (!parsed.valid) {
+            setCombinedPatternError(parsed.error || COMBINED_PATTERN_INPUT_ERROR);
+            return;
+        }
+
+        const nextKey = toCombinedPatternKey(parsed.rowPattern, parsed.columnPattern);
+        if (combinedPatternExclusions.some(item => toCombinedPatternKey(item.rowPattern, item.columnPattern) === nextKey)) {
+            setCombinedPatternError('Esta combinação já foi adicionada.');
+            return;
+        }
+
+        setCombinedPatternExclusions(prev => [...prev, {
+            id: Math.random().toString(36).substr(2, 9),
+            rowPattern: parsed.rowPattern,
+            columnPattern: parsed.columnPattern,
+        }]);
+        setCombinedRowPatternInput('');
+        setCombinedColumnPatternInput('');
+        setCombinedPatternError('');
+    };
+
+    const removeCombinedPatternExclusion = (id: string) => {
+        setCombinedPatternExclusions(prev => prev.filter(item => item.id !== id));
+    };
+
+    const clearCombinedPatternExclusions = () => {
+        if (combinedPatternExclusions.length === 0) return;
+        if (confirm('Remover todas as combinações de Linha + Coluna?')) {
+            setCombinedPatternExclusions([]);
+            setCombinedPatternError('');
+        }
+    };
+
+    const applyCombinedPatternHistory = async () => {
+        if (noData) {
+            setError('Importe concursos primeiro na aba "Dados".');
+            return;
+        }
+
+        const count = Math.max(1, Math.trunc(combinedPatternHistoryCount || 1));
+        setHistoryLoading(true);
+        setError('');
+
+        try {
+            const range = {
+                mode,
+                lastN: count,
+                rangeStart,
+                rangeEnd,
+            };
+            const pulled = await window.electronAPI.generatorApplyCombinedPatternHistory(count, range);
+            const existing = new Set(combinedPatternExclusions.map(item => toCombinedPatternKey(item.rowPattern, item.columnPattern)));
+            const toAdd = (pulled.combinations || []).filter(item => {
+                const key = toCombinedPatternKey(item.rowPattern, item.columnPattern);
+                if (existing.has(key)) return false;
+                existing.add(key);
+                return true;
+            });
+
+            if (toAdd.length > 0) {
+                setCombinedPatternExclusions(prev => [...prev, ...toAdd]);
+            }
+            setCombinedPatternError('');
+
+            const drawsLabel = `${pulled.drawsUsed.toLocaleString('pt-BR')} concurso${pulled.drawsUsed !== 1 ? 's' : ''}`;
+            const limitMessage = pulled.drawsUsed < pulled.requested
+                ? ` A solicitação foi limitada aos ${pulled.drawsUsed.toLocaleString('pt-BR')} concursos disponíveis.`
+                : '';
+            setNotice({
+                tone: toAdd.length > 0 ? 'success' : 'info',
+                title: 'Combinações aplicadas',
+                message: toAdd.length > 0
+                    ? `${toAdd.length} combinação(ões) de Linha + Coluna adicionadas a partir de ${drawsLabel}.${limitMessage}`
+                    : `Nenhuma combinação nova de Linha + Coluna foi encontrada em ${drawsLabel}.${limitMessage}`,
+            });
+        } catch (e: any) {
+            setError(e?.message || 'Erro ao puxar combinações históricas.');
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
     const handleApplyHistory = async () => {
         if (noData) {
             setError('Importe concursos primeiro na aba "Dados".');
@@ -1116,6 +1217,10 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         setExclusions([]);
         setPatternIncludes([]);
         setPatternExclusions([]);
+        setCombinedPatternExclusions([]);
+        setCombinedRowPatternInput('');
+        setCombinedColumnPatternInput('');
+        setCombinedPatternError('');
         setExactGroupExclusions(createDefaultExactGroupExclusions());
         setExactGroupInputs(createExactGroupTextState());
         setExactGroupErrors(createExactGroupTextState());
@@ -1719,6 +1824,136 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                             </>
                         );
                     })()}
+                </section>
+
+                {/* 06. Padrão Linha + Coluna */}
+                <section className="animate-fade-in border-t border-white/5 pt-6" data-testid="combined-pattern-exclusion">
+                    <div className="section-header">
+                        <div className="flex items-center gap-3">
+                            <h3 className="section-title">06. Padrão Linha + Coluna</h3>
+                            {combinedPatternExclusions.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[9px] text-red-400 font-black tabular-nums">
+                                    {combinedPatternExclusions.length}
+                                </span>
+                            )}
+                        </div>
+                        {combinedPatternExclusions.length > 0 && (
+                            <button
+                                onClick={clearCombinedPatternExclusions}
+                                data-testid="combined-pattern-clear"
+                                className="text-[9px] text-gray-500 hover:text-red-500 font-bold uppercase tracking-widest transition-colors"
+                            >
+                                Limpar
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-6">
+                        <div className="col-span-12 lg:col-span-5 space-y-4">
+                            <div className="glass-card !bg-brand-500/5 border-dashed border-brand-500/20 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-[10px] text-brand-400 font-bold uppercase tracking-widest">Recorte Histórico</h4>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={combinedPatternHistoryCount}
+                                            onChange={event => setCombinedPatternHistoryCount(Math.max(1, Math.trunc(Number(event.target.value) || 1)))}
+                                            data-testid="combined-pattern-history-count"
+                                            className="w-12 bg-black/40 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-bold text-brand-300 outline-none"
+                                        />
+                                        <span className="text-[9px] text-gray-600 font-bold uppercase">CONC.</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={applyCombinedPatternHistory}
+                                    disabled={historyLoading || noData}
+                                    data-testid="combined-pattern-history-apply"
+                                    className="w-full py-2 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 rounded text-[10px] text-brand-300 font-black uppercase transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {historyLoading ? 'Puxando...' : 'Puxar Combinações'}
+                                </button>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="desktop-label">Inserir Combinação</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input
+                                        type="text"
+                                        value={combinedRowPatternInput}
+                                        onChange={event => {
+                                            setCombinedRowPatternInput(formatCombinedPatternInputText(event.target.value));
+                                            if (combinedPatternError) setCombinedPatternError('');
+                                        }}
+                                        onKeyDown={event => event.key === 'Enter' && addCombinedPatternExclusion()}
+                                        data-testid="combined-pattern-row-input"
+                                        className={`desktop-control w-full font-mono text-brand-300 ${combinedPatternError ? 'border-red-500/50' : ''}`}
+                                        placeholder="Linha: 3,3,3,3,3"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={combinedColumnPatternInput}
+                                        onChange={event => {
+                                            setCombinedColumnPatternInput(formatCombinedPatternInputText(event.target.value));
+                                            if (combinedPatternError) setCombinedPatternError('');
+                                        }}
+                                        onKeyDown={event => event.key === 'Enter' && addCombinedPatternExclusion()}
+                                        data-testid="combined-pattern-column-input"
+                                        className={`desktop-control w-full font-mono text-brand-300 ${combinedPatternError ? 'border-red-500/50' : ''}`}
+                                        placeholder="Coluna: 2,2,4,4,3"
+                                    />
+                                </div>
+                                <button
+                                    onClick={addCombinedPatternExclusion}
+                                    data-testid="combined-pattern-add"
+                                    className="btn-premium-primary h-[36px] !px-4 !py-0 text-[9px]"
+                                >
+                                    Adicionar combinação
+                                </button>
+                                {combinedPatternError && (
+                                    <p className="text-[10px] text-red-500 font-bold animate-fade-in">
+                                        {combinedPatternError}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="col-span-12 lg:col-span-7">
+                            <div className="glass-card !bg-black/20 border-dashed border-white/5 min-h-[160px] max-h-[220px] overflow-y-auto p-3 custom-scrollbar">
+                                {combinedPatternExclusions.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-25 py-8">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-center">Nenhuma combinação Linha + Coluna cadastrada</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {combinedPatternExclusions.map(item => (
+                                            <div
+                                                key={item.id}
+                                                data-testid="combined-pattern-item"
+                                                data-combined-key={toCombinedPatternKey(item.rowPattern, item.columnPattern)}
+                                                className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/5 group hover:border-red-500/30 transition-all hover:bg-white/[0.05]"
+                                            >
+                                                <div className="min-w-0 flex flex-col gap-1">
+                                                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.1em]">LINHA</span>
+                                                    <span className="font-mono text-[12px] font-extrabold text-brand-300">{item.rowPattern.join(',')}</span>
+                                                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.1em]">COLUNA</span>
+                                                    <span className="font-mono text-[12px] font-extrabold text-brand-300">{item.columnPattern.join(',')}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeCombinedPatternExclusion(item.id)}
+                                                    aria-label={`Remover combinação Linha ${item.rowPattern.join(',')} Coluna ${item.columnPattern.join(',')}`}
+                                                    data-testid="combined-pattern-remove"
+                                                    className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 font-black text-lg"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 {/* Painel de padrões no antigo espaço do Modo Inteligente/Radar Histórico */}

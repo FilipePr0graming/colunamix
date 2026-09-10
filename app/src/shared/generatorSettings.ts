@@ -1,4 +1,4 @@
-import { ExactGroupExclusions, GeneratorConfig, HistoryRangeConfig } from './types';
+import { CombinedPatternExclusion, ExactGroupExclusions, GeneratorConfig, HistoryRangeConfig } from './types';
 import { createDefaultExactGroupExclusions } from './exactGroupExclusions';
 
 export const GENERATOR_SETTINGS_STORAGE_KEY = 'colunamix_generator_settings';
@@ -7,7 +7,9 @@ export interface PersistedGeneratorSettings extends Partial<Omit<GeneratorConfig
     K?: number;
     fixas?: string;
     exactGroupExclusions?: ExactGroupExclusions;
+    combinedPatternExclusions?: CombinedPatternExclusion[];
     exactGroupHistoryCounts?: Record<string, number>;
+    combinedPatternHistoryCount?: number;
     patternPanelEnabled?: boolean;
 }
 
@@ -40,6 +42,7 @@ export function createSafeBoxConfigClearSnapshot<T extends {
     exclusions?: unknown[];
     patternIncludes?: unknown[];
     patternExclusions?: unknown[];
+    combinedPatternExclusions?: CombinedPatternExclusion[];
     exactGroupExclusions?: ExactGroupExclusions;
     exactGroupHistoryCounts?: Record<string, number>;
 }>(state: T): T {
@@ -49,6 +52,7 @@ export function createSafeBoxConfigClearSnapshot<T extends {
         exclusions: [],
         patternIncludes: [],
         patternExclusions: [],
+        combinedPatternExclusions: [],
         exactGroupExclusions: createDefaultExactGroupExclusions(),
         exactGroupHistoryCounts: state.exactGroupHistoryCounts || {},
     };

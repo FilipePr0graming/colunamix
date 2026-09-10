@@ -1,5 +1,17 @@
 # TEST REPORT - ColunaMix
 
+## Validação v1.8.41 - Filtro combinado Linha + Coluna
+
+- Versão anterior: `v1.8.40`.
+- Nova versão: `v1.8.41`.
+- Build: aprovado (`evidence/logs/npm-run-build-v1841.txt`).
+- Unitários: aprovado, `106 passed` (`evidence/logs/npm-run-test-unit-v1841.txt`).
+- E2E: aprovado, `23 passed`, `7 skipped` históricos (`evidence/logs/npm-run-test-e2e-v1841.txt`).
+- Playwright focado: aprovado, `1 passed` (`evidence/logs/npm-run-test-e2e-v1841-dedicated.txt`).
+- Playwright no build empacotado descompactado: aprovado, `1 passed` (`evidence/logs/playwright-packaged-combined-row-column-v1841.txt`).
+- Executável portátil validado por smoke: `app/release/ColunaMix-v1.8.41.exe`.
+- SHA256: `61287236AF00DC93C2A7E380051348948835A6D839A8787016B0B9384789EA10`.
+
 ## Validação v1.8.39 - Escopo final Anderson
 
 - Versão anterior: `v1.8.38`.

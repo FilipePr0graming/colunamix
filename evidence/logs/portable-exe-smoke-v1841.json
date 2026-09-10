@@ -1,0 +1,8 @@
+{
+  "version": "v1.8.41",
+  "portableExe": "C:\\Users\\filip\\Local Sites\\colunamix\\app\\release\\ColunaMix-v1.8.41.exe",
+  "processStarted": true,
+  "aliveAfterSeconds": 12,
+  "controlledUiValidation": "app/release/win-unpacked/ColunaMix.exe",
+  "portableExitedBeforeCheck": false
+}

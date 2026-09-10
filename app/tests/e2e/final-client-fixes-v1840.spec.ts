@@ -134,7 +134,7 @@ test('v1.8.40 corrige busca sem virgula e limpeza global do escopo Anderson', as
 
   try {
     await seedPatternData(page);
-    await expect(page.getByText('v1.8.40')).toBeVisible();
+    await expect(page.getByText('v1.8.41')).toBeVisible();
 
     await page.getByTestId('generator-pattern-sequence-search-row').fill('33');
     let lineKeys = await patternKeys(page, 'row');
@@ -271,7 +271,7 @@ test('v1.8.40 corrige busca sem virgula e limpeza global do escopo Anderson', as
     const logDir = path.join(process.cwd(), '..', 'evidence', 'logs');
     fs.mkdirSync(logDir, { recursive: true });
     fs.writeFileSync(path.join(logDir, 'clear-config-client-semantics-v1840.json'), JSON.stringify({
-      version: 'v1.8.40',
+      version: 'v1.8.41',
       fixedNumbersCleared: after.fixas === '',
       filterExclusionRulesCleared: after.exclusions === 0,
       linePatternIncludesCleared: after.linePatternIncludes === 0,
@@ -290,7 +290,7 @@ test('v1.8.40 corrige busca sem virgula e limpeza global do escopo Anderson', as
       match: true,
     }, null, 2), 'utf-8');
     fs.writeFileSync(path.join(logDir, 'sequence-search-no-comma-v1840.json'), JSON.stringify({
-      version: 'v1.8.40',
+      version: 'v1.8.41',
       line33: observed.line33,
       line334: observed.line334,
       column33: observed.column33,

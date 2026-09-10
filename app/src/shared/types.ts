@@ -33,6 +33,12 @@ export interface PatternExclusion {
     pattern: number[];
 }
 
+export interface CombinedPatternExclusion {
+    id: string;
+    rowPattern: number[];
+    columnPattern: number[];
+}
+
 export type ExactGroupCategory = 'borderOdd' | 'borderEven' | 'coreOdd' | 'coreEven' | 'borderGeneral' | 'middleGeneral' | 'prime' | 'fibonacci' | 'oddNumbers' | 'evenNumbers';
 
 export interface ExactGroupExclusions {
@@ -60,6 +66,7 @@ export interface GeneratorConfig {
     exclusions: Exclusion[];
     patternExclusions: PatternExclusion[];
     patternIncludes?: PatternExclusion[];
+    combinedPatternExclusions?: CombinedPatternExclusion[];
     exactGroupExclusions?: ExactGroupExclusions;
     colPatternMode?: 'exclude' | 'include';
     rowPatternMode?: 'exclude' | 'include';
@@ -103,6 +110,13 @@ export interface ApplyHistoryResult {
 
 export interface ApplyExactGroupHistoryResult {
     groups: number[][];
+    drawsUsed: number;
+    requested: number;
+    available: number;
+}
+
+export interface ApplyCombinedPatternHistoryResult {
+    combinations: CombinedPatternExclusion[];
     drawsUsed: number;
     requested: number;
     available: number;
@@ -177,6 +191,7 @@ export interface ElectronAPI {
     generatorImportConfig: () => Promise<any>;
     generatorApplyHistory: (count: number, scope: 'row' | 'column' | 'both', range: HistoryRangeConfig) => Promise<ApplyHistoryResult>;
     generatorApplyExactGroupHistory: (count: number, category: ExactGroupCategory, range: HistoryRangeConfig) => Promise<ApplyExactGroupHistoryResult>;
+    generatorApplyCombinedPatternHistory: (count: number, range: HistoryRangeConfig) => Promise<ApplyCombinedPatternHistoryResult>;
     onGeneratorProgress: (callback: (data: { current: number; total: number }) => void) => () => void;
     exportSave: (content: string) => Promise<boolean>;
     licenseGetStatus: () => Promise<LicenseInfo>;

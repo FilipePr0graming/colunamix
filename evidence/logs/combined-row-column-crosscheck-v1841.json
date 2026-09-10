@@ -1,0 +1,28 @@
+{
+  "version": "v1.8.41",
+  "previousVersion": "v1.8.40",
+  "rowPatternRuleSource": "app/src/shared/columns.ts:getRowPattern/getRowPatternArray",
+  "columnPatternRuleSource": "app/src/shared/columns.ts:getColPattern/getColPatternArray",
+  "combinedKeyExample": "3,3,3,3,3|2,2,4,4,3",
+  "historySource": "app/src/main/ipc-handlers.ts:resolveHistoryDraws",
+  "storageKey": "colunamix_generator_settings",
+  "storageField": "combinedPatternExclusions",
+  "deduplication": "Set<string> by combined key",
+  "generatorHotPath": "Set<string>.has(rowPattern + '|' + colPattern)",
+  "unitTests": "106 passed",
+  "e2eTests": "23 passed, 7 skipped existing historical tests",
+  "dedicatedPlaywright": "1 passed",
+  "packagedPlaywright": "1 passed on app/release/win-unpacked/ColunaMix.exe",
+  "portableExeSmoke": {
+    "path": "app/release/ColunaMix-v1.8.41.exe",
+    "processStarted": true,
+    "aliveAfterSeconds": 12
+  },
+  "functionalProof": {
+    "line": "3,3,3,3,3",
+    "column": "2,2,4,4,3",
+    "combinedKey": "3,3,3,3,3|2,2,4,4,3",
+    "blockedVisibleWithFilter": 0,
+    "generatedAfterClear": "01,02,03,06,07,09,13,14,15,18,19,20,23,24,25"
+  }
+}
