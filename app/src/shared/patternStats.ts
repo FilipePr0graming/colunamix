@@ -14,10 +14,16 @@ export type PatternStatsSort =
     | 'occurrences-asc'
     | 'lag-desc';
 
+export type PatternPositionFilterValue = string | number | null | undefined;
+
+export const PATTERN_POSITION_COUNT = 5;
+
 export interface PatternStatsFilterOptions extends PatternSearchOptions {
     searchText?: string;
     sequenceSearchText?: string;
     minOccurrences?: string | number | null;
+    maxOccurrences?: string | number | null;
+    positions?: PatternPositionFilterValue[];
     sort?: PatternStatsSort;
 }
 
@@ -179,17 +185,81 @@ export function sortPatternStatsRows(rows: PatternStatsRow[], sort: PatternStats
     return nextRows;
 }
 
+/**
+ * Limite opcional de ocorrências: campo vazio/inválido = sem restrição (null).
+ * Diferente do mínimo, 0 é um valor válido para o máximo.
+ */
+export function parseOccurrenceLimit(value: string | number | null | undefined): number | null {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : null;
+    }
+    if (typeof value !== 'string' || !value.trim()) return null;
+    const parsed = Number(value.trim().replace(',', '.'));
+    return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : null;
+}
+
+/** Filtra por intervalo inclusivo [min, max]; qualquer limite vazio é ignorado. */
+export function filterPatternsByOccurrenceRange(
+    rows: PatternStatsRow[],
+    minOccurrences?: string | number | null,
+    maxOccurrences?: string | number | null
+): PatternStatsRow[] {
+    const min = normalizeMinOccurrences(minOccurrences);
+    const max = parseOccurrenceLimit(maxOccurrences);
+    if (min <= 0 && max === null) return rows;
+
+    return rows.filter(row =>
+        (min <= 0 || row.occurrences >= min)
+        && (max === null || row.occurrences <= max)
+    );
+}
+
+/** Valor de uma posição: vazio/inválido = posição ignorada (null). */
+export function parsePatternPositionValue(value: PatternPositionFilterValue): number | null {
+    if (typeof value === 'number') {
+        return Number.isSafeInteger(value) && value >= 0 ? value : null;
+    }
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) return null;
+    const parsed = Number(trimmed);
+    return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+export function hasActivePatternPositions(positions?: PatternPositionFilterValue[] | null): boolean {
+    return Array.isArray(positions) && positions.some(value => parsePatternPositionValue(value) !== null);
+}
+
+/**
+ * Pesquisa por posição: cada posição preenchida deve ser igual ao valor
+ * naquela posição exata do padrão (índice 0 = posição 1). Posições vazias
+ * são ignoradas; não há ordem nem contiguidade obrigatória.
+ */
+export function filterPatternsByPositions(
+    rows: PatternStatsRow[],
+    positions?: PatternPositionFilterValue[] | null
+): PatternStatsRow[] {
+    if (!Array.isArray(positions)) return rows;
+
+    const constraints = positions
+        .slice(0, PATTERN_POSITION_COUNT)
+        .map((value, index) => ({ index, value: parsePatternPositionValue(value) }))
+        .filter((item): item is { index: number; value: number } => item.value !== null);
+
+    if (constraints.length === 0) return rows;
+
+    return rows.filter(row => constraints.every(({ index, value }) => row.pattern[index] === value));
+}
+
 export function filterPatternStatsRows(
     rows: PatternStatsRow[],
     options: PatternStatsFilterOptions = {}
 ): PatternStatsRow[] {
-    const minOccurrences = normalizeMinOccurrences(options.minOccurrences);
     const searched = filterPatternsBySequence(filterPatternsBySearch(rows, options.searchText || '', {
         variationSearch: options.variationSearch,
     }), options.sequenceSearchText || '');
-    const filtered = minOccurrences > 0
-        ? searched.filter(row => row.occurrences >= minOccurrences)
-        : searched;
+    const byPosition = filterPatternsByPositions(searched, options.positions);
+    const filtered = filterPatternsByOccurrenceRange(byPosition, options.minOccurrences, options.maxOccurrences);
 
     return sortPatternStatsRows(filtered, options.sort);
 }

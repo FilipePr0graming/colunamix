@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GeneratorConfig, GeneratedGame, DbStatus, LicenseStatus, CombinationPreview, Exclusion, PatternExclusion, ExactGroupCategory, ExactGroupExclusions, PatternStatsKind, PatternStatsRow, CombinedPatternExclusion } from '../../shared/types';
 import { parseNumbers, validatePattern, getColPatternArray, getRowPatternArray } from '../../shared/columns';
 import { applyBulkPatternRuleAction, applyPatternRuleAction, PatternRuleAction } from '../../shared/patternRules';
-import { filterPatternStatsRows, type PatternStatsSort } from '../../shared/patternStats';
+import { filterPatternStatsRows, hasActivePatternPositions, parseOccurrenceLimit, PATTERN_POSITION_COUNT, type PatternStatsSort } from '../../shared/patternStats';
 import { clampContestToDatabase } from '../../shared/contestLimits';
 import { GENERATOR_SETTINGS_STORAGE_KEY, parsePersistedGeneratorSettings, shouldPersistGeneratorSettings } from '../../shared/generatorSettings';
 import {
@@ -105,6 +105,8 @@ const ADVANCED_GROUP_ENGINE_FEATURES = [
 
 const formatPatternPercent = (value: number) => `${value.toFixed(2).replace('.', ',')}%`;
 
+const createPatternPositionState = (): string[] => Array.from({ length: PATTERN_POSITION_COUNT }, () => '');
+
 interface GeneratorPatternTableProps {
     kind: PatternStatsKind;
     title: string;
@@ -115,12 +117,16 @@ interface GeneratorPatternTableProps {
     noData: boolean;
     untilContest: string;
     minOccurrences: string;
+    maxOccurrences: string;
+    positions: string[];
     search: string;
     sequenceSearch: string;
     sort: PatternStatsSort;
     maxContest: number;
     onUntilContestChange: (value: string) => void;
     onMinOccurrencesChange: (value: string) => void;
+    onMaxOccurrencesChange: (value: string) => void;
+    onPositionsChange: (value: string[]) => void;
     onSearchChange: (value: string) => void;
     onSequenceSearchChange: (value: string) => void;
     onSortChange: (value: PatternStatsSort) => void;
@@ -152,12 +158,16 @@ function GeneratorPatternTable({
     noData,
     untilContest,
     minOccurrences,
+    maxOccurrences,
+    positions,
     search,
     sequenceSearch,
     sort,
     maxContest,
     onUntilContestChange,
     onMinOccurrencesChange,
+    onMaxOccurrencesChange,
+    onPositionsChange,
     onSearchChange,
     onSequenceSearchChange,
     onSortChange,
@@ -165,6 +175,18 @@ function GeneratorPatternTable({
     onApplyAllPatterns,
 }: GeneratorPatternTableProps) {
     const kindLabel = kind === 'row' ? 'linha' : 'coluna';
+    const positionPrefix = kind === 'row' ? 'L' : 'C';
+    const minLimit = parseOccurrenceLimit(minOccurrences);
+    const maxLimit = parseOccurrenceLimit(maxOccurrences);
+    const invalidOccurrenceRange = minLimit !== null && maxLimit !== null && minLimit > maxLimit;
+    const positionsActive = hasActivePatternPositions(positions);
+
+    const updatePosition = (index: number, value: string) => {
+        const digit = value.replace(/[^0-9]/g, '').slice(-1);
+        const next = [...positions];
+        next[index] = digit;
+        onPositionsChange(next);
+    };
 
     return (
         <div
@@ -249,6 +271,18 @@ function GeneratorPatternTable({
                         />
                     </label>
                     <label>
+                        <span className="desktop-label !mb-1 !text-[9px]">Máximo de ocorrências</span>
+                        <input
+                            type="number"
+                            min={0}
+                            value={maxOccurrences}
+                            onChange={event => onMaxOccurrencesChange(event.target.value)}
+                            data-testid={`generator-pattern-max-${kind}`}
+                            className="desktop-control h-9 w-full !rounded-md !text-[12px]"
+                            placeholder="Sem limite"
+                        />
+                    </label>
+                    <label>
                         <span className="desktop-label !mb-1 !text-[9px]">Busca</span>
                         <input
                             type="text"
@@ -259,6 +293,18 @@ function GeneratorPatternTable({
                             placeholder="4,3,3,3,2"
                         />
                     </label>
+                </div>
+
+                {invalidOccurrenceRange && (
+                    <p
+                        data-testid={`generator-pattern-occurrence-range-warning-${kind}`}
+                        className="mt-2 text-[10px] font-bold text-amber-300"
+                    >
+                        O mínimo ({minLimit}) é maior que o máximo ({maxLimit}): nenhum padrão atende ao intervalo.
+                    </p>
+                )}
+
+                <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
                     <label>
                         <span className="desktop-label !mb-1 !text-[9px]">Busca por sequência</span>
                         <input
@@ -270,6 +316,42 @@ function GeneratorPatternTable({
                             placeholder="3,3,4"
                         />
                     </label>
+                    <div data-testid={`generator-pattern-positions-${kind}`}>
+                        <div className="flex items-center justify-between">
+                            <span className="desktop-label !mb-1 !text-[9px]">Busca por posição</span>
+                            {positionsActive && (
+                                <button
+                                    type="button"
+                                    onClick={() => onPositionsChange(createPatternPositionState())}
+                                    data-testid={`generator-pattern-positions-clear-${kind}`}
+                                    className="mb-1 text-[9px] font-black uppercase tracking-widest text-gray-500 transition-colors hover:text-red-400"
+                                >
+                                    Limpar
+                                </button>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-5 gap-1">
+                            {positions.map((value, index) => (
+                                <label key={index} className="relative block">
+                                    <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-600">
+                                        {positionPrefix}{index + 1}
+                                    </span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={value}
+                                        onChange={event => updatePosition(index, event.target.value)}
+                                        data-testid={`generator-pattern-position-${kind}-${index + 1}`}
+                                        aria-label={`Posição ${index + 1} do padrão de ${kindLabel}`}
+                                        title={`Posição ${index + 1} (${positionPrefix}${index + 1}). Vazio = qualquer valor.`}
+                                        className="desktop-control h-9 w-full !rounded-md !pl-5 !pr-1 text-center !font-mono !text-[12px]"
+                                        placeholder="-"
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -411,6 +493,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [patternPanelEnabled, setPatternPanelEnabled] = useState(true);
     const [rowPatternUntil, setRowPatternUntil] = useState('');
     const [rowPatternMinOccurrences, setRowPatternMinOccurrences] = useState('');
+    const [rowPatternMaxOccurrences, setRowPatternMaxOccurrences] = useState('');
+    const [rowPatternPositions, setRowPatternPositions] = useState<string[]>(createPatternPositionState);
     const [rowPatternSearch, setRowPatternSearch] = useState('');
     const [rowPatternSequenceSearch, setRowPatternSequenceSearch] = useState('');
     const [rowPatternSort, setRowPatternSort] = useState<PatternStatsSort>('occurrences-desc');
@@ -419,6 +503,8 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
     const [rowPatternError, setRowPatternError] = useState('');
     const [columnPatternUntil, setColumnPatternUntil] = useState('');
     const [columnPatternMinOccurrences, setColumnPatternMinOccurrences] = useState('');
+    const [columnPatternMaxOccurrences, setColumnPatternMaxOccurrences] = useState('');
+    const [columnPatternPositions, setColumnPatternPositions] = useState<string[]>(createPatternPositionState);
     const [columnPatternSearch, setColumnPatternSearch] = useState('');
     const [columnPatternSequenceSearch, setColumnPatternSequenceSearch] = useState('');
     const [columnPatternSort, setColumnPatternSort] = useState<PatternStatsSort>('occurrences-desc');
@@ -1236,17 +1322,21 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
         searchText: rowPatternSearch,
         sequenceSearchText: rowPatternSequenceSearch,
         minOccurrences: rowPatternMinOccurrences,
+        maxOccurrences: rowPatternMaxOccurrences,
+        positions: rowPatternPositions,
         sort: rowPatternSort,
         variationSearch: true,
-    }), [rowPatternRows, rowPatternSearch, rowPatternSequenceSearch, rowPatternMinOccurrences, rowPatternSort]);
+    }), [rowPatternRows, rowPatternSearch, rowPatternSequenceSearch, rowPatternMinOccurrences, rowPatternMaxOccurrences, rowPatternPositions, rowPatternSort]);
 
     const columnPatternPanelRows = React.useMemo(() => filterPatternStatsRows(columnPatternRows, {
         searchText: columnPatternSearch,
         sequenceSearchText: columnPatternSequenceSearch,
         minOccurrences: columnPatternMinOccurrences,
+        maxOccurrences: columnPatternMaxOccurrences,
+        positions: columnPatternPositions,
         sort: columnPatternSort,
         variationSearch: true,
-    }), [columnPatternRows, columnPatternSearch, columnPatternSequenceSearch, columnPatternMinOccurrences, columnPatternSort]);
+    }), [columnPatternRows, columnPatternSearch, columnPatternSequenceSearch, columnPatternMinOccurrences, columnPatternMaxOccurrences, columnPatternPositions, columnPatternSort]);
 
     // Calculate combined excluded dozens for visualization
     const allExcludedDozens = React.useMemo(() => 
@@ -2022,12 +2112,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         noData={noData}
                                         untilContest={rowPatternUntil}
                                         minOccurrences={rowPatternMinOccurrences}
+                                        maxOccurrences={rowPatternMaxOccurrences}
+                                        positions={rowPatternPositions}
                                         search={rowPatternSearch}
                                         sequenceSearch={rowPatternSequenceSearch}
                                         sort={rowPatternSort}
                                         maxContest={maxContest}
                                         onUntilContestChange={value => updatePatternUntil('row', value)}
                                         onMinOccurrencesChange={setRowPatternMinOccurrences}
+                                        onMaxOccurrencesChange={setRowPatternMaxOccurrences}
+                                        onPositionsChange={setRowPatternPositions}
                                         onSearchChange={setRowPatternSearch}
                                         onSequenceSearchChange={setRowPatternSequenceSearch}
                                         onSortChange={setRowPatternSort}
@@ -2044,12 +2138,16 @@ export default function Generator({ dbStatus, licenseStatus }: Props) {
                                         noData={noData}
                                         untilContest={columnPatternUntil}
                                         minOccurrences={columnPatternMinOccurrences}
+                                        maxOccurrences={columnPatternMaxOccurrences}
+                                        positions={columnPatternPositions}
                                         search={columnPatternSearch}
                                         sequenceSearch={columnPatternSequenceSearch}
                                         sort={columnPatternSort}
                                         maxContest={maxContest}
                                         onUntilContestChange={value => updatePatternUntil('column', value)}
                                         onMinOccurrencesChange={setColumnPatternMinOccurrences}
+                                        onMaxOccurrencesChange={setColumnPatternMaxOccurrences}
+                                        onPositionsChange={setColumnPatternPositions}
                                         onSearchChange={setColumnPatternSearch}
                                         onSequenceSearchChange={setColumnPatternSequenceSearch}
                                         onSortChange={setColumnPatternSort}

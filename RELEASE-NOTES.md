@@ -1,12 +1,8 @@
-ColunaMix v1.8.41
+ColunaMix v1.8.42
 
-Novo filtro de exclusão por combinação de Padrões de Linha e Coluna.
+Melhorias:
 
-Novidades:
-
-- Adicionado filtro combinado de Padrão de Linha + Padrão de Coluna.
-- Possibilidade de carregar combinações com base nos concursos anteriores.
-- As combinações podem ser utilizadas diretamente na exclusão de jogos do Gerador.
-- Linha e Coluna são analisadas conjuntamente como uma única condição.
-- Adição, remoção e limpeza das combinações pelo próprio filtro.
-- Ajustes internos para manter a geração rápida mesmo com o novo filtro ativo.
+- Pesquisa por intervalo mínimo e máximo de ocorrências.
+- Pesquisa individual pelas cinco posições dos padrões.
+- Combinação de filtros nos Padrões de Linha e Coluna.
+- Melhorias de compatibilidade e estabilidade.

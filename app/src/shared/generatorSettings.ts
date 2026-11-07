@@ -11,6 +11,7 @@ export interface PersistedGeneratorSettings extends Partial<Omit<GeneratorConfig
     exactGroupHistoryCounts?: Record<string, number>;
     combinedPatternHistoryCount?: number;
     patternPanelEnabled?: boolean;
+    noRepeat?: boolean;
 }
 
 export function parsePersistedGeneratorSettings(raw: string | null): PersistedGeneratorSettings | null {
